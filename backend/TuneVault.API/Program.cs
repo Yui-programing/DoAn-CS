@@ -47,7 +47,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // ==========================================
 builder.Services.AddControllers();
 
+// --- THÊM VÀO PHẦN ĐĂNG KÝ SERVICE ---
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+
+
 var app = builder.Build();
+
+// --- THÊM VÀO PHẦN MIDDLEWARE CỦA APP ---
+// Bỏ qua lệnh if(app.Environment.IsDevelopment()) để luôn bật Swagger trong Docker
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Các lệnh app.Use... khác của bạn (nếu có)
 
 // ==========================================
 // 5. CẤU HÌNH MIDDLEWARE PIPELINE
