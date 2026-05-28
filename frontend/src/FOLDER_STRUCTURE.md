@@ -1,22 +1,19 @@
-# 📁 Hướng Dẫn Cấu Trúc Thư Mục `src`
 
 ## Tổng Quan
-
-Cấu trúc này tuân theo các best practices của React và được tổ chức để dễ dàng mở rộng, bảo trì và quản lý code. Mỗi folder có mục đích và chức năng riêng biệt.
-
+**Chức năng riêng biệt của từng folder**
 ---
 
 ## 📂 Các Thư Mục Chính
 
 ### 1. 📦 **components/**
-**Mục đích:** Lưu trữ các React Component tái sử dụng (Reusable Components)
+**Mục đích:** Lưu trữ các React Component(thành phần react) tái sử dụng (Reusable Components)
 
 **Chứa:**
 - UI Components (nút bấm, input, modal, card, v.v.)
 - Features Components (các component có logic riêng)
 - Layout Components (header, sidebar, footer)
 
-**Cấu trúc thường gặp:**
+**Ví dụ:**
 ```
 components/
 ├── Button/
@@ -261,23 +258,6 @@ Apply Styles (styles/)
 
 ---
 
-## 🛠️ Path Aliases (Tùy Chọn)
-
-Thêm vào `tsconfig.json` hoặc `vite.config.ts`:
-
-```json
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/pages/*": ["src/pages/*"],
-      "@/services/*": ["src/services/*"]
-    }
-  }
-}
-```
 
 ---
 
