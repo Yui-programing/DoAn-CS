@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # 1. Cơ sở dữ liệu SQL Server
+  tunevault-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=TuneVault@2026! # Phải có chữ hoa, chữ thường, số và ký tự đặc biệt
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  # 2. API Backend
+  tunevault-backend:
+    image: tunevault-backend:latest
+    build:
+      context: . # Chú ý: Context là thư mục gốc để copy được toàn bộ backend
+      dockerfile: backend/TuneVault.API/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Kết nối sang container DB bên trên
+      - ConnectionStrings__DefaultConnection=Server=tunevault-db;Database=TuneVaultDB;User Id=sa;Password=TuneVault@2026!;TrustServerCertificate=True;
+      # Các Key cấu hình theo kịch bản
+      - JwtSettings__SecretKey=DayLaMotChuoiKhoaBiMatRatDaiVaAnToanChoTuneVault123
+      - AISettings__ApiKey=YOUR_API_KEY_HERE
+    volumes:
+      # Map ổ cứng máy tính vào container để lưu file nhạc/video không bị mất
+      - ./media_storage:/app/media_storage 
+    depends_on:
+      - tunevault-db
+
+  # 3. Giao diện Frontend
+  tunevault-frontend:
+    image: tunevault-frontend:latest
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000/api
+      - VITE_SIGNALR_HUB_URL=http://localhost:5000/hubs/notification
+    depends_on:
+      - tunevault-backend
+
+volumes:
+  sql_data:
