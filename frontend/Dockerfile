@@ -1,8 +1,12 @@
 # 1. Build React App
 FROM node:24-alpine AS build
 WORKDIR /app
+
+# Đi từ thư mục gốc vào frontend để lấy file package.json
 COPY frontend/package*.json ./
 RUN npm install
+
+# Đi từ thư mục gốc copy toàn bộ code frontend vào
 COPY frontend/ ./
 RUN npm run build
 
