@@ -1,122 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
-
+//Import
+import { useState } from "react";
+import  './App.css';
+//Build
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    
+// 1. Khung nền lớn toàn màn hình với hiệu ứng chuyển màu Gradient huyền ảo
+  <div className="w-screen min-h-screen bg-gradient-to-br from-slate-950 via-cyan-950 to-indigo-950 flex justify-center items-center p-4">
+    
+    {/* 2. Chiếc hộp chứa nội dung được thiết kế lại */}
+    {/* - bg-slate-900/60: Nền tối trong suốt 60% */}
+    {/* - backdrop-blur-md: Làm mờ những gì nằm phía sau hộp (hiệu ứng kính) */}
+    {/* - hover:shadow-cyan-500/20: Khi di chuột vào sẽ tỏa ra ánh hào quang màu xanh cyan */}
+    <div className="
+      max-w-2xl w-full p-8 md:p-12
+      bg-slate-900/60 backdrop-blur-md 
+      border border-slate-800 rounded-3xl shadow-2xl
+      text-center cursor-pointer
+      
+      /* Cấu hình hiệu ứng chuyển động mượt mà */
+      transition-all duration-500 ease-out
+      
+      /* Hiệu ứng khi RE CHUỘT: Nhấc hộp lên, đổi màu viền, phát sáng */
+      hover:-translate-y-2 hover:border-cyan-400/50 hover:shadow-cyan-500/20
+    ">
+      
+      {/* 3. Phần tiêu đề / Tên của bạn */}
+      {/* bg-clip-text kết hợp text-transparent giúp chữ cũng có hiệu ứng chuyển màu Gradient */}
+      <h1 className="text-3xl md:text-4xl font-black tracking-wide bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-4">
+        CON CẶC
+      </h1>
+      
+      {/* 4. Đoạn văn phụ trợ */}
+      <p className="text-base md:text-lg text-slate-400 font-medium leading-relaxed">
+        Đang làm chủ 
+        <span className="text-cyan-400 font-semibold ml-1a"> Tailwind CSS</span>
+      </p>
 
-      <div className="ticks"></div>
+      {/* 5. Điểm nhấn trang trí thêm: Một chấm tròn xanh nhỏ giả lập trạng thái Online */}
+      <div className="mt-6 flex justify-center items-center gap-2">
+        <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+        <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Ready to build</span>
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+    </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  </div>
+  );
 }
 
-export default App
+export default App;
