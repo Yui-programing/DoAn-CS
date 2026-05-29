@@ -21,9 +21,4 @@ Sau khi lệnh chạy xong và không báo lỗi, bạn mở trình duyệt web 
 * **Giao diện người dùng (React Frontend):** http://localhost:3000
 * **Tài liệu API (Swagger Backend):** http://localhost:5000/swagger
 
-**5. Cập nhật Cơ sở dữ liệu (Database Migration)**
-Vì cơ sở dữ liệu SQL Server trong Docker là một môi trường hoàn toàn mới và trống rỗng, bạn cần chạy Migration để tạo các bảng (Users, Playlists, MediaItems...) trước khi dùng chức năng Đăng ký/Đăng nhập:
-* Mở solution bằng **Visual Studio**.
-* Mở cửa sổ **Package Manager Console**.
-* Đổi **Default Project** thành `TuneVault.Infrastructure`.
-* Gõ lệnh: `Update-Database` và nhấn Enter.
+
