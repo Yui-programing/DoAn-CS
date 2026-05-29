@@ -51,6 +51,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Build cấu hình CORS trước khi xây dựng app để có thể sử dụng trong middleware pipeline
+
+// Thêm cấu hình CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Địa chỉ Frontend của bạn
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Rất quan trọng vì hệ thống của bạn có dùng SignalR (WebSockets)
+    });
+});
+
 
 
 var app = builder.Build();
@@ -65,7 +79,8 @@ app.UseSwaggerUI();
 // ==========================================
 // 5. CẤU HÌNH MIDDLEWARE PIPELINE
 // ==========================================
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication(); // Bắt buộc chạy TRƯỚC Authorization
 app.UseAuthorization();
