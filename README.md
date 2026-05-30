@@ -13,7 +13,7 @@ Mở Terminal (hoặc Command Prompt/PowerShell), di chuyển đến thư mục 
 
 **3. Khởi chạy toàn bộ hệ thống (Run with Docker)**
 Tại thư mục gốc `DoAn-CS` (nơi chứa file `docker-compose.yml`), thực thi câu lệnh dưới đây để tự động cài đặt và chạy toàn bộ hệ thống:
-`docker-compose up -d --build`
+`docker compose up -d --build`
 *(Lưu ý: Lần chạy đầu tiên sẽ mất vài phút để Docker tải SQL Server, .NET 10 và Node 24 về máy).*
 
 **4. Kiểm tra và Truy cập Hệ thống**
