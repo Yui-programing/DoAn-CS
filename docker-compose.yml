@@ -1,54 +1,54 @@
 
 
 services:
-  # 1. Cơ sở dữ liệu SQL Server  
+  # 1. Cơ sở dữ liệu SQL Server
   tunevault-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: tunevault_db_container
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${DB_PASSWORD} # Mật khẩu đồng bộ với chuỗi kết nối của Backend
+      - MSSQL_SA_PASSWORD=TuneVault@SecurePass2026 # Mật khẩu của tài khoản 'sa'
     ports:
       - "1433:1433"
     volumes:
       - sql_data:/var/opt/mssql # Lưu trữ dữ liệu DB bền vững không bị mất khi sập container
 
-  # 2. API Backend (.NET Clean Architecture)  
+  # 2. API Backend (.NET Clean Architecture)
   tunevault.api:
     image: tunevault-backend:latest
     container_name: tunevault_backend_container
     build:
-      context: ./backend # Sử dụng thư mục gốc làm ngữ cảnh để Dockerfile có thể quét qua cả 4 project      
+      context: ./backend # Sử dụng thư mục gốc làm ngữ cảnh để Dockerfile có thể quét qua cả 4 project
       dockerfile: TuneVault.API/Dockerfile # ĐÃ SỬA: Xóa chữ 'backend/' đi vì không đúng cấu trúc thư mục
     ports:
-      - "${BACKEND_EXTERNAL_PORT}:8080" # Ánh xạ cổng 5000 của máy thật vào cổng 8080 của container runtime    
+      - "5000:8080" # Ánh xạ cổng 5000 của máy thật vào cổng 8080 của container runtime
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_HTTP_PORTS=8080
-      # Chuỗi kết nối trỏ thẳng tới tên dịch vụ 'tunevault-db' thay vì localhost      
-      - ConnectionStrings__DefaultConnection=Server=tunevault-db;Database=${DB_NAME};User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;
-      # ĐÃ SỬA: Đổi từ 'SecretKey' thành 'Secret' để khớp hoàn toàn với builder.Configuration["JwtSettings:Secret"] trong Program.cs      
-      - JwtSettings__Secret=${JWT_SECRET}
-      - AISettings__ApiKey=${AI_API_KEY}
+      # Chuỗi kết nối trỏ thẳng tới tên dịch vụ 'tunevault-db' thay vì localhost
+      - ConnectionStrings__DefaultConnection=Server=tunevault-db;Database=TuneVaultDb;User Id=sa;Password=TuneVault@SecurePass2026;TrustServerCertificate=True;
+      # ĐÃ SỬA: Đổi từ 'SecretKey' thành 'Secret' để khớp hoàn toàn với builder.Configuration["JwtSettings:Secret"] trong Program.cs
+      - JwtSettings__Secret=SuperSecretKeyTuneVaultProject2026LongEnoughToSatisfySecurityRequirements
+      - AISettings__ApiKey=your_actual_ai_api_key_here # Bạn tự điền API Key thực tế của bạn vào đây nếu cần
     volumes:
-      - ./media_storage:/app/media_storage # Ổ đĩa ảo lưu trữ nhạc và video cục bộ trên máy    
+      - ./media_storage:/app/media_storage # Ổ đĩa ảo lưu trữ nhạc và video cục bộ trên máy
     depends_on:
       - tunevault-db # Ép hệ thống khởi động container DB trước
 
-  # 3. Giao diện Frontend (React)  
+  # 3. Giao diện Frontend (React)
   tunevault-frontend:
     image: tunevault-frontend:latest
     container_name: tunevault_frontend_container
     build:
       context: ./frontend
       dockerfile: Dockerfile # Lưu ý: Hãy chắc chắn bạn CÓ thư mục 'frontend' ở ngoài cùng chứa Dockerfile nhé
-      # ĐÃ SỬA: Đổi environment thành args và thụt lề vào trong mục build      
+      # ĐÃ SỬA: Đổi environment thành args và thụt lề vào trong mục build
       args:
-        - VITE_API_BASE_URL=http://localhost:${BACKEND_EXTERNAL_PORT}/api
-        - VITE_SIGNALR_HUB_URL=http://localhost:${BACKEND_EXTERNAL_PORT}/hubs/notification
+        - VITE_API_BASE_URL=http://localhost:5000/api
+        - VITE_SIGNALR_HUB_URL=http://localhost:5000/hubs/notification
     ports:
-      - "${FRONTEND_EXTERNAL_PORT}:80"
+      - "3000:80" # Ánh xạ cổng 3000 của máy thật vào cổng 80 của container (Nginx/Apache phục vụ React)
     depends_on:
       - tunevault.api # ĐÃ SỬA: Đổi 'tunevault.api' cho khớp tên service
 
