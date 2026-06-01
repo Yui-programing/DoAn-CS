@@ -2,8 +2,8 @@
 {
     public enum NotificationType
     {
-        NewShare,
-        NewFollower,
-        System
+        NewShare = 0,
+        NewFollower = 1,
+        System = 2
     }
 }
