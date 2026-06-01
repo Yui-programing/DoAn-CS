@@ -1,91 +1,40 @@
-using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using TuneVault.Application.Behaviors;
-using TuneVault.Infrastructure.Persistence;
+using System.Data;
+using Microsoft.Data.SqlClient;
+using TuneVault.Application.Repositories;
+using TuneVault.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==========================================
-// 1. CẤU HÌNH DATABASE (Từ Chặng 1)
-// ==========================================
-builder.Services.AddDbContext<TuneVaultDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// ==========================================
-// 2. CẤU HÌNH MEDIATR VÀ VALIDATION (Từ Chặng 2)
-// ==========================================
-builder.Services.AddMediatR(cfg => {
-    cfg.RegisterServicesFromAssembly(typeof(TuneVault.Application.UseCases.Auth.LoginCommand).Assembly);
-    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-});
-builder.Services.AddValidatorsFromAssembly(typeof(TuneVault.Application.UseCases.Auth.LoginCommandValidator).Assembly);
-
-// ==========================================
-// 3. CẤU HÌNH AUTHENTICATION & JWT (Từ Chặng 2)
-// ==========================================
-var jwtSecret = builder.Configuration["JwtSettings:Secret"]
-                ?? throw new InvalidOperationException("Không tìm thấy JwtSettings:Secret trong file cấu hình!");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-// ==========================================
-// 4. CẤU HÌNH CONTROLLERS
-// ==========================================
+// Thêm Controller
 builder.Services.AddControllers();
 
-// --- THÊM VÀO PHẦN ĐĂNG KÝ SERVICE ---
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Build cấu hình CORS trước khi xây dựng app để có thể sử dụng trong middleware pipeline
+// Lấy connection string
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                          ?? throw new InvalidOperationException("Không tìm thấy chuỗi kết nối 'DefaultConnection'.");
 
-// Thêm cấu hình CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000") // Địa chỉ Frontend của bạn
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials(); // Rất quan trọng vì hệ thống của bạn có dùng SignalR (WebSockets)
-    });
-});
+// Đăng ký SQL Connection
+builder.Services.AddTransient<IDbConnection>(sp => new SqlConnection(connectionString));
 
+// Đăng ký Repository
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+// Đăng ký MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(TuneVault.Application.Features.Users.Queries.GetAllUsersQuery).Assembly));
 
 var app = builder.Build();
 
-// --- THÊM VÀO PHẦN MIDDLEWARE CỦA APP ---
-// Bỏ qua lệnh if(app.Environment.IsDevelopment()) để luôn bật Swagger trong Docker
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-
-// Các lệnh app.Use... khác của bạn (nếu có)
-
-// ==========================================
-// 5. CẤU HÌNH MIDDLEWARE PIPELINE
-// ==========================================
-//app.UseHttpsRedirection();
-app.UseCors("AllowFrontend");
-
-app.UseAuthentication(); // Bắt buộc chạy TRƯỚC Authorization
+app.UseHttpsRedirection();
 app.UseAuthorization();
-
-app.MapControllers();
+app.MapControllers(); // Map các Controller vào pipeline
 
 app.Run();
