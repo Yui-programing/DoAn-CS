@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using TuneVault.Domain.Entities;
+﻿using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Repositories
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<UserProfile>> GetAllAsync();
+        // Kiểm tra xem email đã tồn tại dưới DB chưa
+        Task<User?> GetByEmailAsync(string email);
+
+        // Tạo đồng thời cả tài khoản User và thông tin UserProfile (Dùng Transaction)
+        Task<bool> CreateUserWithProfileAsync(User user, string fullName);
     }
 }
