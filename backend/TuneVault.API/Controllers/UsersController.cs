@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TuneVault.Application.Features.Users.Queries;
-
+using TuneVault.Domain.Entities;
+using TuneVault.Application.Common;
 namespace TuneVault.API.Controllers
 {
     [Route("api/[controller]")]
@@ -21,7 +22,8 @@ namespace TuneVault.API.Controllers
         {
             var query = new GetAllUsersQuery();
             var users = await _mediator.Send(query);
-            return Ok(users);
+            var response = ApiResponseDto<IEnumerable<UserProfile>>.Ok(users, "Lấy danh sách người dùng thành công");
+            return Ok(response);
         }
     }
 }
