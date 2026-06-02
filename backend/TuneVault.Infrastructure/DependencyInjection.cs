@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TuneVault.Application.Repositories;
 using TuneVault.Infrastructure.Repositories;
+using TuneVault.Application.Interfaces;
 
 namespace TuneVault.Infrastructure
 {
@@ -20,6 +21,7 @@ namespace TuneVault.Infrastructure
 
             // Đăng ký Repository
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IPlaylistRepository, PlaylistRepository>();
 
             return services;
         }
