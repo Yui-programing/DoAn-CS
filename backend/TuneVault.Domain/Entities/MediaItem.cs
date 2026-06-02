@@ -5,12 +5,12 @@ namespace TuneVault.Domain.Entities
     public class MediaItem
     {
         public Guid Id { get; set; }
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
         public string? Description { get; set; }
-        public string FilePath { get; set; }
+        public string FilePath { get; set; } = null!;
         public int DurationInSeconds { get; set; }
         public MediaType MediaType { get; set; }
-        public string OwnerId { get; set; }
+        public string OwnerId { get; set; } = null!;
         public Guid? AlbumId { get; set; }
         public Guid? ArtistId { get; set; }
         public bool IsPrivate { get; set; }

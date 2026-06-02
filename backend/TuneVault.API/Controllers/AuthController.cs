@@ -1,0 +1,40 @@
+﻿using System.Threading.Tasks;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using TuneVault.Application.Common;
+using TuneVault.Application.Features.Auth.Commands.Register;
+
+namespace TuneVault.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")] // Route chuẩn: /api/auth
+    public class AuthController : ControllerBase
+    {
+        private readonly IMediator _mediator;
+
+        public AuthController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
+
+        [HttpPost("register")] // Endpoint chuẩn: POST /api/auth/register
+        public async Task<IActionResult> Register([FromBody] RegisterCommand command)
+        {
+            // 1. Bắn lệnh vào đường ống. Nếu dữ liệu bậy, ValidationBehavior tự ném lỗi, 
+            // Middleware tự hứng và trả về BadRequest 400 kèm mảng errors cho Frontend!
+            var result = await _mediator.Send(command);
+
+            // 2. Nếu không có lỗi nhập liệu nhưng DB gặp sự cố không lưu được
+            if (!result)
+            {
+                return BadRequest(ApiResponseDto<object>.Fail(
+                    new List<string> { "Hệ thống không thể khởi tạo dữ liệu người dùng lúc này." },
+                    "Đăng ký thất bại!"
+                ));
+            }
+
+            // 3. Trả về kết quả thành công đúng chuẩn Hợp đồng JSON (success: true, data: null)
+            return Ok(ApiResponseDto<object>.Ok(null!, "Đăng ký tài khoản thành công!"));
+        }
+    }
+}
