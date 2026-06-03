@@ -1,7 +1,5 @@
-using System.Data;
-using Microsoft.Data.SqlClient;
-using TuneVault.Application.Repositories;
-using TuneVault.Infrastructure.Repositories;
+using TuneVault.Application;
+using TuneVault.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,18 +10,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Lấy connection string
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                          ?? throw new InvalidOperationException("Không tìm thấy chuỗi kết nối 'DefaultConnection'.");
-
-// Đăng ký SQL Connection
-builder.Services.AddTransient<IDbConnection>(sp => new SqlConnection(connectionString));
-
-// Đăng ký Repository
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-// Đăng ký MediatR
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(TuneVault.Application.Features.Users.Queries.GetAllUsersQuery).Assembly));
+// GỌI GOM CẤU HÌNH CỦA CÁC TẦNG DƯỚI TẠI ĐÂY
+builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
@@ -32,9 +21,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
+// Tạm thời tắt chuyển hướng HTTPS khi chạy local
+// app.UseHttpsRedirection();
 app.UseAuthorization();
-app.MapControllers(); // Map các Controller vào pipeline
+
+// Lưới hứng lỗi tự động
+app.UseMiddleware<TuneVault.API.Middlewares.ExceptionHandlingMiddleware>();
+
+app.MapControllers();
 
 app.Run();

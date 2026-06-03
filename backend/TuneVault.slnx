@@ -1,7 +1,10 @@
 <Solution>
+<<<<<<< HEAD
   <Project Path="../docker-compose.dcproj">
     <Build />
   </Project>
+=======
+>>>>>>> f426ce8e74d6068e915fdd2f297cfbde0b02ab0b
   <Project Path="TuneVault.API/TuneVault.API.csproj" />
   <Project Path="TuneVault.Application/TuneVault.Application.csproj" />
   <Project Path="TuneVault.Domain/TuneVault.Domain.csproj" />
