@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using TuneVault.Application.Common;
+using TuneVault.Application.Models;
 using TuneVault.Application.Features.Auth.Commands.Register;
-
 namespace TuneVault.API.Controllers
 {
     [ApiController]

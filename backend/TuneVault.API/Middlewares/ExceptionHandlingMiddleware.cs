@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TuneVault.Application.Common;
+using TuneVault.Application.Models;
 
 namespace TuneVault.API.Middlewares
 {

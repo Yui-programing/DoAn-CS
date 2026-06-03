@@ -1,13 +1,16 @@
-﻿using TuneVault.Domain.Entities;
+﻿// Đường dẫn: TuneVault.Application.Repositories/IUserRepository.cs
+using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Repositories
 {
     public interface IUserRepository
     {
-        // Kiểm tra xem email đã tồn tại dưới DB chưa
+        // 1. Dành cho Authentication (Đăng nhập / Đăng ký)
         Task<User?> GetByEmailAsync(string email);
-
-        // Tạo đồng thời cả tài khoản User và thông tin UserProfile (Dùng Transaction)
         Task<bool> CreateUserWithProfileAsync(User user, string fullName);
+
+        // 2. Dành cho Profile (Lấy thông tin và Cập nhật)
+        Task<UserProfile?> GetProfileByUserIdAsync(string userId); 
+        Task<bool> UpdateProfileAsync(UserProfile profile); 
     }
 }

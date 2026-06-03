@@ -21,8 +21,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
+// Tạm thời tắt chuyển hướng HTTPS khi chạy local
+// app.UseHttpsRedirection();
 app.UseAuthorization();
 
 // Lưới hứng lỗi tự động
