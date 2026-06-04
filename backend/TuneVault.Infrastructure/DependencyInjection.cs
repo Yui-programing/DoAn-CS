@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TuneVault.Application.Repositories;
 using TuneVault.Infrastructure.Repositories;
-using TuneVault.Application.Interfaces;
+using TuneVault.Application.Features.Playlists.Interfaces;
 
 namespace TuneVault.Infrastructure
 {

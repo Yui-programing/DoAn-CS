@@ -8,13 +8,14 @@ namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist
 {
     public class CreatePlaylistCommand: IRequest<ApiResponseDto<Guid>>
     {
+        public Guid Id { get; set; }
         public String Title { get; set; } = string.Empty;
 
         public String? Description { get; set; }
 
         public bool IsPublic { get; set; }
 
-        public String CurrentUserId { get; set; } = null!;
+        public String OwnerId { get; set; } = null!;
 
         
     }

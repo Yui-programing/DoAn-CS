@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using TuneVault.Application.Common;
-using TuneVault.Application.Interfaces;
+using TuneVault.Application.Features.Playlists.Interfaces;
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist;
@@ -27,7 +27,7 @@ public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistComman
             Title = request.Title,
             Description = request.Description,
             IsPublic = request.IsPublic,
-            OwnerId = request.CurrentUserId
+            OwnerId = request.OwnerId,
         };
 
         // 2. Pass the entity down to the Infrastructure repository to run the raw SQL insert
