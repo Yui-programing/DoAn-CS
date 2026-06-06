@@ -52,7 +52,7 @@ namespace TuneVault.API.Middlewares
             }
 
             // Đóng gói vào hộp ApiResponseDto chuẩn hóa đúng như hợp đồng với Frontend
-            var response = ApiResponseDto<object>.Fail(errors, message);
+            var response = ApiResponseDto<object>.Fail(errors ?? new List<string>(), message);
 
             // Cấu hình định dạng chữ thường (camelCase) cho JSON để khớp với Frontend
             var options = new JsonSerializerOptions

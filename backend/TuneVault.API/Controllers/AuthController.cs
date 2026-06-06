@@ -1,8 +1,9 @@
-﻿using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using TuneVault.Application.Models;
+using System.Threading.Tasks;
+using TuneVault.Application.Features.Auth.Commands.Login;
 using TuneVault.Application.Features.Auth.Commands.Register;
+using TuneVault.Application.Models;
 namespace TuneVault.API.Controllers
 {
     [ApiController]
@@ -34,6 +35,17 @@ namespace TuneVault.API.Controllers
 
             // 3. Trả về kết quả thành công đúng chuẩn Hợp đồng JSON (success: true, data: null)
             return Ok(ApiResponseDto<object>.Ok(null!, "Đăng ký tài khoản thành công!"));
+        }
+
+
+        [HttpPost("login")] // Endpoint chuẩn: POST /api/auth/login
+        public async Task<IActionResult> Login([FromBody] LoginCommand command)
+        {
+            // Bắn lệnh vào MediatR để xử lý logic băm mật khẩu và tạo token ngầm
+            var token = await _mediator.Send(command);
+
+            // Dùng khuôn ApiResponseDto bọc cục token bóng bẩy trả về Frontend
+            return Ok(ApiResponseDto<string>.Ok(token, "Đăng nhập thành công!"));
         }
     }
 }

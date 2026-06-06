@@ -9,7 +9,7 @@ namespace TuneVault.API.Controllers
 {   
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -21,51 +21,48 @@ namespace TuneVault.API.Controllers
 
         // 1. GET / Xem hồ sơ User
         [HttpGet("profile")]
-        public async Task<IActionResult> GetProfile([FromQuery] string? userId = null)
+        public async Task<IActionResult> GetProfile()
         {
-            string userIdParsed;
-            
-            // TODO: Xóa code tạm thời này khi đã có JWT token
-            if (!string.IsNullOrEmpty(userId))
-            {
-                userIdParsed = userId;
-            }
-            else
-            {
-                // Lấy Id của người dùng đang đăng nhập từ trong JWT token
-                // var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                // if (string.IsNullOrEmpty(userIdStr))
-                //     return Unauthorized("User ID không hợp lệ");
-                
-                // Gán trực tiếp vì cả 2 đều là string, không cần Guid.Parse(userIdStr) nữa
-                // userIdParsed = userIdStr; 
-                
-                return BadRequest("Vui lòng truyền userId trong query parameter (tạm thời)");
-            }
 
+            // Lấy Id của người dùng đang đăng nhập từ trong JWT token
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized("User ID không hợp lệ");
+ 
             // Tạo query và gửi cho MediatR xử lý
-            var query = new GetProfileQuery { UserId = userIdParsed };
+            var query = new GetProfileQuery { UserId = userIdStr };
             var data = await _mediator.Send(query);
             return Ok(ApiResponseDto<UserProfileDto>.Ok(data, "Lấy thông tin thành công!"));
         }
 
         // 2. PUT / Cập nhật hồ sơ người dùng
         [HttpPut("profile")]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileCommand command)
+        public async Task<IActionResult> UpdateProfile([FromBody] UserProfileDto request)
         {
-            // TODO: Xóa code tạm thời này khi đã có JWT token
-            if (string.IsNullOrEmpty(command.UserId)) 
-                return BadRequest("Vui lòng truyền UserId trong body (tạm thời)");
+            // 1. Lấy UserId trực tiếp từ Claims của Token (Bảo mật, tránh bị sửa bậy UserId)
+            var userIdFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            // if (string.IsNullOrEmpty(userIdStr))
-            //     return Unauthorized("User ID không hợp lệ");
-            
-            // Gán trực tiếp, không cần Guid.Parse
-            // command.UserId = userIdStr; 
-            
-            await _mediator.Send(command);
-            return Ok(ApiResponseDto<bool>.Ok(true, "Cập nhật thông tin thành công!"));
+            if (string.IsNullOrEmpty(userIdFromToken))
+            {
+
+                var errors = new List<string> { "Token không hợp lệ hoặc đã hết hạn." };
+                return Unauthorized(ApiResponseDto<bool>.Fail(errors, "Xác thực thất bại!")); //
+            }
+
+            // 2. Map dữ liệu từ UserProfileDto và Token vào Command để đẩy qua MediatR
+            var command = new UpdateProfileCommand
+            {
+                UserId = userIdFromToken, // Lấy từ Token bảo mật
+                FullName = request.FullName, // Lấy từ Body thông qua DTO có sẵn
+                Bio = request.Bio,           // Lấy từ Body thông qua DTO có sẵn
+                AvatarUrl = request.AvatarUrl // Lấy từ Body thông qua DTO có sẵn
+            };
+
+            // 3. Đẩy sang Handler xử lý xuống Database
+            var result = await _mediator.Send(command);
+
+            // 4. Giữ nguyên hàm Response chuẩn của bạn
+            return Ok(ApiResponseDto<bool>.Ok(result, "Cập nhật thông tin thành công!"));
         }
     }
 }
