@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using TuneVault.Application.Common;
+
 
 namespace TuneVault.Application.Features.Playlists.Commands.RestorePlaylist
 {
-    public class RestorePlaylistCommand: IRequest<ApiResponseDto<Guid>>
+    public class RestorePlaylistCommand: IRequest<Guid>
     {
         public Guid Id { get; set; }
         public string OwnerId { get; set; } = null!;

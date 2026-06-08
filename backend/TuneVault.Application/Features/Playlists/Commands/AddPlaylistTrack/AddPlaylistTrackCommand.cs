@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using TuneVault.Application.Common;
+
 
 namespace TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack
 {
-    public class AddPlaylistTrackCommand: IRequest<ApiResponseDto<Guid>>
+    public class AddPlaylistTrackCommand: IRequest<Guid>
     {
         public Guid PlaylistId { get; set; }
         public Guid MediaItemId { get; set; }

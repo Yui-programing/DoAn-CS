@@ -2,13 +2,13 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using TuneVault.Application.Common;
+
 using TuneVault.Application.Features.Playlists.Interfaces;
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist;
 
-public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistCommand, ApiResponseDto<Guid>>
+public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistCommand, Guid>
 {
     private readonly IPlaylistRepository _playlistRepository;
 
@@ -18,7 +18,7 @@ public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistComman
         _playlistRepository = playlistRepository;
     }
 
-    public async Task<ApiResponseDto<Guid>> Handle(CreatePlaylistCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreatePlaylistCommand request, CancellationToken cancellationToken)
     {
         // 1. Map command request data to your Domain Entity
         var playlist = new Playlist
@@ -33,7 +33,7 @@ public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistComman
         // 2. Pass the entity down to the Infrastructure repository to run the raw SQL insert
         var createdId = await _playlistRepository.CreateAsync(playlist);
 
-        // 3. Return the exact wrapper response format you designed
-        return ApiResponseDto<Guid>.Ok(createdId, "Tạo Playlist thành công!");
+        // 3. Return the exact response format you designed
+        return request.Id;
     }
 }

@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using TuneVault.Application.Common;
+
 
 namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist
 {
-    public class CreatePlaylistCommand: IRequest<ApiResponseDto<Guid>>
+    public class CreatePlaylistCommand: IRequest<Guid>
     {
         public Guid Id { get; set; }
         public String Title { get; set; } = string.Empty;
