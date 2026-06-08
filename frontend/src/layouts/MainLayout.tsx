@@ -1,19 +1,230 @@
-// MainLayout component - khung giao diện chính
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
+import { NavLink, Outlet } from 'react-router-dom';
+import { 
+  Home, 
+  Search, 
+  Library, 
+  Bell, 
+  Mail, 
+  User, 
+  Play, 
+  SkipBack, 
+  SkipForward, 
+  Volume2, 
+  Heart, 
+  Repeat, 
+  Shuffle, 
+  Music,
+  LogOut
+} from 'lucide-react';
 
-export const MainLayout = ({ children }: MainLayoutProps) => {
+export const MainLayout = () => {
   return (
-    <div className="main-layout">
-      {/* Header */}
-      <header className="layout-header">{/* Header content */}</header>
+    <div className="h-screen w-screen bg-black text-slate-100 flex flex-col overflow-hidden font-sans">
+      {/* Khung chính: Sidebar + Main Content */}
+      <div className="flex-1 flex overflow-hidden p-2 gap-2">
+        
+        {/* 1. SIDEBAR (Bên trái) */}
+        <aside className="w-64 bg-zinc-950 rounded-xl flex flex-col p-4 gap-6 shrink-0 border border-zinc-900">
+          {/* Logo */}
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+              <Music className="w-6 h-6 text-black stroke-[2.5]" />
+            </div>
+            <div>
+              <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
+                TuneVault
+              </h1>
+              <span className="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Spotify Clone</span>
+            </div>
+          </div>
 
-      {/* Main content */}
-      <main className="layout-content">{children}</main>
+          {/* Navigation links */}
+          <nav className="flex flex-col gap-1.5 flex-1">
+            <NavLink 
+              to="/" 
+              className={({ isActive }) => 
+                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
+                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                }`
+              }
+            >
+              <Home className="w-5 h-5" />
+              <span>Trang chủ</span>
+            </NavLink>
 
-      {/* Footer */}
-      <footer className="layout-footer">{/* Footer content */}</footer>
+            <NavLink 
+              to="/search" 
+              className={({ isActive }) => 
+                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
+                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                }`
+              }
+            >
+              <Search className="w-5 h-5" />
+              <span>Tìm kiếm</span>
+            </NavLink>
+
+            <NavLink 
+              to="/library" 
+              className={({ isActive }) => 
+                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
+                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                }`
+              }
+            >
+              <Library className="w-5 h-5" />
+              <span>Thư viện</span>
+            </NavLink>
+
+            <div className="h-px bg-zinc-900 my-2" />
+
+            <NavLink 
+              to="/notifications" 
+              className={({ isActive }) => 
+                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
+                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                }`
+              }
+            >
+              <Bell className="w-5 h-5" />
+              <span>Thông báo</span>
+            </NavLink>
+
+            <NavLink 
+              to="/share" 
+              className={({ isActive }) => 
+                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
+                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                }`
+              }
+            >
+              <Mail className="w-5 h-5" />
+              <span>Hộp thư chia sẻ</span>
+            </NavLink>
+
+            <NavLink 
+              to="/profile" 
+              className={({ isActive }) => 
+                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
+                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                }`
+              }
+            >
+              <User className="w-5 h-5" />
+              <span>Hồ sơ</span>
+            </NavLink>
+          </nav>
+
+          {/* Footer Sidebar / Nút đăng xuất/đăng nhập */}
+          <div className="mt-auto">
+            <NavLink 
+              to="/login" 
+              className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-all duration-200"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Đăng nhập / Thoát</span>
+            </NavLink>
+          </div>
+        </aside>
+
+        {/* 2. MAIN CONTENT (Ở giữa & phải) */}
+        <main className="flex-1 bg-zinc-950 rounded-xl flex flex-col overflow-hidden border border-zinc-900 relative">
+          {/* Header trong suốt mờ ảo */}
+          <header className="h-16 flex items-center justify-between px-6 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/50 shrink-0 z-10">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-zinc-400">Trạng thái hệ thống:</span>
+              <span className="flex items-center gap-1.5 bg-green-500/10 text-green-400 text-xs px-2.5 py-1 rounded-full font-bold border border-green-500/20">
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                Connected
+              </span>
+            </div>
+            
+            {/* Avatar góc phải */}
+            <NavLink to="/profile" className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all">
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
+                PD
+              </div>
+              <span className="text-sm font-semibold text-zinc-300">Phương Duy</span>
+            </NavLink>
+          </header>
+
+          {/* Nội dung động thay đổi theo route */}
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-zinc-800">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+
+      {/* 3. PLAYER BAR (Dưới cùng) */}
+      <footer className="h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between shrink-0">
+        
+        {/* Phía bên trái: Thông tin bài hát đang phát */}
+        <div className="flex items-center gap-4 w-1/3">
+          <div className="w-14 h-14 bg-zinc-800 rounded-lg flex items-center justify-center shadow-md border border-zinc-800 overflow-hidden shrink-0">
+            <Music className="w-6 h-6 text-zinc-500" />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-sm font-bold truncate hover:underline cursor-pointer">Lần Cuối</h4>
+            <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer">Ngọt Band</p>
+          </div>
+          <button className="text-zinc-400 hover:text-green-400 transition-colors p-1 ml-2">
+            <Heart className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Ở giữa: Các nút điều khiển nhạc & Thanh tiến trình */}
+        <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
+          <div className="flex items-center gap-6">
+            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+              <Shuffle className="w-4 h-4" />
+            </button>
+            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+              <SkipBack className="w-5 h-5 fill-current" />
+            </button>
+            <button className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md">
+              <Play className="w-4 h-4 fill-current ml-0.5" />
+            </button>
+            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+              <SkipForward className="w-5 h-5 fill-current" />
+            </button>
+            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+              <Repeat className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Thanh chạy tiến trình phát nhạc */}
+          <div className="w-full flex items-center gap-2 text-[10px] text-zinc-500 font-semibold">
+            <span>0:00</span>
+            <div className="flex-1 h-1 bg-zinc-800 rounded-full relative group cursor-pointer">
+              <div className="absolute top-0 left-0 w-1/3 h-full bg-green-500 rounded-full group-hover:bg-green-400" />
+              <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <span>3:30</span>
+          </div>
+        </div>
+
+        {/* Phía bên phải: Âm lượng & Tiện ích */}
+        <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-400">
+          <Volume2 className="w-5 h-5 hover:text-slate-100 cursor-pointer" />
+          <div className="w-24 h-1 bg-zinc-800 rounded-full cursor-pointer relative group">
+            <div className="absolute top-0 left-0 w-3/4 h-full bg-green-500 rounded-full group-hover:bg-green-400" />
+            <div className="absolute top-1/2 left-3/4 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+
+      </footer>
     </div>
   );
 };

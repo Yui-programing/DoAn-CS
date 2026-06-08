@@ -1,12 +1,109 @@
-// Home page
-import './Home.css';
-import {useHome} from './useHome';
+import { Play, Sparkles, Heart } from 'lucide-react';
+
+const featuredPlaylists = [
+  { id: '1', title: 'Giai điệu thư giãn cuối tuần', tracks: '3 bài hát', duration: '1h 10m', color: 'from-emerald-500/20 to-zinc-900' },
+  { id: '2', title: 'Playlist chiến Valorant', tracks: '3 bài hát', duration: '10m', color: 'from-red-500/20 to-zinc-900' },
+  { id: '3', title: 'Tuyển tập Indie Việt', tracks: '12 bài hát', duration: '45m', color: 'from-blue-500/20 to-zinc-900' },
+  { id: '4', title: 'Lofi Cafe Sài Gòn', tracks: '1 bài hát', duration: '1h 00m', color: 'from-amber-500/20 to-zinc-900' },
+];
+
+const mockTracks = [
+  { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:30', plays: '1.2M lượt nghe' },
+  { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:15', plays: '980K lượt nghe' },
+  { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:25', plays: '4.5M lượt nghe' },
+  { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:00', plays: '3.1M lượt nghe' },
+];
 
 export const Home = () => {
+  // Lấy lời chào theo thời gian thực
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Chào buổi sáng';
+    if (hour < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
+  };
+
   return (
-    <div className="home-page">
-      <h1>Welcome to Home</h1>
-      {/* Home page content */}
+    <div className="space-y-8 animate-fadeIn">
+      {/* Banner chào mừng */}
+      <div className="bg-gradient-to-r from-emerald-900/40 via-zinc-900 to-zinc-950 p-8 rounded-2xl border border-zinc-800/40 flex justify-between items-center relative overflow-hidden">
+        <div className="space-y-2 relative z-10">
+          <div className="flex items-center gap-2 text-green-400 font-semibold text-sm">
+            <Sparkles className="w-4 h-4" />
+            <span>Gợi ý riêng cho bạn</span>
+          </div>
+          <h2 className="text-3xl font-extrabold tracking-tight">
+            {getGreeting()}, Duy!
+          </h2>
+          <p className="text-sm text-zinc-400 max-w-md">
+            Hôm nay bạn muốn nghe thể loại nhạc gì? Hãy cùng khám phá kho nhạc số khổng lồ tại TuneVault nhé.
+          </p>
+        </div>
+        <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-radial from-green-500/10 to-transparent blur-3xl" />
+      </div>
+
+      {/* Danh sách Playlist nổi bật */}
+      <section className="space-y-4">
+        <h3 className="text-xl font-bold tracking-tight">Thư viện gợi ý</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {featuredPlaylists.map((playlist) => (
+            <div 
+              key={playlist.id}
+              className={`p-5 rounded-xl bg-gradient-to-b ${playlist.color} border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-300 cursor-pointer group relative`}
+            >
+              <h4 className="font-bold text-base line-clamp-1 group-hover:text-green-400 transition-colors">
+                {playlist.title}
+              </h4>
+              <p className="text-xs text-zinc-400 mt-1">{playlist.tracks} • {playlist.duration}</p>
+              
+              {/* Nút phát nhanh khi hover */}
+              <button className="absolute right-4 bottom-4 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95">
+                <Play className="w-5 h-5 fill-current ml-0.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Bài hát mới thịnh hành */}
+      <section className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây</h3>
+          <button className="text-xs text-green-400 hover:underline font-bold">Xem tất cả</button>
+        </div>
+
+        <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden">
+          {mockTracks.map((track, index) => (
+            <div 
+              key={track.id}
+              className="flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer"
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <span className="text-sm text-zinc-500 font-bold w-4 text-right group-hover:text-green-400">
+                  {index + 1}
+                </span>
+                <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center text-zinc-500">
+                  <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 text-green-400 transition-opacity" />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold truncate group-hover:text-green-400 transition-colors">
+                    {track.title}
+                  </h4>
+                  <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-8 text-xs text-zinc-400">
+                <span className="hidden sm:inline">{track.plays}</span>
+                <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
+                  <Heart className="w-4 h-4" />
+                </button>
+                <span className="font-semibold">{track.duration}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };
