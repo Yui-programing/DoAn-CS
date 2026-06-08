@@ -8,7 +8,7 @@ const mockPlaylistsData: Record<string, {
   owner: string;
   tracksCount: number;
   duration: string;
-  tracks: Array<{ id: string; title: string; artist: string; duration: string; album: string; filePath: string }>;
+  tracks: Array<{ id: string; title: string; artist: string; duration: string; album: string; filePath: string; coverUrl?: string }>;
 }> = {
   '1': {
     title: 'Giai điệu thư giãn cuối tuần',
@@ -17,9 +17,9 @@ const mockPlaylistsData: Record<string, {
     tracksCount: 3,
     duration: '10m 38s',
     tracks: [
-      { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', album: 'Tuyển tập Indie', filePath: '/media/lancuoi.mp3' },
-      { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', album: 'Tuyển tập Indie', filePath: '/media/emdaonay.mp3' },
-      { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', album: 'Valorant Champions', filePath: '/media/dieforyou.mp3' },
+      { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', album: 'Tuyển tập Indie', filePath: '/media/lancuoi.mp3', coverUrl: '/media/lancuoi.jpg' },
+      { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', album: 'Tuyển tập Indie', filePath: '/media/emdaonay.mp3', coverUrl: '/media/emdaonay.jpg' },
+      { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', album: 'Valorant Champions', filePath: '/media/dieforyou.mp3', coverUrl: '/media/dieforyou.jpg' },
     ]
   },
   '2': {
@@ -29,9 +29,9 @@ const mockPlaylistsData: Record<string, {
     tracksCount: 3,
     duration: '9m 55s',
     tracks: [
-      { id: 'm4', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', album: 'Valorant Champions', filePath: '/media/dieforyou.mp3' },
-      { id: 'm5', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', album: 'Worlds 2018', filePath: '/media/ignite.mp3' },
-      { id: 'm6', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', album: 'Tuyển tập Indie', filePath: '/media/lancuoi.mp3' },
+      { id: 'm4', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', album: 'Valorant Champions', filePath: '/media/dieforyou.mp3', coverUrl: '/media/dieforyou.jpg' },
+      { id: 'm5', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', album: 'Worlds 2018', filePath: '/media/ignite.mp3', coverUrl: '/media/ignite.jpg' },
+      { id: 'm6', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', album: 'Tuyển tập Indie', filePath: '/media/lancuoi.mp3', coverUrl: '/media/lancuoi.jpg' },
     ]
   }
 };
@@ -148,6 +148,13 @@ export const PlaylistDetail = () => {
                     {isCurrent && isPlaying ? '•' : index + 1}
                   </td>
                   <td className="py-4 px-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800/80 overflow-hidden shrink-0 shadow-inner">
+                      {track.coverUrl ? (
+                        <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover animate-fadeIn" />
+                      ) : (
+                        <Music className="w-5 h-5 text-zinc-550" />
+                      )}
+                    </div>
                     <div>
                       <h4 className={`text-sm font-bold truncate max-w-xs transition-colors ${
                         isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'

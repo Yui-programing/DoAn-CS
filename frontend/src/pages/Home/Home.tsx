@@ -1,5 +1,5 @@
 import { usePlayer } from '../../contexts/PlayerContext';
-import { Play, Pause, Sparkles, Heart } from 'lucide-react';
+import { Play, Pause, Sparkles, Heart, Music } from 'lucide-react';
 
 const featuredPlaylists = [
   { id: '1', title: 'Giai điệu thư giãn cuối tuần', tracks: '3 bài hát', duration: '1h 10m', color: 'from-emerald-500/20 to-zinc-900' },
@@ -10,10 +10,10 @@ const featuredPlaylists = [
 
 // Thay thế bằng các tệp nhạc MP3 local hoạt động thực tế
 const mockTracks = [
-  { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', filePath: '/media/lancuoi.mp3', plays: '1.2M lượt nghe' },
-  { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', filePath: '/media/emdaonay.mp3', plays: '980K lượt nghe' },
-  { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', filePath: '/media/dieforyou.mp3', plays: '4.5M lượt nghe' },
-  { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', filePath: '/media/ignite.mp3', plays: '3.1M lượt nghe' },
+  { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', filePath: '/media/lancuoi.mp3', coverUrl: '/media/lancuoi.jpg', plays: '1.2M lượt nghe' },
+  { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', filePath: '/media/emdaonay.mp3', coverUrl: '/media/emdaonay.jpg', plays: '980K lượt nghe' },
+  { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', filePath: '/media/dieforyou.mp3', coverUrl: '/media/dieforyou.jpg', plays: '4.5M lượt nghe' },
+  { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', filePath: '/media/ignite.mp3', coverUrl: '/media/ignite.jpg', plays: '3.1M lượt nghe' },
 ];
 
 export const Home = () => {
@@ -98,12 +98,21 @@ export const Home = () => {
                   <span className={`text-sm font-bold w-4 text-right ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
                     {isCurrent && isPlaying ? '•' : index + 1}
                   </span>
-                  <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center text-zinc-550 border border-zinc-800 group-hover:border-zinc-700">
-                    {isCurrent && isPlaying ? (
-                      <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
+                  <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center border border-zinc-800 overflow-hidden relative group-hover:border-zinc-700 shrink-0">
+                    {track.coverUrl ? (
+                      <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover" />
                     ) : (
-                      <Play className="w-4.5 h-4.5 text-green-400 fill-current ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Music className="w-5 h-5 text-zinc-500" />
                     )}
+                    <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${
+                      isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`}>
+                      {isCurrent && isPlaying ? (
+                        <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
+                      ) : (
+                        <Play className="w-4.5 h-4.5 text-green-400 fill-current ml-0.5" />
+                      )}
+                    </div>
                   </div>
                   <div className="min-w-0">
                     <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>

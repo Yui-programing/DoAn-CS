@@ -7,6 +7,7 @@ export interface Track {
   filePath: string;
   duration: string; // ví dụ: "3:30" hoặc "3:00"
   album?: string;
+  coverUrl?: string;
 }
 
 interface PlayerContextType {
