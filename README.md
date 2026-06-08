@@ -21,4 +21,61 @@ Sau khi lệnh chạy xong và không báo lỗi, bạn mở trình duyệt web 
 * **Giao diện người dùng (React Frontend):** http://localhost:3000
 * **Tài liệu API (Swagger Backend):** http://localhost:5000/swagger
 
+---
+
+## 📁 Cấu trúc Thư mục Backend
+
+```
+backend/
+├── 📄 API_Contract.md              # Tài liệu định nghĩa API contracts
+├── 📄 TuneVault.slnx               # Solution file (.NET)
+│
+├── 📁 TuneVault.API/               # 🎯 API Layer (Main Entry Point)
+│   ├── 📄 Program.cs               # Cấu hình ứng dụng chính
+│   ├── 📄 TuneVault.API.csproj    # Project file
+│   ├── 📄 TuneVault.API.http       # HTTP request definitions
+│   ├── 📄 appsettings.json         # Cấu hình production
+│   ├── 📄 appsettings.Development.json  # Cấu hình development
+│   ├── 📄 Dockerfile               # Docker image configuration
+│   ├── 📁 Controllers/             # API endpoints
+│   ├── 📁 Middlewares/             # Custom middleware components
+│   ├── 📁 Common/                  # Utilities & helpers
+│   ├── 📁 Properties/              # Project properties
+│   ├── 📁 bin/                     # Compiled binaries
+│   └── 📁 obj/                     # Build artifacts
+│
+├── 📁 TuneVault.Application/       # 📋 Business Logic Layer
+│   ├── 📄 DependencyInjection.cs   # Dependency injection setup
+│   ├── 📄 TuneVault.Application.csproj
+│   ├── 📁 Features/                # Business logic & use cases
+│   ├── 📁 Models/                  # DTOs & application models
+│   ├── 📁 Repositories/            # Repository interfaces
+│   ├── 📁 Common/                  # Shared application utilities
+│   ├── 📁 bin/                     # Compiled binaries
+│   └── 📁 obj/                     # Build artifacts
+│
+├── 📁 TuneVault.Domain/            # 🏛️ Domain Layer (Business Objects)
+│   ├── 📄 TuneVault.Domain.csproj
+│   ├── 📁 Entities/                # Core business entities
+│   ├── 📁 Enums/                   # Enumeration definitions
+│   ├── 📁 bin/                     # Compiled binaries
+│   └── 📁 obj/                     # Build artifacts
+│
+└── 📁 TuneVault.Infrastructure/    # 🔧 Infrastructure Layer (Data Access)
+    ├── 📄 DependencyInjection.cs   # Infrastructure IoC configuration
+    ├── 📄 TuneVault.Infrastructure.csproj
+    ├── 📁 Repositories/            # Data access implementations
+    ├── 📁 bin/                     # Compiled binaries
+    └── 📁 obj/                     # Build artifacts
+```
+
+### 🏗️ Kiến trúc tầng (Layered Architecture)
+
+| Tầng | Thư mục | Chức năng |
+|------|---------|----------|
+| **API Layer** | `TuneVault.API` | HTTP endpoints, middleware, request handling |
+| **Application Layer** | `TuneVault.Application` | Business logic, use cases, DTOs |
+| **Domain Layer** | `TuneVault.Domain` | Core entities, business rules, enums |
+| **Infrastructure Layer** | `TuneVault.Infrastructure` | Database, repositories, external services |
+
 

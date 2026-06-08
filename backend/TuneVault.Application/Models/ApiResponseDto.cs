@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TuneVault.Application.Common
+namespace TuneVault.Application.Models
 {
     public class ApiResponseDto<T>
     {

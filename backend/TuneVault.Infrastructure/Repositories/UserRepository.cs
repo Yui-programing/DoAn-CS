@@ -21,6 +21,30 @@ namespace TuneVault.Infrastructure.Repositories
             const string sql = "SELECT * FROM [User] WHERE Email = @Email";
             return await _dbConnection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
         }
+          //  Hàm kiểm tra xem id đã tồn tại dưới DB chưa
+        public async Task<UserProfile?> GetProfileByUserIdAsync(string id)
+        {
+            const string sql = "SELECT * FROM [UserProfile] WHERE Id = @Id";
+            return await _dbConnection.QueryFirstOrDefaultAsync<UserProfile>(sql, new { Id = id });
+        }
+        //Hàm cập nhật UserProfile
+        public async Task<bool> UpdateProfileAsync(UserProfile profile)
+        {
+            // KHÔNG động tới bảng Users
+            const string sql = @"
+                UPDATE UserProfile 
+                SET 
+                    FullName = @FullName,
+                    Bio = @Bio, 
+                    AvatarUrl = @AvatarUrl
+                WHERE Id = @Id"; // Khóa ngoại liên kết
+
+            int rowsAffected = await _dbConnection.ExecuteAsync(sql, profile);
+            return rowsAffected > 0;
+        }
+        
+         
+
 
         // 2. Hàm chèn đồng thời cả User và UserProfile (Dùng Transaction bảo vệ)
         public async Task<bool> CreateUserWithProfileAsync(User user, string fullName)
