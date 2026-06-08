@@ -1,4 +1,6 @@
+import { useRef, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { usePlayer } from '../contexts/PlayerContext';
 import { 
   Home, 
   Search, 
@@ -7,6 +9,7 @@ import {
   Mail, 
   User, 
   Play, 
+  Pause,
   SkipBack, 
   SkipForward, 
   Volume2, 
@@ -17,9 +20,102 @@ import {
   LogOut
 } from 'lucide-react';
 
+// Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
+const formatTime = (seconds: number) => {
+  if (isNaN(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
 export const MainLayout = () => {
+  const {
+    currentTrack,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    togglePlay,
+    nextTrack,
+    prevTrack,
+    seek,
+    setVolume,
+    setCurrentTime,
+    setDuration,
+    setIsPlaying
+  } = usePlayer();
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Theo dõi và cập nhật trạng thái Play/Pause thực tế của thẻ audio
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.play().catch((err) => {
+        console.log('Tự động phát bị chặn bởi trình duyệt:', err);
+        setIsPlaying(false);
+      });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, currentTrack]);
+
+  // Đồng bộ âm lượng
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  // Xử lý sự kiện cập nhật tiến trình thời gian
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  // Xử lý sự kiện khi file nhạc load xong thông tin (Metadata)
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  // Tua nhạc bằng thanh trượt
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || duration === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const newProgress = clickX / width;
+    const newTime = newProgress * duration;
+    seek(newTime);
+  };
+
+  // Tua âm lượng bằng thanh trượt
+  const handleVolumeBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const newVolume = Math.min(Math.max(clickX / width, 0), 1);
+    setVolume(newVolume);
+  };
+
   return (
     <div className="h-screen w-screen bg-black text-slate-100 flex flex-col overflow-hidden font-sans">
+      
+      {/* THẺ AUDIO ẨN CHƠI NHẠC THỰC TẾ */}
+      {currentTrack && (
+        <audio
+          id="global-audio-element"
+          ref={audioRef}
+          src={currentTrack.filePath}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onEnded={nextTrack}
+        />
+      )}
+
       {/* Khung chính: Sidebar + Main Content */}
       <div className="flex-1 flex overflow-hidden p-2 gap-2">
         
@@ -127,7 +223,7 @@ export const MainLayout = () => {
             </NavLink>
           </nav>
 
-          {/* Footer Sidebar / Nút đăng xuất/đăng nhập */}
+          {/* Footer Sidebar / Nút đăng nhập/đăng xuất */}
           <div className="mt-auto">
             <NavLink 
               to="/login" 
@@ -172,55 +268,101 @@ export const MainLayout = () => {
         
         {/* Phía bên trái: Thông tin bài hát đang phát */}
         <div className="flex items-center gap-4 w-1/3">
-          <div className="w-14 h-14 bg-zinc-800 rounded-lg flex items-center justify-center shadow-md border border-zinc-800 overflow-hidden shrink-0">
-            <Music className="w-6 h-6 text-zinc-500" />
+          <div className="w-14 h-14 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 overflow-hidden shrink-0 shadow-inner">
+            {currentTrack ? (
+              <div className="w-full h-full bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center">
+                <Music className="w-6 h-6 text-green-400" />
+              </div>
+            ) : (
+              <Music className="w-6 h-6 text-zinc-600" />
+            )}
           </div>
           <div className="min-w-0">
-            <h4 className="text-sm font-bold truncate hover:underline cursor-pointer">Lần Cuối</h4>
-            <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer">Ngọt Band</p>
+            <h4 className="text-sm font-bold truncate hover:underline cursor-pointer">
+              {currentTrack ? currentTrack.title : 'Chưa có bài hát'}
+            </h4>
+            <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer">
+              {currentTrack ? currentTrack.artist : 'Chọn một bài hát để nghe'}
+            </p>
           </div>
-          <button className="text-zinc-400 hover:text-green-400 transition-colors p-1 ml-2">
-            <Heart className="w-5 h-5" />
-          </button>
+          {currentTrack && (
+            <button className="text-zinc-450 hover:text-green-400 transition-colors p-1 ml-2">
+              <Heart className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Ở giữa: Các nút điều khiển nhạc & Thanh tiến trình */}
         <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
           <div className="flex items-center gap-6">
-            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+            <button className="text-zinc-550 hover:text-slate-100 transition-colors">
               <Shuffle className="w-4 h-4" />
             </button>
-            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+            <button 
+              onClick={prevTrack}
+              className="text-zinc-400 hover:text-slate-100 transition-colors"
+            >
               <SkipBack className="w-5 h-5 fill-current" />
             </button>
-            <button className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md">
-              <Play className="w-4 h-4 fill-current ml-0.5" />
+            
+            <button 
+              onClick={togglePlay}
+              disabled={!currentTrack}
+              className="w-10 h-10 bg-slate-100 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md"
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4 fill-current" />
+              ) : (
+                <Play className="w-4 h-4 fill-current ml-0.5" />
+              )}
             </button>
-            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+
+            <button 
+              onClick={nextTrack}
+              className="text-zinc-400 hover:text-slate-100 transition-colors"
+            >
               <SkipForward className="w-5 h-5 fill-current" />
             </button>
-            <button className="text-zinc-400 hover:text-slate-100 transition-colors">
+            <button className="text-zinc-550 hover:text-slate-100 transition-colors">
               <Repeat className="w-4 h-4" />
             </button>
           </div>
           
           {/* Thanh chạy tiến trình phát nhạc */}
-          <div className="w-full flex items-center gap-2 text-[10px] text-zinc-500 font-semibold">
-            <span>0:00</span>
-            <div className="flex-1 h-1 bg-zinc-800 rounded-full relative group cursor-pointer">
-              <div className="absolute top-0 left-0 w-1/3 h-full bg-green-500 rounded-full group-hover:bg-green-400" />
-              <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="w-full flex items-center gap-2.5 text-[10px] text-zinc-500 font-bold">
+            <span>{formatTime(currentTime)}</span>
+            <div 
+              onClick={handleProgressBarClick}
+              className="flex-1 h-1 bg-zinc-800 rounded-full relative group cursor-pointer"
+            >
+              <div 
+                className="absolute top-0 left-0 h-full bg-green-500 rounded-full group-hover:bg-green-400"
+                style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+              />
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
+              />
             </div>
-            <span>3:30</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
 
         {/* Phía bên phải: Âm lượng & Tiện ích */}
         <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-400">
           <Volume2 className="w-5 h-5 hover:text-slate-100 cursor-pointer" />
-          <div className="w-24 h-1 bg-zinc-800 rounded-full cursor-pointer relative group">
-            <div className="absolute top-0 left-0 w-3/4 h-full bg-green-500 rounded-full group-hover:bg-green-400" />
-            <div className="absolute top-1/2 left-3/4 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div 
+            onClick={handleVolumeBarClick}
+            className="w-24 h-1 bg-zinc-800 rounded-full cursor-pointer relative group"
+          >
+            <div 
+              className="absolute top-0 left-0 h-full bg-green-500 rounded-full group-hover:bg-green-400"
+              style={{ width: `${volume * 100}%` }}
+            />
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ left: `${volume * 100}%`, transform: 'translate(-50%, -50%)' }}
+            />
           </div>
         </div>
 

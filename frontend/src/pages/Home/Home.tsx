@@ -1,4 +1,5 @@
-import { Play, Sparkles, Heart } from 'lucide-react';
+import { usePlayer } from '../../contexts/PlayerContext';
+import { Play, Pause, Sparkles, Heart } from 'lucide-react';
 
 const featuredPlaylists = [
   { id: '1', title: 'Giai điệu thư giãn cuối tuần', tracks: '3 bài hát', duration: '1h 10m', color: 'from-emerald-500/20 to-zinc-900' },
@@ -7,20 +8,30 @@ const featuredPlaylists = [
   { id: '4', title: 'Lofi Cafe Sài Gòn', tracks: '1 bài hát', duration: '1h 00m', color: 'from-amber-500/20 to-zinc-900' },
 ];
 
+// Thay thế bằng các tệp nhạc MP3 local hoạt động thực tế
 const mockTracks = [
-  { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:30', plays: '1.2M lượt nghe' },
-  { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:15', plays: '980K lượt nghe' },
-  { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:25', plays: '4.5M lượt nghe' },
-  { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:00', plays: '3.1M lượt nghe' },
+  { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', filePath: '/media/lancuoi.mp3', plays: '1.2M lượt nghe' },
+  { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', filePath: '/media/emdaonay.mp3', plays: '980K lượt nghe' },
+  { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', filePath: '/media/dieforyou.mp3', plays: '4.5M lượt nghe' },
+  { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', filePath: '/media/ignite.mp3', plays: '3.1M lượt nghe' },
 ];
 
 export const Home = () => {
-  // Lấy lời chào theo thời gian thực
+  const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Chào buổi sáng';
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';
+  };
+
+  const handleTrackClick = (track: typeof mockTracks[0]) => {
+    if (currentTrack?.id === track.id) {
+      togglePlay();
+    } else {
+      playTrack(track, mockTracks);
+    }
   };
 
   return (
@@ -36,7 +47,7 @@ export const Home = () => {
             {getGreeting()}, Duy!
           </h2>
           <p className="text-sm text-zinc-400 max-w-md">
-            Hôm nay bạn muốn nghe thể loại nhạc gì? Hãy cùng khám phá kho nhạc số khổng lồ tại TuneVault nhé.
+            Hôm nay bạn muốn nghe thể loại nhạc gì? Hãy click vào bài hát bất kỳ bên dưới để trải nghiệm âm thanh thực tế nhé.
           </p>
         </div>
         <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-radial from-green-500/10 to-transparent blur-3xl" />
@@ -73,35 +84,45 @@ export const Home = () => {
         </div>
 
         <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden">
-          {mockTracks.map((track, index) => (
-            <div 
-              key={track.id}
-              className="flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer"
-            >
-              <div className="flex items-center gap-4 min-w-0">
-                <span className="text-sm text-zinc-500 font-bold w-4 text-right group-hover:text-green-400">
-                  {index + 1}
-                </span>
-                <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center text-zinc-500">
-                  <Play className="w-4 h-4 opacity-0 group-hover:opacity-100 text-green-400 transition-opacity" />
+          {mockTracks.map((track, index) => {
+            const isCurrent = currentTrack?.id === track.id;
+            return (
+              <div 
+                key={track.id}
+                onClick={() => handleTrackClick(track)}
+                className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer ${
+                  isCurrent ? 'bg-zinc-900/30' : ''
+                }`}
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <span className={`text-sm font-bold w-4 text-right ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
+                    {isCurrent && isPlaying ? '•' : index + 1}
+                  </span>
+                  <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center text-zinc-550 border border-zinc-800 group-hover:border-zinc-700">
+                    {isCurrent && isPlaying ? (
+                      <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
+                    ) : (
+                      <Play className="w-4.5 h-4.5 text-green-400 fill-current ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
+                      {track.title}
+                    </h4>
+                    <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h4 className="text-sm font-bold truncate group-hover:text-green-400 transition-colors">
-                    {track.title}
-                  </h4>
-                  <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-8 text-xs text-zinc-400">
-                <span className="hidden sm:inline">{track.plays}</span>
-                <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
-                  <Heart className="w-4 h-4" />
-                </button>
-                <span className="font-semibold">{track.duration}</span>
+                <div className="flex items-center gap-8 text-xs text-zinc-400">
+                  <span className="hidden sm:inline">{track.plays}</span>
+                  <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
+                    <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
+                  </button>
+                  <span className={`font-semibold ${isCurrent ? 'text-green-400' : ''}`}>{track.duration}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
