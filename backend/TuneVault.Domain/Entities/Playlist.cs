@@ -10,5 +10,7 @@
         public string OwnerId { get; set; } = null!;
         public int TracksCount { get; set; }
         public int TotalDuration { get; set; }
+
+        public bool IsDeleted { get; set; }
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TuneVault.Application.Features.Auth.Commands.Login;
 using TuneVault.Application.Features.Auth.Commands.Register;
-using TuneVault.Application.Models;
+using TuneVault.API.Common;
 namespace TuneVault.API.Controllers
 {
     [ApiController]
@@ -27,14 +27,14 @@ namespace TuneVault.API.Controllers
             // 2. Nếu không có lỗi nhập liệu nhưng DB gặp sự cố không lưu được
             if (!result)
             {
-                return BadRequest(ApiResponseDto<object>.Fail(
+                return BadRequest(ApiResponse<object>.SetFailure(
                     new List<string> { "Hệ thống không thể khởi tạo dữ liệu người dùng lúc này." },
                     "Đăng ký thất bại!"
                 ));
             }
 
             // 3. Trả về kết quả thành công đúng chuẩn Hợp đồng JSON (success: true, data: null)
-            return Ok(ApiResponseDto<object>.Ok(null!, "Đăng ký tài khoản thành công!"));
+            return Ok(ApiResponse<object>.SetSuccess(null!, "Đăng ký tài khoản thành công!"));
         }
 
 
@@ -45,7 +45,7 @@ namespace TuneVault.API.Controllers
             var token = await _mediator.Send(command);
 
             // Dùng khuôn ApiResponseDto bọc cục token bóng bẩy trả về Frontend
-            return Ok(ApiResponseDto<string>.Ok(token, "Đăng nhập thành công!"));
+            return Ok(ApiResponse<string>.SetSuccess(token, "Đăng nhập thành công!"));
         }
     }
 }

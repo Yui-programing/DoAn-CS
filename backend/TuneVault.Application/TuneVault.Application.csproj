@@ -13,7 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Features\Share\" />
+    <Folder Include="Features\Query\" />
     <Folder Include="Features\Users\Queries\" />
+    <Folder Include="Models\" />
   </ItemGroup>
 
   <PropertyGroup>

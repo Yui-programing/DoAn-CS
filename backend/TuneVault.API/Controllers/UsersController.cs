@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TuneVault.Application.Features.Users.Profile;
-using TuneVault.Application.Models;
+using TuneVault.API.Common;
 
 namespace TuneVault.API.Controllers
 {   
@@ -32,7 +32,7 @@ namespace TuneVault.API.Controllers
             // Tạo query và gửi cho MediatR xử lý
             var query = new GetProfileQuery { UserId = userIdStr };
             var data = await _mediator.Send(query);
-            return Ok(ApiResponseDto<UserProfileDto>.Ok(data, "Lấy thông tin thành công!"));
+            return Ok(ApiResponse<UserProfileDto>.SetSuccess(data, "Lấy thông tin thành công!"));
         }
 
         // 2. PUT / Cập nhật hồ sơ người dùng
@@ -46,7 +46,7 @@ namespace TuneVault.API.Controllers
             {
 
                 var errors = new List<string> { "Token không hợp lệ hoặc đã hết hạn." };
-                return Unauthorized(ApiResponseDto<bool>.Fail(errors, "Xác thực thất bại!")); //
+                return Unauthorized(ApiResponse<bool>.SetFailure(errors, "Xác thực thất bại!")); //
             }
 
             // 2. Map dữ liệu từ UserProfileDto và Token vào Command để đẩy qua MediatR
@@ -62,7 +62,7 @@ namespace TuneVault.API.Controllers
             var result = await _mediator.Send(command);
 
             // 4. Giữ nguyên hàm Response chuẩn của bạn
-            return Ok(ApiResponseDto<bool>.Ok(result, "Cập nhật thông tin thành công!"));
+            return Ok(ApiResponse<bool>.SetSuccess(result, "Cập nhật thông tin thành công!"));
         }
     }
 }

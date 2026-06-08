@@ -12,7 +12,7 @@
             => new() { Success = true, Data = data, Message = message, Errors = new List<string>() };
 
         // Hàm sinh nhanh phản hồi thất bại (nhận vào danh sách lỗi chi tiết)
-        public static ApiResponse<T> SetFailure(string message, List<string>? errors = null)
+        public static ApiResponse<T> SetFailure(List<string>? errors = null, string message = "Thao tác thất bại!")
             => new() { Success = false, Data = default, Message = message, Errors = errors ?? new List<string>() };
     }
 }

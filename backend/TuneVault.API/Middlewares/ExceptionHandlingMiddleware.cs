@@ -1,10 +1,10 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
-using TuneVault.Application.Models;
+using TuneVault.API.Common;
 
 namespace TuneVault.API.Middlewares
 {
@@ -35,33 +35,39 @@ namespace TuneVault.API.Middlewares
         {
             context.Response.ContentType = "application/json";
 
-            // Mặc định các lỗi lạ khác sẽ là 500 Internal Server Error
+            // 1. Cấu hình mặc định cho các lỗi hệ thống không xác định (500)
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             var message = "Đã có lỗi hệ thống xảy ra.";
-            System.Collections.Generic.List<string>? errors = null;
+            var errors = new List<string> { exception.Message };
 
-            // BẮT RIÊNG LỖI VALIDATION (Lỗi nhập liệu từ FluentValidation)
+            // 2. Phân loại và bẫy các Exception cụ thể từ tầng Application quăng ra
             if (exception is ValidationException validationException)
             {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest; // Trả về mã 400 chuyên cho lỗi dữ liệu
+                // Lỗi nhập liệu từ FluentValidation
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 message = "Dữ liệu đầu vào không hợp lệ!";
-                // Gom toàn bộ tin nhắn lỗi lại thành một mảng
                 errors = validationException.Errors
                     .Select(e => e.ErrorMessage)
                     .ToList();
             }
-
-            // Đóng gói vào hộp ApiResponseDto chuẩn hóa đúng như hợp đồng với Frontend
-            var response = ApiResponseDto<object>.Fail(errors ?? new List<string>(), message);
-
-            // Cấu hình định dạng chữ thường (camelCase) cho JSON để khớp với Frontend
-            var options = new JsonSerializerOptions
+            else if (exception is UnauthorizedAccessException)
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
+                // Lỗi khi check IsOwnerAsync thất bại (Không có quyền)
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                message = "Bạn không có quyền thực hiện thao tác này.";
+            }
+            else if (exception is InvalidOperationException || exception is ArgumentException)
+            {
+                // Lỗi logic nghiệp vụ (Ví dụ: Track đã tồn tại trong playlist)
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                message = exception.Message; // Lấy trực tiếp câu chữ bạn quăng ra từ Handler
+            }
 
-            var jsonResult = JsonSerializer.Serialize(response, options);
-            return context.Response.WriteAsync(jsonResult);
+            // 3. Đóng gói vào ApiResponse chuẩn hóa theo đúng cấu trúc file của bạn
+            var response = ApiResponse<object>.SetFailure(errors, message);
+
+            // 4. Sử dụng WriteAsJsonAsync để tự động serialize sang camelCase và gửi về Client
+            return context.Response.WriteAsJsonAsync(response);
         }
     }
 }
