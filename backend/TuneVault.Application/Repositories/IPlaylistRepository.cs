@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using TuneVault.Domain.Entities;
+using TuneVault.Application.Models;
 
 namespace TuneVault.Application.Repositories
 {
@@ -13,7 +14,7 @@ namespace TuneVault.Application.Repositories
         Task UpdateAsync(Playlist playlist);
 
         Task DeleteAsync(Guid playlistId);
-        Task RestoreAsync(Guid playlistId);
+        
 
         Task AddTrackAsync(Guid playlistId, Guid mediaitemId);
 
@@ -28,5 +29,9 @@ namespace TuneVault.Application.Repositories
         Task<bool> IsPlaylistEmptyAsync(Guid playlistId);
 
         Task<bool> IsPlaylistDeletedAsync(Guid playlistId);
+
+        Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId);
+
+        Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId);
     }
 }

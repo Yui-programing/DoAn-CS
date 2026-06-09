@@ -5,6 +5,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using TuneVault.Application.Models;
 using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 
@@ -23,8 +24,8 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task<Guid> CreateAsync(Playlist playlist)
     {
         const string sql = @"
-            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt, IsDeleted)
-            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE(), 0)";
+            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt)
+            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE())";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, playlist);
@@ -50,7 +51,7 @@ public class PlaylistRepository : IPlaylistRepository
         const string sql = @"
             UPDATE Playlist 
             SET Title = @title, Description = @description, IsPublic = @isPublic
-            WHERE Id = @Id AND IsDeleted = 0";
+            WHERE Id = @Id";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, playlist);
@@ -59,21 +60,15 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task DeleteAsync(Guid playlistId)
     {
         const string sql = @"
-            UPDATE Playlist 
-            SET IsDeleted = 1
-            WHERE Id = @playlistId";
+            DELETE FROM PlaylistTrack 
+            WHERE PlaylistId = @playlistId;
+
+            DELETE FROM Playlist 
+            WHERE Id = @playlistId;";
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, new { PlaylistId = playlistId });
     }
-    public async Task RestoreAsync(Guid playlistId)
-    {
-        const string sql = @"
-            UPDATE Playlist 
-            SET IsDeleted = 0
-            WHERE Id = @playlistId";
-        using IDbConnection db = new SqlConnection(_connectionString);
-        await db.ExecuteAsync(sql, new { PlaylistId = playlistId });
-    }
+    
     /// <summary>
     /// Thêm bài hát vào Playlist và cập nhật số lượng Track
     /// </summary>
@@ -88,12 +83,12 @@ public class PlaylistRepository : IPlaylistRepository
                 -- 2. Tăng số đếm TracksCount của Playlist đó lên 1
                 UPDATE Playlist
                 SET TracksCount = TracksCount + 1
-                WHERE Id = @playlistId AND IsDeleted = 0;
+                WHERE Id = @playlistId;
                 
                 --3. Tăng DurationCount
                 UPDATE Playlist
                 SET TotalDuration = TotalDuration + (SELECT DurationInSeconds FROM MediaItem WHERE Id = @mediaItemId)
-                WHERE Id = @playlistId AND IsDeleted = 0;
+                WHERE Id = @playlistId;
             ";
 
         var parameters = new
@@ -131,11 +126,11 @@ public class PlaylistRepository : IPlaylistRepository
                 -- 2. Giảm số đếm TracksCount của Playlist đó xuống 1
                 UPDATE Playlist
                 SET TracksCount = TracksCount - 1
-                WHERE Id = @playlistId and IsDeleted = 0;
+                WHERE Id = @playlistId;
                 --3. Giảm DurationCount
                 UPDATE Playlist
                 SET TotalDuration = TotalDuration - (SELECT DurationInSeconds FROM MediaItem WHERE Id = @mediaItemId)
-                WHERE Id = @playlistId and IsDeleted = 0;
+                WHERE Id = @playlistId;
             ";
         var parameters = new
         {
@@ -182,12 +177,45 @@ public class PlaylistRepository : IPlaylistRepository
     }
     public async Task<bool> IsPlaylistDeletedAsync(Guid playlistId)
     {
-        const string sql = @"
-            SELECT IsDeleted 
-            FROM Playlist 
-            WHERE Id = @playlistId";
+        // Đếm xem có record nào mang Id này không. 
+        // Trả về 0 nghĩa là không tồn tại -> Đã bị xóa (Hard Delete).
+        const string sql = @"SELECT COUNT(1) FROM Playlist WHERE Id = @playlistId";
+    
         using IDbConnection db = new SqlConnection(_connectionString);
-        return await db.ExecuteScalarAsync<bool>(sql, new { PlaylistId = playlistId });
+        var count = await db.ExecuteScalarAsync<int>(sql, new { PlaylistId = playlistId });
+    
+        return count == 0; 
+    }
+
+    public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId)
+    {
+        const string sql = @"
+        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration
+        FROM Playlist 
+        WHERE OwnerId = @UserId
+        ORDER BY CreatedAt DESC"; // Sắp xếp cái mới nhất lên đầu
+
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.QueryAsync<MyPlaylistDto>(sql, new { UserId = userId });
+    }
+
+    public async Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId)
+    {
+        // Dùng INNER JOIN để lấy thông tin từ bảng MediaItem dựa trên khóa ngoại ở bảng PlaylistTrack
+        const string sql = @"
+        SELECT 
+            m.Id AS MediaItemId, 
+            m.Title, 
+            m.DurationInSeconds, 
+            pt.AddedAt
+        FROM PlaylistTrack pt
+        INNER JOIN MediaItem m ON pt.MediaItemId = m.Id
+        WHERE pt.PlaylistId = @PlaylistId
+        ORDER BY pt.AddedAt DESC"; // Sắp xếp: Bài mới thêm vào sẽ nằm trên cùng
+
+        using IDbConnection db = new SqlConnection(_connectionString);
+
+        return await db.QueryAsync<PlaylistTrackDto>(sql, new { PlaylistId = playlistId });
     }
 
 }
