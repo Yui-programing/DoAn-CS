@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using FluentValidation;
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Repositories;
 
 namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
 {

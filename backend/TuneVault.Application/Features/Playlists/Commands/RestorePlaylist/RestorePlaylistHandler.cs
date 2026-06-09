@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using TuneVault.Application.Features.Playlists.Interfaces;
+using MediatR;
+using TuneVault.Application.Repositories;
 
 
 namespace TuneVault.Application.Features.Playlists.Commands.RestorePlaylist
 {
-    public class RestorePlaylistHandler
+    public class RestorePlaylistHandler: IRequestHandler<RestorePlaylistCommand, Guid>
     {
         private readonly IPlaylistRepository _playlistRepository;
         public RestorePlaylistHandler(IPlaylistRepository playlistRepository)

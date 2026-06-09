@@ -2,8 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist;

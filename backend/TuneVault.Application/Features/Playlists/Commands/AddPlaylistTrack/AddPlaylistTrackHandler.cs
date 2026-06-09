@@ -2,7 +2,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Repositories;
 
 namespace TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack
 {
@@ -27,6 +27,13 @@ namespace TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack
                 throw new UnauthorizedAccessException("Không có quyền để thêm track vào playlist");
             }
 
+            var isPlaylistDeleted = await _playlistRepository.IsPlaylistDeletedAsync(request.PlaylistId);
+
+            if (isPlaylistDeleted)
+            {
+                throw new InvalidOperationException("Playlist đã bị xóa");
+            }
+
             // 2. Kiểm tra xem track đã tồn tại trong playlist chưa
             var isMediaItemAdded = await _playlistRepository.IsMediaItemInPlaylistAsync(request.PlaylistId, request.MediaItemId);
 
@@ -36,6 +43,8 @@ namespace TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack
             {
                 throw new InvalidOperationException("Track đã tồn tại trong playlist");
             }
+
+            
 
             // 3. Thực thi chèn dữ liệu xuống DB
             await _playlistRepository.AddTrackAsync(request.PlaylistId, request.MediaItemId);

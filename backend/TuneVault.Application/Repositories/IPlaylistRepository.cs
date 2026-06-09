@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TuneVault.Domain.Entities;
 
-namespace TuneVault.Application.Features.Playlists.Interfaces
+namespace TuneVault.Application.Repositories
 {
     public interface IPlaylistRepository
     {
@@ -25,6 +25,8 @@ namespace TuneVault.Application.Features.Playlists.Interfaces
 
         Task<bool> IsTitleUniqueAsync(string title, Guid Id, string userId, CancellationToken cancellationToken);
 
-           
+        Task<bool> IsPlaylistEmptyAsync(Guid playlistId);
+
+        Task<bool> IsPlaylistDeletedAsync(Guid playlistId);
     }
 }
