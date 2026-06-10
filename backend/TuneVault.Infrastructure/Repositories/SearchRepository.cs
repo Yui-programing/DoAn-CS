@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
@@ -23,14 +23,14 @@ namespace TuneVault.Infrastructure.Repositories
             string safeKeyword = string.IsNullOrWhiteSpace(keyword) ? "" : $"%{keyword.Trim()}%";
 
             string sql = @"
-            SELECT TOP (@Limit) Id, Title AS Name, 'Song' AS Type, CoverImageUrl AS ImageUrl 
+            SELECT TOP (@Limit) Id, Title AS Name, 'Song' AS Type, CoverUrl AS ImageUrl 
             FROM MediaItem WHERE Title LIKE @Keyword;
 
-            SELECT TOP (@Limit) Id, StageName AS Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
-            FROM Artist WHERE StageName LIKE @Keyword;
+            SELECT TOP (@Limit) Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
+            FROM Artist WHERE Name LIKE @Keyword;
 
-            SELECT TOP (@Limit) Id, Name, 'Playlist' AS Type, ThumbnailUrl AS ImageUrl 
-            FROM Playlist WHERE Name LIKE @Keyword;
+            SELECT TOP (@Limit) Id, Title AS Name, 'Playlist' AS Type, NULL AS ImageUrl
+            FROM Playlist WHERE Title LIKE @Keyword;
         ";
 
             using var multi = await _dbConnection.QueryMultipleAsync(sql, new { Keyword = safeKeyword, Limit = limit });
@@ -50,26 +50,26 @@ namespace TuneVault.Infrastructure.Repositories
 
             string sql = @"
             WITH SearchResults AS (
-                SELECT Id, Title AS Name, 'Song' AS Type, CoverImageUrl AS ImageUrl 
+                SELECT Id, Title AS Name, 'Song' AS Type, CoverUrl AS ImageUrl 
                 FROM MediaItem WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, StageName AS Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
-                FROM Artist WHERE StageName LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
+                FROM Artist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Name, 'Playlist' AS Type, ThumbnailUrl AS ImageUrl 
-                FROM Playlist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS ImageUrl 
+                FROM Playlist WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
             SELECT COUNT(1) FROM SearchResults;
 
             WITH SearchResults AS (
-                SELECT Id, Title AS Name, 'Song' AS Type, CoverImageUrl AS ImageUrl 
+                SELECT Id, Title AS Name, 'Song' AS Type, CoverUrl AS ImageUrl 
                 FROM MediaItem WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, StageName AS Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
-                FROM Artist WHERE StageName LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
+                FROM Artist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Name, 'Playlist' AS Type, ThumbnailUrl AS ImageUrl 
-                FROM Playlist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS ImageUrl 
+                FROM Playlist WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
             SELECT * FROM SearchResults
             ORDER BY Type, Name

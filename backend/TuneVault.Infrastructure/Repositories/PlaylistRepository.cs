@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -151,8 +151,7 @@ public class PlaylistRepository : IPlaylistRepository
             FROM Playlist 
             WHERE Title = @Title 
               AND OwnerId = @UserId 
-              AND Id <> @PlaylistId 
-              AND IsDeleted = 0";
+              AND Id <> @PlaylistId";
 
         using IDbConnection db = new SqlConnection(_connectionString);
 

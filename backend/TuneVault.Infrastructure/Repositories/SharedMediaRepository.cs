@@ -21,7 +21,7 @@ namespace TuneVault.Infrastructure.Repositories
         public async Task<Guid> ShareItemAsync(Guid id, string senderId, string receiverId, Guid mediaItemId, string? message)
         {
             const string sql = @"
-            INSERT INTO SharedMedia (Id, SenderId, ReceiverId, MediaItemId, Message, SharedAt)
+            INSERT INTO MediaShare (Id, SenderId, ReceiverId, MediaItemId, Message, SharedAt)
             VALUES (@Id, @SenderId, @ReceiverId, @MediaItemId, @Message, GETUTCDATE())";
 
             var parameters = new
