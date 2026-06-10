@@ -233,11 +233,11 @@ DECLARE @M1 UNIQUEIDENTIFIER = NEWID(), @M2 UNIQUEIDENTIFIER = NEWID(),
 INSERT INTO MediaItem
     (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId)
 VALUES
-    (@M1, N'Lần Cuối', '/media/lancuoi.mp3', NULL , 210, 0, 'U1', @Artist1Id, @Album1Id),
-    (@M2, N'Em Dạo Này', '/media/emdaonay.mp3', NULL, 195, 0, 'U1', @Artist1Id, @Album1Id),
-    (@M3, N'Die For You', '/media/dieforyou.mp3', NULL, 205, 0, 'U1', @Artist2Id, NULL),
-    (@M4, N'Ignite', '/media/ignite.mp3', NULL, 180, 0, 'U1', @Artist2Id, NULL),
-    (@M5, N'Ticking Away', '/media/tickingaway.mp3', NULL, 215, 0, 'U2', @Artist2Id, NULL),
+    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg' , 210, 0, 'U1', @Artist1Id, @Album1Id),
+    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id),
+    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL),
+    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL),
+    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL),
     (@M6, N'Lofi Cafe Sài Gòn', '/media/lofi1.mp3', NULL, 3600, 0, 'U1', NULL, NULL),
     (@M7, N'Nhạc tập trung Code', '/media/focus.mp3', NULL, 1800, 0, 'U2', NULL, NULL),
     (@M8, N'Guitar Acoustic Không Lời', '/media/guitar.mp3', NULL, 240, 0, 'U2', NULL, NULL),

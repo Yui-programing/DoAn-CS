@@ -12,4 +12,6 @@ public interface IMediaItemRepository
     Task<IEnumerable<MediaItem>> GetByOwnerIdAsync(string ownerId);
     Task UpdateAsync(MediaItem mediaItem);
     Task<bool> DeleteAsync(Guid id);
+    //Phương thức tăng lượng nghe cho chức năng 4 và 10
+    Task IncrementPlayCountAsync(Guid id);
 }
