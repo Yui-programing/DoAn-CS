@@ -16,7 +16,7 @@ namespace TuneVault.Application
             {
                 cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
                 cfg.AddOpenBehavior(typeof(ValidationBehavior<,>)); // Kích hoạt trạm quét
-            })
+            });
             return services;
         }
     }
