@@ -28,7 +28,8 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             services.AddScoped<IMediaItemRepository, MediaItemRepository>();
-            
+            services.AddScoped<IPlayHistoryRepository, PlayHistoryRepository>();
+
             // Đăng ký Service
             services.AddScoped<ICloudinaryService, CloudinaryService>();
 

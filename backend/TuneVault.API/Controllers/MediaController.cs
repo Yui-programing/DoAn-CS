@@ -84,7 +84,7 @@ public class MediaController : ControllerBase
         }
 
         // 5. Gán thời gian phát nhạc mặc định
-        int duration = 180; 
+        int duration = 180;
 
         // 6. Lưu metadata xuống SQL Server thông qua MediatR Command
         var command = new UploadMediaCommand
@@ -112,6 +112,18 @@ public class MediaController : ControllerBase
             return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy media."));
 
         return Ok(ApiResponse<MediaItem>.SetSuccess(media));
+    }
+
+    // API ghi nhận lượt nghe nhạc
+    [HttpGet("{id:guid}/stream")]
+    [AllowAnonymous] // cho phép mọi người đều có thể stream nhạc kh bắt buộc đăng nhập
+    public async Task<IActionResult> StreamMedia(Guid id)
+    {
+        var media = await _mediaItemRepository.GetByIdAsync(id);
+        if (media == null)
+            return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy file media."));
+        // Chuyển hướng HTTP 302 Redirect trực tiếp sang URL Cloudinary để phát
+        return Redirect(media.FilePath);
     }
 }
 
