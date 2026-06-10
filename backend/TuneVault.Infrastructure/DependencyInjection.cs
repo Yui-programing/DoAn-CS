@@ -22,7 +22,7 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             services.AddScoped<ISearchRepository, SearchRepository>();
-            services.AddScoped<ISharedMediaRepository, SharedMediaRepository>();
+            services.AddScoped<ISharedRepository, SharedMediaRepository>();
 
             return services;
         }

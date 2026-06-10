@@ -31,9 +31,9 @@ namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
             var playlist = new Playlist
             {
                 Id = request.Id,
-                Title = request.title,
-                Description = request.description,
-                IsPublic = request.isPublic,
+                Title = request.Title,
+                Description = request.Description,
+                IsPublic = request.IsPublic,
                 OwnerId = request.OwnerId,
             };
             // 3. Pass the entity down to the Infrastructure repository to run the raw SQL update

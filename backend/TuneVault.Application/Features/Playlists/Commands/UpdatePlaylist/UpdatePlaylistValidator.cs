@@ -15,7 +15,7 @@ namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
         {
             _context = context;
 
-            RuleFor(x => x.title)
+            RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Tên playlist không được để trống.")
                 .MaximumLength(100).WithMessage("Tên playlist không được vượt quá 100 ký tự.")
                 // Thêm rule check trùng bằng DB

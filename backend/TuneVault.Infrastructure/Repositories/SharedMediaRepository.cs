@@ -9,34 +9,56 @@ using TuneVault.Application.Repositories;
 namespace TuneVault.Infrastructure.Repositories
 {
 
-    public class SharedMediaRepository : ISharedMediaRepository
+    public class SharedMediaRepository : ISharedRepository
     {
-        private readonly string _connectionString;
+        private readonly IDbConnection _dbConnection;
 
-        public SharedMediaRepository(IConfiguration configuration)
+        // Tầng Infrastructure trực tiếp quản lý Connection để truy vấn SQL bằng Dapper
+        public SharedMediaRepository(IDbConnection dbConnection)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            _dbConnection = dbConnection;
         }
 
-        public async Task<Guid> ShareItemAsync(Guid id, string senderId, string receiverId, Guid mediaItemId, string? message)
+        public async Task<bool> UserExistsAsync(string userId)
         {
-            const string sql = @"
-            INSERT INTO MediaShare (Id, SenderId, ReceiverId, MediaItemId, Message, SharedAt)
-            VALUES (@Id, @SenderId, @ReceiverId, @MediaItemId, @Message, GETUTCDATE())";
+            string sql = "SELECT COUNT(1) FROM User WHERE Id = @UserId";
+            var count = await _dbConnection.ExecuteScalarAsync<int>(sql, new { UserId = userId });
+            return count > 0;
+        }
 
-            var parameters = new
+        public async Task<bool> MediaItemExistsAsync(Guid mediaItemId)
+        {
+            string sql = "SELECT COUNT(1) FROM MediaItems WHERE Id = @MediaItemId";
+            var count = await _dbConnection.ExecuteScalarAsync<int>(sql, new { MediaItemId = mediaItemId });
+            return count > 0;
+        }
+        public async Task<bool> PlaylistExistsAsync(Guid playlistId)
+        {
+            string sql = "SELECT COUNT(1) FROM Playlists WHERE Id = @PlaylistId";
+            var count = await _dbConnection.ExecuteScalarAsync<int>(sql, new { PlaylistId = playlistId });
+            return count > 0;
+        }
+
+        public async Task<Guid> ShareItemAsync(string senderId, string receiverId, Guid? id, Guid? mediaItemId, string? message)
+        {
+            var shareId = Guid.NewGuid();
+            string sql = @"
+                INSERT INTO MediaShare (Id, SenderId, ReceiverId, MediaItemId, PlaylistId, Message, SharedAt)
+                VALUES (@Id, @SenderId, @ReceiverId, @MediaItemId, @PlaylistId, @Message, @SharedAt)";
+
+            await _dbConnection.ExecuteAsync(sql, new
             {
-                Id = id,
+                Id = shareId,
                 SenderId = senderId,
                 ReceiverId = receiverId,
                 MediaItemId = mediaItemId,
-                Message = message
-            };
+                PlaylistId = id,
+                Message = message,
+                SharedAt = DateTime.UtcNow
+            });
 
-            using IDbConnection db = new SqlConnection(_connectionString);
-            await db.ExecuteAsync(sql, parameters);
-
-            return id;
+            return shareId;
         }
+        
     }
 }
