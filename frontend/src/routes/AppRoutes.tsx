@@ -8,7 +8,7 @@ import Profile from '../pages/Profile/Profile';
 import Notifications from '../pages/Notifications/Notifications';
 import ShareInbox from '../pages/ShareInbox/ShareInbox';
 import Login from '../pages/Login/Login';
-
+import { VideoPlayer } from '../pages/VideoPlayer/VideoPlayer';
 export const AppRoutes = () => {
   return (
     <Routes>
@@ -22,9 +22,11 @@ export const AppRoutes = () => {
         <Route path="notifications" element={<Notifications />} />
         <Route path="share" element={<ShareInbox />} />
       </Route>
-      
+
       {/* Route độc lập cho Đăng nhập (Toàn màn hình) */}
       <Route path="/login" element={<Login />} />
+      <Route path="/video/:id" element={<VideoPlayer />} />
+
     </Routes>
   );
 };

@@ -238,11 +238,11 @@ VALUES
     (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL),
     (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL),
     (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL),
-    (@M6, N'Lofi Cafe Sài Gòn', '/media/lofi1.mp3', NULL, 3600, 0, 'U1', NULL, NULL),
+    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', NULL, NULL),
     (@M7, N'Nhạc tập trung Code', '/media/focus.mp3', NULL, 1800, 0, 'U2', NULL, NULL),
     (@M8, N'Guitar Acoustic Không Lời', '/media/guitar.mp3', NULL, 240, 0, 'U2', NULL, NULL),
     -- Video
-    (@M9, N'Valorant Champions Tour Highlights', '/media/vct_highlight.mp4', NULL, 600, 1, 'U1', @Artist2Id, NULL),
+    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', NULL, 325, 1, 'U1', @Artist2Id, NULL),
     (@M10, N'Hướng dẫn ReactJS cơ bản', '/media/react.mp4', NULL, 1200, 1, 'U2', NULL, NULL);
 
 -- Map Tags to MediaItems
@@ -291,3 +291,5 @@ INSERT INTO Notification
     (UserId, Type, PayloadJson)
 VALUES
     ('U2', 0, N'{"SenderId": "U1", "Message": "Lê Phạm Hoàng Phúc đã chia sẻ một playlist cho bạn."}');
+
+
