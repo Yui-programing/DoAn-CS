@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Share\" />
+    <Folder Include="DTOs\" />
     <Folder Include="Features\Users\Queries\" />
   </ItemGroup>
 

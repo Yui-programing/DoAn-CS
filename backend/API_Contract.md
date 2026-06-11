@@ -23,12 +23,14 @@ Tất cả các API trả về dù thành công hay thất bại đều phải b
 |6. Playlist  | GET    | `/api/playlists`                      | Header: `Authorization`               | Lấy danh sách Playlist của mình |
 |             | POST   | `/api/playlists`                      | Body: `Title`, `Description`          | Tạo Playlist mới |
 |             | PUT    | `/api/playlists/{id}`                 | Body: `Title`, `Description`          | Sửa tên/mô tả Playlist |
+|             | GET    | `/api/playlist'                       | Header: `Authorization`               | Lấy danh sách Playlist |
 |             | DELETE | `/api/playlists/{id}`                 | Route param: `id`                     | Xóa Playlist |
 |             | POST   | `/api/playlists/{id}/tracks`          | Body: `MediaItemId`                   | Thêm bài hát vào Playlist |
+|             | GET    | `/api/playlists/{id}/tracks`          | Route params: `id`                    | Xem danh sách nhạc trong Playlist |
 |             | DELETE | `/api/playlists/{id}/tracks/{trackId}`| Route params: `id`, `trackId`         | Bỏ bài hát khỏi Playlist |
 |7. Tìm kiếm  | GET    | `/api/search`                         | Query: `?q=lofi&page=1`               | Tìm kiếm bài hát, ca sĩ |
-|8. Chia sẻ   | POST   | `/api/shares`                         | Body: `ReceiverId`, `MediaItemId`     | Gửi nhạc/video cho bạn bè |
-|             | GET    | `/api/shares`                         | Header: `Authorization`               | Xem hộp thư đến (nhạc được share) |
+|8. Chia sẻ   | POST   | `/api/share`                         | Body: `ReceiverId`, `MediaItemId`     | Gửi nhạc/video cho bạn bè |
+|             | GET    | `/api/share`                         | Header: `Authorization`               | Xem hộp thư đến (nhạc được share) |
 |9. Thông báo | GET    | `/api/notifications`                  | Header: `Authorization`               | Lấy danh sách thông báo |
 |             | PUT    | `/api/notifications/{id}/read`        | Route param: `id`                     | Đánh dấu 1 thông báo đã đọc |
 |10. Tương tác| POST   | `/api/favorites`                      | Body: `MediaItemId`                   | Thả tim bài hát |

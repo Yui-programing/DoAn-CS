@@ -11,8 +11,12 @@ namespace TuneVault.Application.Models
 
         public bool IsPublic { get; set; }
     }   
+    public class AddPlaylistTrackRequest
+    {
+        public Guid MediaItemId { get; set; }
+    }
 
-    
+
     public class UpdatePlaylistRequest
     {
         public string Title { get; set; } = string.Empty;

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using TuneVault.Application.DTOs;
 using TuneVault.Application.Models;
 using TuneVault.Application.Repositories;
 using Dapper;
@@ -18,29 +17,24 @@ namespace TuneVault.Infrastructure.Repositories
             _dbConnection = dbConnection;
         }
 
-        public async Task<QuickSearchResultDto> GetQuickSearchResultsAsync(string keyword, int limit)
+        public async Task<IEnumerable<SuggestionResultDto>> GetQuickSearchResultsAsync(string keyword, int limit)
         {
             string safeKeyword = string.IsNullOrWhiteSpace(keyword) ? "" : $"%{keyword.Trim()}%";
 
             string sql = @"
-            SELECT TOP (@Limit) Id, Title AS Name, 'Song' AS Type, CoverUrl AS ImageUrl 
-            FROM MediaItem WHERE Title LIKE @Keyword;
+            SELECT DISTINCT TOP (@Limit) Title AS Text, 'Song' AS Type
+            FROM MediaItem 
+            WHERE Title LIKE @Keyword
 
-            SELECT TOP (@Limit) Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
-            FROM Artist WHERE Name LIKE @Keyword;
+            UNION
 
-            SELECT TOP (@Limit) Id, Title AS Name, 'Playlist' AS Type, NULL AS ImageUrl
-            FROM Playlist WHERE Title LIKE @Keyword;
-        ";
+            SELECT DISTINCT TOP (@Limit) Name AS Text, 'Artist' AS Type
+            FROM Artist 
+            WHERE Name LIKE @Keyword
+        
+            ORDER BY Text ASC;"; // Có thể sắp xếp theo bảng chữ cái
 
-            using var multi = await _dbConnection.QueryMultipleAsync(sql, new { Keyword = safeKeyword, Limit = limit });
-
-            return new QuickSearchResultDto
-            {
-                TopSongs = await multi.ReadAsync<SearchItemDto>(),
-                TopArtists = await multi.ReadAsync<SearchItemDto>(),
-                TopPlaylists = await multi.ReadAsync<SearchItemDto>()
-            };
+            return await _dbConnection.QueryAsync<SuggestionResultDto>(sql, new { Keyword = safeKeyword, Limit = limit });
         }
 
         public async Task<ResultPage<SearchItemDto>> GetFullSearchResultsAsync(string keyword, int pageNumber, int pageSize, string? filterType)
@@ -55,9 +49,7 @@ namespace TuneVault.Infrastructure.Repositories
                 UNION ALL
                 SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
                 FROM Artist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
-                UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS ImageUrl 
-                FROM Playlist WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
+                
             )
             SELECT COUNT(1) FROM SearchResults;
 
@@ -67,9 +59,7 @@ namespace TuneVault.Infrastructure.Repositories
                 UNION ALL
                 SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
                 FROM Artist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
-                UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS ImageUrl 
-                FROM Playlist WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
+              
             )
             SELECT * FROM SearchResults
             ORDER BY Type, Name

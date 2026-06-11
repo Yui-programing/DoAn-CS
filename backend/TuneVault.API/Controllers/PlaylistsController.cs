@@ -94,7 +94,7 @@ public class PlaylistsController : ControllerBase
     
 
     [HttpPost("{id:guid}/tracks")]
-    public async Task<IActionResult> AddTrackToPlaylist(Guid id, Guid MediaItemId)
+    public async Task<IActionResult> AddTrackToPlaylist(Guid id, [FromBody] AddPlaylistTrackRequest request)
     {
         var userId = GetUserIdFromJwt();
         if (string.IsNullOrEmpty(userId))
@@ -103,7 +103,7 @@ public class PlaylistsController : ControllerBase
         var command = new AddPlaylistTrackCommand
         {
             PlaylistId = id,
-            MediaItemId = MediaItemId,
+            MediaItemId = request.MediaItemId,
             UserId = userId,
             AddedAt = DateTime.UtcNow
         };
