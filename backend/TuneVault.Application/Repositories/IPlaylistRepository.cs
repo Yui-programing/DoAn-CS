@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using TuneVault.Domain.Entities;
+using TuneVault.Application.Models;
 
-namespace TuneVault.Application.Features.Playlists.Interfaces
+namespace TuneVault.Application.Repositories
 {
     public interface IPlaylistRepository
     {
@@ -13,7 +14,7 @@ namespace TuneVault.Application.Features.Playlists.Interfaces
         Task UpdateAsync(Playlist playlist);
 
         Task DeleteAsync(Guid playlistId);
-        Task RestoreAsync(Guid playlistId);
+        
 
         Task AddTrackAsync(Guid playlistId, Guid mediaitemId);
 
@@ -25,6 +26,12 @@ namespace TuneVault.Application.Features.Playlists.Interfaces
 
         Task<bool> IsTitleUniqueAsync(string title, Guid Id, string userId, CancellationToken cancellationToken);
 
-           
+        Task<bool> IsPlaylistEmptyAsync(Guid playlistId);
+
+        Task<bool> IsPlaylistDeletedAsync(Guid playlistId);
+
+        Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId);
+
+        Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId);
     }
 }

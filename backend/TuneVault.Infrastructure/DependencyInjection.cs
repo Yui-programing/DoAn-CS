@@ -4,9 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TuneVault.Application.Repositories;
 using TuneVault.Infrastructure.Repositories;
-using TuneVault.Application.Features.Playlists.Interfaces;
 using TuneVault.Infrastructure.Configurations;
-using TuneVault.Application.Interfaces;
 using TuneVault.Infrastructure.Services;
 
 namespace TuneVault.Infrastructure
@@ -29,7 +27,8 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             services.AddScoped<IMediaItemRepository, MediaItemRepository>();
             services.AddScoped<IPlayHistoryRepository, PlayHistoryRepository>();
-
+            services.AddScoped<ISharedRepository, SharedMediaRepository>();
+            services.AddScoped<ISearchRepository,  SearchRepository>();
             // Đăng ký Service
             services.AddScoped<ICloudinaryService, CloudinaryService>();
 

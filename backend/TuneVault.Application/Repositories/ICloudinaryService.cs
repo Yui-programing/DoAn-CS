@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace TuneVault.Application.Interfaces;
+namespace TuneVault.Application.Repositories;
 
 public interface ICloudinaryService
 {

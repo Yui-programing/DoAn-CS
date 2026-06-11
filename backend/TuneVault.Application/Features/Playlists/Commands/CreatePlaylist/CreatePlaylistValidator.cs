@@ -13,8 +13,7 @@ namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Tên playlist không được để trống.")
                 .MaximumLength(100).WithMessage("Tên playlist không được vượt quá 100 ký tự.");
-            RuleFor(x => x.OwnerId)
-                .NotEmpty().WithMessage("UserId không hợp lệ."); //This shouldnt be needed?
+            
         }
     }
 }

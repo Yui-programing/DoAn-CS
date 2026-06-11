@@ -2,8 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Repositories;
 
 namespace TuneVault.Application.Features.Playlists.Commands.RemovePlaylistTrack
 {
@@ -23,6 +22,18 @@ namespace TuneVault.Application.Features.Playlists.Commands.RemovePlaylistTrack
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa track khỏi playlist này.");
                 
+            }
+
+            var isPlaylistDeleted = await _playlistRepository.IsPlaylistDeletedAsync(request.PlaylistId);
+            if (isPlaylistDeleted)
+            {
+                throw new InvalidOperationException("Playlist này đã bị xóa, không thể xóa track.");
+            }
+
+            var isPlaylistEmpty = await _playlistRepository.IsPlaylistEmptyAsync(request.PlaylistId);
+            if (isPlaylistEmpty)
+            {
+                throw new InvalidOperationException("Playlist này đã rỗng, không thể xóa track.");
             }
 
             var isMediaItemAdded = await _playlistRepository.IsMediaItemInPlaylistAsync(request.PlaylistId, request.MediaItemId);

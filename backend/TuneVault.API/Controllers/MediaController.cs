@@ -9,7 +9,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using TuneVault.API.Common;
 using TuneVault.Application.Features.Medias.Commands.UploadMedia;
-using TuneVault.Application.Interfaces;
 using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 using TuneVault.Domain.Enums;

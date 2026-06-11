@@ -1,11 +1,12 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Models;
+using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Infrastructure.Repositories;
@@ -23,8 +24,8 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task<Guid> CreateAsync(Playlist playlist)
     {
         const string sql = @"
-            INSERT INTO Playlists (Id, Title, Description, IsPublic, OwnerId, CreatedAt, IsDeleted)
-            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE(), 0)";
+            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt)
+            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE())";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, playlist);
@@ -36,8 +37,8 @@ public class PlaylistRepository : IPlaylistRepository
     {
         const string sql = @"
             SELECT COUNT(1) 
-            FROM Playlists 
-            WHERE Id = @PlaylistId AND OwnerId = @UserId AND IsDeleted = 0";
+            FROM Playlist 
+            WHERE Id = @playlistId AND OwnerId = @userId";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         var counts = await db.ExecuteScalarAsync<int>(sql, new { PlaylistId = playlistId, UserId = userId });
@@ -48,9 +49,9 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task UpdateAsync(Playlist playlist)
     {
         const string sql = @"
-            UPDATE Playlists 
-            SET Title = @Title, Description = @Description, IsPublic = @IsPublic
-            WHERE Id = @Id AND IsDeleted = 0";
+            UPDATE Playlist 
+            SET Title = @title, Description = @description, IsPublic = @isPublic
+            WHERE Id = @Id";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, playlist);
@@ -59,21 +60,15 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task DeleteAsync(Guid playlistId)
     {
         const string sql = @"
-            UPDATE Playlists 
-            SET IsDeleted = 1
-            WHERE Id = @PlaylistId";
+            DELETE FROM PlaylistTrack 
+            WHERE PlaylistId = @playlistId;
+
+            DELETE FROM Playlist 
+            WHERE Id = @playlistId;";
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, new { PlaylistId = playlistId });
     }
-    public async Task RestoreAsync(Guid playlistId)
-    {
-        const string sql = @"
-            UPDATE Playlists 
-            SET IsDeleted = 0
-            WHERE Id = @PlaylistId";
-        using IDbConnection db = new SqlConnection(_connectionString);
-        await db.ExecuteAsync(sql, new { PlaylistId = playlistId });
-    }
+    
     /// <summary>
     /// Thêm bài hát vào Playlist và cập nhật số lượng Track
     /// </summary>
@@ -82,13 +77,18 @@ public class PlaylistRepository : IPlaylistRepository
         // Dapper cho phép chạy nhiều câu lệnh SQL cùng lúc ngăn cách bởi dấu chấm phẩy (;)
         var sql = @"
                 -- 1. Thêm bản ghi vào bảng trung gian
-                INSERT INTO PlaylistMediaItems (PlaylistId, MediaItemId, AddedAt)
-                VALUES (@PlaylistId, @MediaItemId, @AddedAt);
+                INSERT INTO PlaylistTrack (PlaylistId, MediaItemId, AddedAt)
+                VALUES (@playlistId, @mediaItemId, @AddedAt);
 
                 -- 2. Tăng số đếm TracksCount của Playlist đó lên 1
-                UPDATE Playlists
+                UPDATE Playlist
                 SET TracksCount = TracksCount + 1
-                WHERE Id = @PlaylistId;
+                WHERE Id = @playlistId;
+                
+                --3. Tăng DurationCount
+                UPDATE Playlist
+                SET TotalDuration = TotalDuration + (SELECT DurationInSeconds FROM MediaItem WHERE Id = @mediaItemId)
+                WHERE Id = @playlistId;
             ";
 
         var parameters = new
@@ -109,8 +109,8 @@ public class PlaylistRepository : IPlaylistRepository
         var sql = @"
                 SELECT CASE WHEN EXISTS (
                     SELECT 1 
-                    FROM PlaylistMediaItems 
-                    WHERE PlaylistId = @PlaylistId AND MediaItemId = @MediaItemId
+                    FROM PlaylistTrack 
+                    WHERE PlaylistId = @playlistId AND MediaItemId = @mediaItemId
                 ) THEN 1 ELSE 0 END";
 
         var parameters = new { PlaylistId = playlistId, MediaItemId = mediaItemId };
@@ -121,12 +121,16 @@ public class PlaylistRepository : IPlaylistRepository
     {
         var sql = @"
                 -- 1. Xóa bản ghi khỏi bảng trung gian
-                DELETE FROM PlaylistMediaItems 
-                WHERE PlaylistId = @PlaylistId AND MediaItemId = @MediaItemId;
+                DELETE FROM PlaylistTrack 
+                WHERE PlaylistId = @playlistId AND MediaItemId = @mediaItemId;
                 -- 2. Giảm số đếm TracksCount của Playlist đó xuống 1
-                UPDATE Playlists
+                UPDATE Playlist
                 SET TracksCount = TracksCount - 1
-                WHERE Id = @PlaylistId;
+                WHERE Id = @playlistId;
+                --3. Giảm DurationCount
+                UPDATE Playlist
+                SET TotalDuration = TotalDuration - (SELECT DurationInSeconds FROM MediaItem WHERE Id = @mediaItemId)
+                WHERE Id = @playlistId;
             ";
         var parameters = new
         {
@@ -144,11 +148,10 @@ public class PlaylistRepository : IPlaylistRepository
         // Lưu ý: Tên cột trong DB của bạn là OwnerId (dựa vào hàm Create và IsOwner ở trên)
         const string sql = @"
             SELECT COUNT(1) 
-            FROM Playlists 
+            FROM Playlist 
             WHERE Title = @Title 
               AND OwnerId = @UserId 
-              AND Id <> @PlaylistId 
-              AND IsDeleted = 0";
+              AND Id <> @PlaylistId";
 
         using IDbConnection db = new SqlConnection(_connectionString);
 
@@ -159,6 +162,59 @@ public class PlaylistRepository : IPlaylistRepository
 
         // Nếu count == 0 tức là KHÔNG có playlist nào bị trùng -> Trả về true (Hợp lệ)
         return count == 0;
+    }
+    public async Task<bool> IsPlaylistEmptyAsync(Guid playlistId)
+    {
+        const string sql = @"
+            SELECT CASE WHEN EXISTS (
+                SELECT 1 
+                FROM PlaylistTrack 
+                WHERE PlaylistId = @playlistId
+            ) THEN 0 ELSE 1 END";
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.ExecuteScalarAsync<bool>(sql, new { PlaylistId = playlistId });
+    }
+    public async Task<bool> IsPlaylistDeletedAsync(Guid playlistId)
+    {
+        // Đếm xem có record nào mang Id này không. 
+        // Trả về 0 nghĩa là không tồn tại -> Đã bị xóa (Hard Delete).
+        const string sql = @"SELECT COUNT(1) FROM Playlist WHERE Id = @playlistId";
+    
+        using IDbConnection db = new SqlConnection(_connectionString);
+        var count = await db.ExecuteScalarAsync<int>(sql, new { PlaylistId = playlistId });
+    
+        return count == 0; 
+    }
+
+    public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId)
+    {
+        const string sql = @"
+        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration
+        FROM Playlist 
+        WHERE OwnerId = @UserId
+        ORDER BY CreatedAt DESC"; // Sắp xếp cái mới nhất lên đầu
+
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.QueryAsync<MyPlaylistDto>(sql, new { UserId = userId });
+    }
+
+    public async Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId)
+    {
+        // Dùng INNER JOIN để lấy thông tin từ bảng MediaItem dựa trên khóa ngoại ở bảng PlaylistTrack
+        const string sql = @"
+        SELECT 
+            m.Id AS MediaItemId, 
+            m.Title, 
+            m.DurationInSeconds, 
+            pt.AddedAt
+        FROM PlaylistTrack pt
+        INNER JOIN MediaItem m ON pt.MediaItemId = m.Id
+        WHERE pt.PlaylistId = @PlaylistId
+        ORDER BY pt.AddedAt DESC"; // Sắp xếp: Bài mới thêm vào sẽ nằm trên cùng
+
+        using IDbConnection db = new SqlConnection(_connectionString);
+
+        return await db.QueryAsync<PlaylistTrackDto>(sql, new { PlaylistId = playlistId });
     }
 
 }

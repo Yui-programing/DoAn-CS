@@ -15,6 +15,7 @@ IF OBJECT_ID('Album', 'U') IS NOT NULL DROP TABLE Album;
 IF OBJECT_ID('Artist', 'U') IS NOT NULL DROP TABLE Artist;
 IF OBJECT_ID('UserProfile', 'U') IS NOT NULL DROP TABLE UserProfile;
 IF OBJECT_ID('User', 'U') IS NOT NULL DROP TABLE [User];
+GO
 
 ---------------------------------------------------------
 -- 2. CREATE TABLES
@@ -176,6 +177,7 @@ CREATE TABLE Notification
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserId) REFERENCES UserProfile(Id) ON DELETE CASCADE
 );
+GO
 
 ---------------------------------------------------------
 -- 3. INSERT SEED DATA (Dữ liệu mẫu)
