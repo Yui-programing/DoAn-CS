@@ -1,0 +1,39 @@
+/* Container bọc toàn bộ màn hình */
+.video-player-container {
+    font-family: 'Inter', sans-serif;
+    background-color: #000;
+}
+
+/* Tùy chỉnh thanh trượt tua Video (Progress Bar) */
+.video-player-container input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #27272a;
+    /* kẽ màu xám zinc-800 */
+    height: 6px;
+    border-radius: 9999px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.video-player-container input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Nút tròn kéo của slider */
+.video-player-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #10b981;
+    /* Màu xanh lá green-500 */
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.video-player-container input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+}

@@ -1,4 +1,4 @@
-﻿using TuneVault.Domain.Enums;
+using TuneVault.Domain.Enums;
 
 namespace TuneVault.Domain.Entities
 {
@@ -8,6 +8,7 @@ namespace TuneVault.Domain.Entities
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string FilePath { get; set; } = null!;
+        public string? CoverUrl { get; set; }
         public int DurationInSeconds { get; set; }
         public MediaType MediaType { get; set; }
         public string OwnerId { get; set; } = null!;
