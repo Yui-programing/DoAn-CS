@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { Play, Pause, Sparkles, Heart, Music } from 'lucide-react';
 
@@ -14,9 +15,11 @@ const mockTracks = [
   { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', filePath: '/media/emdaonay.mp3', coverUrl: '/media/emdaonay.jpg', plays: '980K lượt nghe' },
   { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', filePath: '/media/dieforyou.mp3', coverUrl: '/media/dieforyou.jpg', plays: '4.5M lượt nghe' },
   { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', filePath: '/media/ignite.mp3', coverUrl: '/media/ignite.jpg', plays: '3.1M lượt nghe' },
+  { id: 'B19B93F2-E96F-44DF-863F-1710E55F6164', title: 'MV Đừng làm trái tim anh đau', artist: 'Sơn Tùng M-TP', duration: '10:00', filePath: '/videoplayback.mp4', coverUrl: '', plays: '100M lượt xem' }
 ];
 
 export const Home = () => {
+  const navigate = useNavigate();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
 
   const getGreeting = () => {
@@ -27,12 +30,22 @@ export const Home = () => {
   };
 
   const handleTrackClick = (track: typeof mockTracks[0]) => {
-    if (currentTrack?.id === track.id) {
-      togglePlay();
+    // Kiểm tra xem bài hát này có phải là video hay không (dựa vào đuôi file .mp4)
+    const isVideo = track.filePath.endsWith('.mp4');
+
+    if (isVideo) {
+      // Nếu là video, chuyển hướng sang trang Video Player
+      navigate(`/video/${track.id}`);
     } else {
-      playTrack(track, mockTracks);
+      // Nếu là nhạc bình thường, phát qua Player Bar ở dưới
+      if (currentTrack?.id === track.id) {
+        togglePlay();
+      } else {
+        playTrack(track, mockTracks);
+      }
     }
   };
+
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -58,7 +71,7 @@ export const Home = () => {
         <h3 className="text-xl font-bold tracking-tight">Thư viện gợi ý</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {featuredPlaylists.map((playlist) => (
-            <div 
+            <div
               key={playlist.id}
               className={`p-5 rounded-xl bg-gradient-to-b ${playlist.color} border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-300 cursor-pointer group relative`}
             >
@@ -66,7 +79,7 @@ export const Home = () => {
                 {playlist.title}
               </h4>
               <p className="text-xs text-zinc-400 mt-1">{playlist.tracks} • {playlist.duration}</p>
-              
+
               {/* Nút phát nhanh khi hover */}
               <button className="absolute right-4 bottom-4 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95">
                 <Play className="w-5 h-5 fill-current ml-0.5" />
@@ -87,12 +100,11 @@ export const Home = () => {
           {mockTracks.map((track, index) => {
             const isCurrent = currentTrack?.id === track.id;
             return (
-              <div 
+              <div
                 key={track.id}
                 onClick={() => handleTrackClick(track)}
-                className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer ${
-                  isCurrent ? 'bg-zinc-900/30' : ''
-                }`}
+                className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer ${isCurrent ? 'bg-zinc-900/30' : ''
+                  }`}
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <span className={`text-sm font-bold w-4 text-right ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
@@ -104,9 +116,8 @@ export const Home = () => {
                     ) : (
                       <Music className="w-5 h-5 text-zinc-500" />
                     )}
-                    <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${
-                      isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    }`}>
+                    <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}>
                       {isCurrent && isPlaying ? (
                         <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
                       ) : (

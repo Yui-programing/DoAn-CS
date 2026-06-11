@@ -122,8 +122,47 @@ public class MediaController : ControllerBase
         var media = await _mediaItemRepository.GetByIdAsync(id);
         if (media == null)
             return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy file media."));
-        // Chuyển hướng HTTP 302 Redirect trực tiếp sang URL Cloudinary để phát
-        return Redirect(media.FilePath);
+
+        // Nếu là URL tuyệt đối (trên mây như Cloudinary) thì redirect
+        if (media.FilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+            media.FilePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return Redirect(media.FilePath);
+        }
+
+        // Nếu là đường dẫn cục bộ (ví dụ: /media/react.mp4)
+        var relativePath = media.FilePath.TrimStart('/');
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
+        
+        // Dự phòng: Tìm ở thư mục frontend public/media nếu đang ở môi trường chạy dev
+        if (!System.IO.File.Exists(filePath))
+        {
+            var parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
+            if (parentDir != null)
+            {
+                filePath = Path.Combine(parentDir, "frontend", "public", relativePath);
+            }
+        }
+
+        if (!System.IO.File.Exists(filePath))
+        {
+            return NotFound(ApiResponse<object>.SetFailure(message: $"Không tìm thấy file vật lý tại {filePath}."));
+        }
+
+        // Xác định Content-Type
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        var contentType = extension switch
+        {
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            _ => "application/octet-stream"
+        };
+
+        // Bật enableRangeProcessing = true để hỗ trợ Range header phát video/audio
+        var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return File(fileStream, contentType, enableRangeProcessing: true);
     }
 }
 

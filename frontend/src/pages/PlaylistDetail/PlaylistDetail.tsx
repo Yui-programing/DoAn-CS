@@ -1,4 +1,4 @@
-import { useParams, NavLink } from 'react-router-dom';
+import { useParams, NavLink, useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { Play, Pause, Clock, Heart, Music, ArrowLeft } from 'lucide-react';
 
@@ -38,22 +38,33 @@ const mockPlaylistsData: Record<string, {
 
 export const PlaylistDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
-  
+
   const playlist = (id && mockPlaylistsData[id]) || mockPlaylistsData['1'];
 
   const handleTrackClick = (track: typeof playlist.tracks[0]) => {
-    if (currentTrack?.id === track.id) {
-      togglePlay();
+    // Kiểm tra xem bài hát này có phải là video hay không (đuôi .mp4)
+    const isVideo = track.filePath.endsWith('.mp4');
+
+    if (isVideo) {
+      // Nếu là video, chuyển hướng sang trang Video Player
+      navigate(`/video/${track.id}`);
     } else {
-      playTrack(track, playlist.tracks);
+      // Nếu là nhạc bình thường, phát qua Player Bar ở dưới
+      if (currentTrack?.id === track.id) {
+        togglePlay();
+      } else {
+        playTrack(track, playlist.tracks);
+      }
     }
   };
+
 
   // Nút Play lớn ở đầu playlist
   const handleBigPlayClick = () => {
     if (playlist.tracks.length === 0) return;
-    
+
     // Nếu đang phát một bài trong chính playlist này thì chỉ cần toggle
     const isPlayingCurrentPlaylist = playlist.tracks.some(t => t.id === currentTrack?.id);
     if (isPlayingCurrentPlaylist) {
@@ -69,8 +80,8 @@ export const PlaylistDetail = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Nút quay lại */}
-      <NavLink 
-        to="/library" 
+      <NavLink
+        to="/library"
         className="inline-flex items-center gap-2 text-zinc-400 hover:text-green-400 text-sm font-semibold transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -83,7 +94,7 @@ export const PlaylistDetail = () => {
         <div className="w-48 h-48 bg-gradient-to-br from-green-500/20 to-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800 shadow-2xl shrink-0">
           <Music className="w-16 h-16 text-zinc-650" />
         </div>
-        
+
         {/* Thông tin */}
         <div className="text-center md:text-left space-y-2">
           <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
@@ -107,7 +118,7 @@ export const PlaylistDetail = () => {
 
       {/* Action buttons */}
       <div className="flex items-center gap-4 py-2">
-        <button 
+        <button
           onClick={handleBigPlayClick}
           className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg shadow-green-500/10 hover:scale-105 active:scale-95 transition-transform"
         >
@@ -137,12 +148,11 @@ export const PlaylistDetail = () => {
             {playlist.tracks.map((track, index) => {
               const isCurrent = currentTrack?.id === track.id;
               return (
-                <tr 
+                <tr
                   key={track.id}
                   onClick={() => handleTrackClick(track)}
-                  className={`hover:bg-zinc-900/40 border-b border-zinc-900/20 last:border-0 group cursor-pointer transition-colors ${
-                    isCurrent ? 'bg-zinc-900/20' : ''
-                  }`}
+                  className={`hover:bg-zinc-900/40 border-b border-zinc-900/20 last:border-0 group cursor-pointer transition-colors ${isCurrent ? 'bg-zinc-900/20' : ''
+                    }`}
                 >
                   <td className={`py-4 px-4 text-center text-sm font-semibold ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
                     {isCurrent && isPlaying ? '•' : index + 1}
@@ -156,9 +166,8 @@ export const PlaylistDetail = () => {
                       )}
                     </div>
                     <div>
-                      <h4 className={`text-sm font-bold truncate max-w-xs transition-colors ${
-                        isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'
-                      }`}>
+                      <h4 className={`text-sm font-bold truncate max-w-xs transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'
+                        }`}>
                         {track.title}
                       </h4>
                       <p className="text-xs text-zinc-400 truncate max-w-xs">{track.artist}</p>

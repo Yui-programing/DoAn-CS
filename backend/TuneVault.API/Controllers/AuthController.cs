@@ -1,5 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using TuneVault.Application.Features.Auth.Commands.Login;
 using TuneVault.Application.Features.Auth.Commands.Register;
@@ -41,11 +42,39 @@ namespace TuneVault.API.Controllers
         [HttpPost("login")] // Endpoint chuẩn: POST /api/auth/login
         public async Task<IActionResult> Login([FromBody] LoginCommand command)
         {
-            // Bắn lệnh vào MediatR để xử lý logic băm mật khẩu và tạo token ngầm
+            // Lấy token được sinh ra từ MediaR Handler
             var token = await _mediator.Send(command);
-
+            // Thiết lập cấu hình bảo mật cho cookie
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true, //Ngăn chặn Js truy cập
+                Secure = true, //Chỉ gửi qua HTTPS khi chạy Production
+                SameSite = SameSiteMode.Strict, // Chống CSRF
+                Expires = DateTimeOffset.UtcNow.AddDays(7)//Thời gian hết hạn của cookie là 7 ngày khớp với token
+            };
+            
+            Response.Cookies.Append("token",token,cookieOptions);
             // Dùng khuôn ApiResponseDto bọc cục token bóng bẩy trả về Frontend
             return Ok(ApiResponse<string>.SetSuccess(token, "Đăng nhập thành công!"));
         }
+
+        [Authorize] // Chỉ ai đang đăng nhập mới được gọi
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Thiết lập cookieOptions khớp với lúc tạo
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1) // Hết hạn từ ngày hôm qua
+            };
+
+            // Xóa cookie "token" bằng cách gửi cookie hết hạn
+            Response.Cookies.Delete("token", cookieOptions);
+
+            return Ok(ApiResponse<object>.SetSuccess(null!, "Đăng xuất thành công!"));
+        }    
     }
 }

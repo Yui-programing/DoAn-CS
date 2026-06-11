@@ -184,8 +184,8 @@ CREATE TABLE Notification
 INSERT INTO [User]
     (Id, Email, PasswordHash, [Role])
 VALUES
-    ('U1', 'hoangphuc@gmail.com', '$2a$11$abcdefghijklmnopqrstuv...', 'User'),
-    ('U2', 'khachhang2@gmail.com', '$2a$11$abcdefghijklmnopqrstuv...', 'User');
+    ('U1', 'hoangphuc@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
+    ('U2', 'khachhang2@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User');
 
 -- Insert UserProfile
 INSERT INTO UserProfile
@@ -223,11 +223,17 @@ VALUES
     ('T4', N'Chill');
 
 -- Khai báo 10 Media Items ID
-DECLARE @M1 UNIQUEIDENTIFIER = NEWID(), @M2 UNIQUEIDENTIFIER = NEWID(),
-        @M3 UNIQUEIDENTIFIER = NEWID(), @M4 UNIQUEIDENTIFIER = NEWID(),
-        @M5 UNIQUEIDENTIFIER = NEWID(), @M6 UNIQUEIDENTIFIER = NEWID(),
-        @M7 UNIQUEIDENTIFIER = NEWID(), @M8 UNIQUEIDENTIFIER = NEWID(),
-        @M9 UNIQUEIDENTIFIER = NEWID(), @M10 UNIQUEIDENTIFIER = NEWID();
+DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05', 
+        @M2 UNIQUEIDENTIFIER = 'DC1C6608-72FE-4CAD-8DEC-6E0911050456',
+        @M3 UNIQUEIDENTIFIER = '4A012ECD-70E7-4DDB-90F7-D51A30A88491', 
+        @M4 UNIQUEIDENTIFIER = '54D1B50E-1988-41BA-9B2E-B939595D512E',
+        @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C', 
+        @M6 UNIQUEIDENTIFIER = '455972D7-D1DC-4483-9794-6D809679C8E1',
+        @M7 UNIQUEIDENTIFIER = '8B813399-0E61-4729-B16F-59BD14B19E6D', 
+        @M8 UNIQUEIDENTIFIER = 'FF39B3C0-3900-4C48-8B70-FC126FFBF73F',
+        @M9 UNIQUEIDENTIFIER = 'B19B93F2-E96F-44DF-863F-1710E55F6164', 
+        @M10 UNIQUEIDENTIFIER = '60BBC102-FD22-4AF9-8DDA-C3BBFED408B9';
+
 
 -- Insert MediaItem (8 Audio, 2 Video)
 INSERT INTO MediaItem
@@ -238,11 +244,11 @@ VALUES
     (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL),
     (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL),
     (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL),
-    (@M6, N'Lofi Cafe Sài Gòn', '/media/lofi1.mp3', NULL, 3600, 0, 'U1', NULL, NULL),
+    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', NULL, NULL),
     (@M7, N'Nhạc tập trung Code', '/media/focus.mp3', NULL, 1800, 0, 'U2', NULL, NULL),
     (@M8, N'Guitar Acoustic Không Lời', '/media/guitar.mp3', NULL, 240, 0, 'U2', NULL, NULL),
     -- Video
-    (@M9, N'Valorant Champions Tour Highlights', '/media/vct_highlight.mp4', NULL, 600, 1, 'U1', @Artist2Id, NULL),
+    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', NULL, 325, 1, 'U1', @Artist2Id, NULL),
     (@M10, N'Hướng dẫn ReactJS cơ bản', '/media/react.mp4', NULL, 1200, 1, 'U2', NULL, NULL);
 
 -- Map Tags to MediaItems
