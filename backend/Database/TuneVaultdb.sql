@@ -199,13 +199,15 @@ VALUES
 -- Khai báo biến để tái sử dụng Id
 DECLARE @Artist1Id UNIQUEIDENTIFIER = NEWID();
 DECLARE @Artist2Id UNIQUEIDENTIFIER = NEWID();
+DECLARE @Artist3Id UNIQUEIDENTIFIER = NEWID();
 
 -- Insert Artist
 INSERT INTO Artist
     (Id, Name, Bio)
 VALUES
     (@Artist1Id, N'Ngọt Band', N'Ban nhạc Indie Việt Nam'),
-    (@Artist2Id, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi');
+    (@Artist2Id, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi'),
+    (@Artist3Id, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam');
 
 DECLARE @Album1Id UNIQUEIDENTIFIER = NEWID();
 
@@ -224,15 +226,16 @@ VALUES
     ('T3', N'Gaming'),
     ('T4', N'Chill');
 
--- Khai báo 5 Media Items ID thật (lưu online Cloudinary)
+-- Khai báo các Media Items ID thật (lưu online Cloudinary & wwwroot local)
 DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05', 
         @M2 UNIQUEIDENTIFIER = 'DC1C6608-72FE-4CAD-8DEC-6E0911050456',
         @M3 UNIQUEIDENTIFIER = '4A012ECD-70E7-4DDB-90F7-D51A30A88491', 
         @M4 UNIQUEIDENTIFIER = '54D1B50E-1988-41BA-9B2E-B939595D512E',
-        @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C';
+        @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C',
+        @M6 UNIQUEIDENTIFIER = '455972D7-D1DC-4483-9794-6D809679C8E1',
+        @M9 UNIQUEIDENTIFIER = 'B19B93F2-E96F-44DF-863F-1710E55F6164';
 
-
--- Insert MediaItem (Chỉ lưu 5 bài hát online thật)
+-- Insert MediaItem (Chỉ lưu các bài hát/MV thực tế có file thật)
 INSERT INTO MediaItem
     (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId)
 VALUES
@@ -240,7 +243,9 @@ VALUES
     (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id),
     (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL),
     (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL),
-    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL);
+    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL),
+    (@M6, N'Come My Way', '/CMW.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 258, 0, 'U1', NULL, NULL),
+    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', @Artist3Id, NULL);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag
@@ -250,7 +255,9 @@ VALUES
     (@M2, 'T1'),
     (@M3, 'T3'),
     (@M4, 'T3'),
-    (@M5, 'T3');
+    (@M5, 'T3'),
+    (@M6, 'T4'),
+    (@M9, 'T3');
 
 -- Khai báo Playlist
 DECLARE @P1 UNIQUEIDENTIFIER = NEWID();
@@ -260,7 +267,7 @@ DECLARE @P2 UNIQUEIDENTIFIER = NEWID();
 INSERT INTO Playlist
     (Id, Title, OwnerId, TracksCount, TotalDuration)
 VALUES
-    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 2, 405),
+    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 3, 663),
     (@P2, N'Playlist chiến Valorant', 'U1', 3, 600);
 
 -- Insert PlaylistTrack
@@ -269,6 +276,7 @@ INSERT INTO PlaylistTrack
 VALUES
     (@P1, @M1),
     (@P1, @M2),
+    (@P1, @M6),
     (@P2, @M3),
     (@P2, @M4),
     (@P2, @M5);
@@ -284,3 +292,4 @@ INSERT INTO Notification
     (UserId, Type, PayloadJson)
 VALUES
     ('U2', 0, N'{"SenderId": "U1", "Message": "Lê Phạm Hoàng Phúc đã chia sẻ một playlist cho bạn."}');
+GO

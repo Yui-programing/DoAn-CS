@@ -18,6 +18,10 @@ export const Home = () => {
   const [suggestedTracks, setSuggestedTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Phân tách nhạc gợi ý dựa vào loại media (0 = Audio, 1 = Video)
+  const audioTracks = suggestedTracks.filter((track: any) => track.mediaType === 0);
+  const videoTracks = suggestedTracks.filter((track: any) => track.mediaType === 1);
+
   // BƯỚC 2: Tự động gọi API khi vừa mở trang Home
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -33,7 +37,8 @@ export const Home = () => {
             artist: item.artistName || 'Nghệ sĩ TuneVault',
             coverUrl: item.coverUrl,
             filePath: mediaService.getStreamUrl(item.id),
-            duration: 'Phát nhạc'
+            duration: 'Phát nhạc',
+            mediaType: item.mediaType // Nhận thêm loại media từ Backend (0: Audio, 1: Video)
           }));
           setSuggestedTracks(mapped);
         }
@@ -72,7 +77,8 @@ export const Home = () => {
   };
 
   const handleTrackClick = (track: any, queueTracks: any[]) => {
-    const isVideo = track.filePath?.endsWith('.mp4');
+    // Kiểm tra nếu là MV (MediaType = 1) hoặc đường dẫn kết thúc bằng .mp4
+    const isVideo = track.mediaType === 1 || track.filePath?.endsWith('.mp4');
 
     if (isVideo) {
       navigate(`/video/${track.id}`);
@@ -149,16 +155,16 @@ export const Home = () => {
           <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay (Dữ liệu thật)</h3>
         </div>
 
-        {suggestedTracks.length === 0 ? (
+        {audioTracks.length === 0 ? (
           <p className="text-zinc-500 text-sm">Chưa có bài hát nào trên hệ thống.</p>
         ) : (
           <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden">
-            {suggestedTracks.map((track, index) => {
+            {audioTracks.map((track, index) => {
               const isCurrent = currentTrack?.id === track.id;
               return (
                 <div
                   key={track.id || index}
-                  onClick={() => handleTrackClick(track, suggestedTracks)}
+                  onClick={() => handleTrackClick(track, audioTracks)}
                   className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer ${isCurrent ? 'bg-zinc-900/30' : ''}`}
                 >
                   <div className="flex items-center gap-4 min-w-0">
@@ -203,6 +209,52 @@ export const Home = () => {
           </div>
         )}
       </section>
+
+      {/* SECTION MV: MV ca nhạc gợi ý */}
+      {videoTracks.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-green-400" />
+              MV ca nhạc gợi ý (Dữ liệu thật)
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {videoTracks.map((track) => {
+              return (
+                <div
+                  key={track.id}
+                  onClick={() => navigate(`/video/${track.id}`)}
+                  className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
+                >
+                  {/* Khung ảnh MV tỉ lệ 16:9 */}
+                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors">
+                    {track.coverUrl ? (
+                      <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                        <Music className="w-8 h-8 text-zinc-600" />
+                      </div>
+                    )}
+                    {/* Nút phát khi hover */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-black transform scale-90 group-hover:scale-100 transition-transform duration-300 hover:scale-110 shadow-lg">
+                        <Play className="w-6 h-6 fill-current ml-0.5" />
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-200 line-clamp-1 group-hover:text-green-400 transition-colors">
+                      {track.title}
+                    </h4>
+                    <p className="text-xs text-zinc-400 mt-1">{track.artist}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* SECTION 3: Hiển thị Lịch sử bài hát THẬT */}
       {isAuthenticated && (
