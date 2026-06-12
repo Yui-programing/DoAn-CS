@@ -1,16 +1,3 @@
-// Định nghĩa các TypeScript interface/type dùng chung
-// Ví dụ:
-// export interface User {
-//   id: string;
-//   name: string;
-//   email: string;
-// }
-
-// export interface Product {
-//   id: string;
-//   title: string;
-//   price: number;
-// }
 // === Cấu trúc Response dùng chung cho mọi API ===
 export interface ApiResponse<T> {
     success: boolean;
@@ -19,11 +6,10 @@ export interface ApiResponse<T> {
     errors: string[] | null;
 }
 
-// === Các Models (Entities) ===
+// === Các Models (Entities & DTOs) ===
+
 export interface UserProfile {
-    id: string;
-    name: string;
-    email: string;
+    fullName: string;
     bio?: string;
     avatarUrl?: string;
 }
@@ -38,29 +24,47 @@ export interface MediaItem {
     id: string;
     title: string;
     description?: string;
-    mediaUrl: string;
-    thumbnailUrl?: string;
+    filePath: string;
+    coverUrl?: string;
+    durationInSeconds: number;
     mediaType: MediaType;
-    duration?: number;
-    uploaderId: string;
-    createdAt: string;
+    ownerId: string;
+    albumId?: string;
+    artistId?: string;
+    isPrivate: boolean;
+    viewCount: number;
 }
 
 export interface Playlist {
     id: string;
     title: string;
     description?: string;
-    ownerId: string;
+    isPublic: boolean;
+    tracksCount: number;
     createdAt: string;
-    tracks?: PlaylistTrack[];
 }
 
 export interface PlaylistTrack {
-    id: string;
-    playlistId: string;
     mediaItemId: string;
-    mediaItem?: MediaItem;
+    title: string;
+    durationInSeconds: number;
     addedAt: string;
+}
+
+export interface SharedMediaItem {
+    mediaItemId: string;
+    senderId: string;
+    receiverId: string;
+    sharedAt: string;
+    message?: string;
+}
+
+export interface SharedPlaylist {
+    playlistId: string;
+    senderId: string;
+    receiverId: string;
+    sharedAt: string;
+    message?: string;
 }
 
 export interface Notification {
@@ -73,17 +77,23 @@ export interface Notification {
     referenceId?: string;
 }
 
-export interface SharedMedia {
+export interface Favorite {
     id: string;
-    senderId: string;
-    receiverId: string;
-    mediaItemId?: string;
-    playlistId?: string;
-    sharedAt: string;
-    message?: string;
+    userId: string;
+    mediaItemId: string;
+    mediaItem?: MediaItem;
+    createdAt: string;
 }
 
-// === Các Request DTOs ===
+export interface PlayHistory {
+    id: string;
+    userId: string;
+    mediaItemId: string;
+    mediaItem?: MediaItem;
+    playedAt: string;
+}
+
+// === Các Request DTOs (Dùng khi gửi POST/PUT) ===
 export interface LoginRequest {
     email: string;
     password: string;
@@ -99,29 +109,27 @@ export interface UpdateProfileRequest {
     bio?: string;
     avatarUrl?: string;
 }
+
 export interface CreatePlaylistRequest {
     title: string;
     description?: string;
+    isPublic: boolean;
 }
 
-export interface ShareMediaRequest {
+export interface UpdatePlaylistRequest {
+    title: string;
+    description?: string;
+    isPublic: boolean;
+}
+
+export interface ShareMediaItemRequest {
     receiverId: string;
-    mediaItemId?: string;
-    playlistId?: string;
-}
-export interface Favorite {
-    id: string;
-    userId: string;
     mediaItemId: string;
-    mediaItem?: MediaItem; // Tùy chọn: có thể chứa thông tin bài hát
-    createdAt: string;
+    message?: string;
 }
 
-export interface PlayHistory {
-    id: string;
-    userId: string;
-    mediaItemId: string;
-    mediaItem?: MediaItem; // Tùy chọn: có thể chứa thông tin bài hát
-    playedAt: string;
+export interface SharePlaylistRequest {
+    receiverid: string; // Chú ý: Backend C# đang viết chữ 'i' thường (ShareDto.cs)
+    playlistId: string;
+    message?: string;
 }
-

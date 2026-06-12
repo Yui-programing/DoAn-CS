@@ -9,24 +9,34 @@ import Notifications from '../pages/Notifications/Notifications';
 import ShareInbox from '../pages/ShareInbox/ShareInbox';
 import Login from '../pages/Login/Login';
 import { VideoPlayer } from '../pages/VideoPlayer/VideoPlayer';
+
+// Import cánh cửa bảo vệ bạn vừa tạo
+import { ProtectedRoute } from '../components/ProtectedRoute';
+
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Route sử dụng MainLayout chung */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<Home />} />
-        <Route path="search" element={<Search />} />
-        <Route path="library" element={<Library />} />
-        <Route path="playlist/:id" element={<PlaylistDetail />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="notifications" element={<Notifications />} />
-        <Route path="share" element={<ShareInbox />} />
-      </Route>
-
-      {/* Route độc lập cho Đăng nhập (Toàn màn hình) */}
+      {/* 1. Các trang ai cũng vào được (Public Route) */}
       <Route path="/login" element={<Login />} />
-      <Route path="/video/:id" element={<VideoPlayer />} />
 
+      {/* 2. CÁC TRANG CẦN BẢO VỆ (Protected Route) */}
+      <Route element={<ProtectedRoute />}>
+
+        {/* Nhóm trang có Sidebar và Header chung */}
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Home />} />
+          <Route path="search" element={<Search />} />
+          <Route path="library" element={<Library />} />
+          <Route path="playlist/:id" element={<PlaylistDetail />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="share" element={<ShareInbox />} />
+        </Route>
+
+        {/* Trang xem video toàn màn hình (vẫn cần đăng nhập) */}
+        <Route path="/video/:id" element={<VideoPlayer />} />
+
+      </Route>
     </Routes>
   );
 };

@@ -24,9 +24,16 @@ api.interceptors.response.use(
         // Bắt lỗi 401 (Unauthorized - Chưa đăng nhập / Hết hạn token)
         if (error.response && error.response.status === 401) {
             console.warn('Lỗi 401: Không có quyền truy cập hoặc phiên đã hết hạn.');
-            // Gợi ý: Bạn có thể điều hướng user về trang đăng nhập ở đây
-            // window.location.href = '/login'; 
+
+            // Xoá cờ hiệu đánh dấu trạng thái đăng nhập ở Frontend
+            localStorage.removeItem('isAuthenticated');
+
+            // Chuyển hướng người dùng về trang đăng nhập (nếu họ đang không ở trang login)
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
         }
+
 
         return Promise.reject(error);
     }
