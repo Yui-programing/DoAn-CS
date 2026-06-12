@@ -1,6 +1,7 @@
 ---------------------------------------------------------
 -- 1. DROP TABLES (Xóa bảng theo thứ tự từ con đến cha)
 ---------------------------------------------------------
+IF OBJECT_ID('OtpVerification', 'U') IS NOT NULL DROP TABLE OtpVerification;
 IF OBJECT_ID('MediaTag', 'U') IS NOT NULL DROP TABLE MediaTag;
 IF OBJECT_ID('Tag', 'U') IS NOT NULL DROP TABLE Tag;
 IF OBJECT_ID('PlaylistTrack', 'U') IS NOT NULL DROP TABLE PlaylistTrack;
@@ -20,6 +21,18 @@ GO
 ---------------------------------------------------------
 -- 2. CREATE TABLES
 ---------------------------------------------------------
+-- Bảng lưu trữ OTP
+CREATE TABLE OtpVerification
+(
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    Email NVARCHAR(256) NOT NULL,
+    OtpCode NVARCHAR(6) NOT NULL,
+    Purpose NVARCHAR(50) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    ExpiresAt DATETIME2 NOT NULL,
+    IsUsed BIT NOT NULL DEFAULT 0
+);
+
 -- Bảng chứa thông tin Đăng nhập & Phân quyền
 CREATE TABLE [User]
 (

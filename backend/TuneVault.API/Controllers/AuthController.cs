@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TuneVault.Application.Features.Auth.Commands.Login;
 using TuneVault.Application.Features.Auth.Commands.Register;
+using TuneVault.Application.Features.Auth.Commands.SendRegistrationOtp;
+using TuneVault.Application.Features.Auth.Commands.SendForgotPasswordOtp;
+using TuneVault.Application.Features.Auth.Commands.ResetPassword;
 using TuneVault.Application.Repositories;
 using TuneVault.API.Common;
 
@@ -23,6 +26,14 @@ namespace TuneVault.API.Controllers
         {
             _mediator = mediator;
             _userRepository = userRepository;
+        }
+
+        [HttpPost("register/send-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SendRegistrationOtp([FromBody] SendRegistrationOtpCommand command)
+        {
+            await _mediator.Send(command);
+            return Ok(ApiResponse<object>.SetSuccess(null!, "Mã OTP đã được gửi đến email của bạn!"));
         }
 
         [HttpPost("register")] // Endpoint chuẩn: POST /api/auth/register
@@ -84,25 +95,27 @@ namespace TuneVault.API.Controllers
             return Ok(ApiResponse<object>.SetSuccess(null!, "Đăng xuất thành công!"));
         }
 
-        [HttpPost("forgot-password")] // Endpoint kiểm tra Email tồn tại
+        [HttpPost("forgot-password/send-otp")]
         [AllowAnonymous]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        public async Task<IActionResult> SendForgotPasswordOtp([FromBody] SendForgotPasswordOtpCommand command)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email);
-            if (user == null)
+            await _mediator.Send(command);
+            return Ok(ApiResponse<object>.SetSuccess(null!, "Mã OTP khôi phục mật khẩu đã được gửi đến email của bạn!"));
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
+        {
+            var result = await _mediator.Send(command);
+            if (!result)
             {
                 return BadRequest(ApiResponse<object>.SetFailure(
-                    new List<string> { "Email không tồn tại!" },
-                    "Email không tồn tại!"
+                    new List<string> { "Hệ thống không thể đổi mật khẩu lúc này." },
+                    "Đổi mật khẩu thất bại!"
                 ));
             }
-
-            return Ok(ApiResponse<object>.SetSuccess(null!, "Email khôi phục mật khẩu đã được gửi thành công!"));
+            return Ok(ApiResponse<object>.SetSuccess(null!, "Đổi mật khẩu thành công! Bạn có thể đăng nhập ngay bây giờ."));
         }
-    }
-
-    public class ForgotPasswordRequest
-    {
-        public string Email { get; set; } = null!;
     }
 }

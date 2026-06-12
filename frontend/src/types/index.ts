@@ -103,6 +103,17 @@ export interface RegisterRequest {
     name: string;
     email: string;
     password: string;
+    otpCode: string;
+}
+
+export interface SendOtpRequest {
+    email: string;
+}
+
+export interface ResetPasswordRequest {
+    email: string;
+    otpCode: string;
+    newPassword: string;
 }
 
 export interface UpdateProfileRequest {

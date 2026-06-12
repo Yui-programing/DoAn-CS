@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 
@@ -7,10 +7,12 @@ namespace TuneVault.Application.Features.Auth.Commands.Register
     public class RegisterCommandHandler : IRequestHandler<RegisterCommand, bool>
     {
         private readonly IUserRepository _userRepository;
+        private readonly IOtpRepository _otpRepository;
 
-        public RegisterCommandHandler(IUserRepository userRepository)
+        public RegisterCommandHandler(IUserRepository userRepository, IOtpRepository otpRepository)
         {
             _userRepository = userRepository;
+            _otpRepository = otpRepository;
         }
 
         public async Task<bool> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -23,7 +25,14 @@ namespace TuneVault.Application.Features.Auth.Commands.Register
                 throw new FluentValidation.ValidationException("Email này đã được sử dụng trong hệ thống.");
             }
 
-            // 2. Mã hóa mật khẩu
+            // 2. Xác minh OTP
+            var otp = await _otpRepository.GetLatestUnusedOtpAsync(request.Email, "Register");
+            if (otp == null || otp.OtpCode != request.OtpCode)
+            {
+                throw new FluentValidation.ValidationException("Mã OTP không hợp lệ hoặc đã hết hạn.");
+            }
+
+            // 3. Mã hóa mật khẩu
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             // 3. Tạo cấu trúc Entity
@@ -37,8 +46,16 @@ namespace TuneVault.Application.Features.Auth.Commands.Register
                 IsActive = true
             };
 
-            // 4. Lưu xuống database ( request.Name truyền vào làm FullName )
-            return await _userRepository.CreateUserWithProfileAsync(newUser, request.Name);
+            // 5. Lưu xuống database
+            var result = await _userRepository.CreateUserWithProfileAsync(newUser, request.Name);
+            
+            // 6. Đánh dấu OTP đã sử dụng
+            if (result)
+            {
+                await _otpRepository.MarkAsUsedAsync(otp.Id);
+            }
+
+            return result;
         }
     }
 }
