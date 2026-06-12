@@ -5,9 +5,11 @@ import { usePlayer } from '../../contexts/PlayerContext';
 import { Play, Pause, Sparkles, Heart, Music, Loader2 } from 'lucide-react';
 // Import dịch vụ API để lấy dữ liệu thật
 import { playlistService, mediaService } from '../../services';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const Home = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
@@ -15,9 +17,14 @@ export const Home = () => {
   const [recentTracks, setRecentTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // BƯỚC 2: Tự động gọi API khi vừa mở trang Home
+  // BƯỚC 2: Tự động gọi API khi vừa mở trang Home (chỉ khi đã đăng nhập)
   useEffect(() => {
     const fetchHomeData = async () => {
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
 
@@ -42,7 +49,7 @@ export const Home = () => {
     };
 
     fetchHomeData();
-  }, []);
+  }, [isAuthenticated]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -85,7 +92,7 @@ export const Home = () => {
             <span>Gợi ý riêng cho bạn</span>
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight">
-            {getGreeting()}, Duy!
+            {getGreeting()}{isAuthenticated ? ', Duy!' : '!'}
           </h2>
           <p className="text-sm text-zinc-400 max-w-md">
             Hôm nay bạn muốn nghe thể loại nhạc gì? Hãy click vào bài hát bất kỳ bên dưới để trải nghiệm âm thanh thực tế nhé.

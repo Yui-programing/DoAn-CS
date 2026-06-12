@@ -18,6 +18,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         // Khi F5 lại trang, gọi API profile để kiểm tra xem cookie còn hợp lệ không
         const checkAuth = async () => {
+            // Kiểm tra cờ đăng nhập cục bộ trước để tránh gửi request dư thừa bị 401 khi chưa đăng nhập
+            const hasAuthFlag = localStorage.getItem('isAuthenticated') === 'true';
+            if (!hasAuthFlag) {
+                setIsAuthenticated(false);
+                setIsLoading(false);
+                return;
+            }
+
             try {
                 await userService.getProfile();
                 setIsAuthenticated(true);

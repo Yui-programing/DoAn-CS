@@ -28,8 +28,13 @@ api.interceptors.response.use(
             // Xoá cờ hiệu đánh dấu trạng thái đăng nhập ở Frontend
             localStorage.removeItem('isAuthenticated');
 
-            // Chuyển hướng người dùng về trang đăng nhập (nếu họ đang không ở trang login)
-            if (window.location.pathname !== '/login') {
+            // Kiểm tra xem trang hiện tại có phải là trang công khai (Public Route) không
+            const publicPaths = ['/', '/search', '/register', '/forgot-password'];
+            const isPublicPath = publicPaths.includes(window.location.pathname) || 
+                                 window.location.pathname.startsWith('/playlist/');
+
+            // Chỉ chuyển hướng về trang đăng nhập nếu người dùng đang ở trang riêng tư (Private Route)
+            if (!isPublicPath && window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }
         }
