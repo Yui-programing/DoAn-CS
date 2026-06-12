@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export const Home = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
@@ -92,7 +92,7 @@ export const Home = () => {
             <span>Gợi ý riêng cho bạn</span>
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight">
-            {getGreeting()}{isAuthenticated ? ', Duy!' : '!'}
+            {getGreeting()}{isAuthenticated && user ? `, ${user.fullName}!` : '!'}
           </h2>
           <p className="text-sm text-zinc-400 max-w-md">
             Hôm nay bạn muốn nghe thể loại nhạc gì? Hãy click vào bài hát bất kỳ bên dưới để trải nghiệm âm thanh thực tế nhé.
