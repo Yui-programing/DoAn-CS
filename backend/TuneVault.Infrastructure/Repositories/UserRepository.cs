@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Dapper;
 using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
@@ -45,6 +45,13 @@ namespace TuneVault.Infrastructure.Repositories
         
          
 
+
+        public async Task<bool> UpdatePasswordAsync(string userId, string passwordHash)
+        {
+            const string sql = "UPDATE [User] SET PasswordHash = @PasswordHash WHERE Id = @Id";
+            int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { PasswordHash = passwordHash, Id = userId });
+            return rowsAffected > 0;
+        }
 
         // 2. Hàm chèn đồng thời cả User và UserProfile (Dùng Transaction bảo vệ)
         public async Task<bool> CreateUserWithProfileAsync(User user, string fullName)

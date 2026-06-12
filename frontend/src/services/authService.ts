@@ -12,20 +12,38 @@ export const authService = {
     },
 
     // Hàm đăng ký
-    register: async (data: RegisterRequest): Promise<ApiResponse<null>> => {
-        const response = await api.post<ApiResponse<null>>('/auth/register', data);
+    register: async (data: RegisterRequest): Promise<ApiResponse<string>> => {
+        const response = await api.post<ApiResponse<string>>('/auth/register', data);
         return response.data;
     },
 
     // Hàm đăng xuất
-    logout: async (): Promise<ApiResponse<null>> => {
-        const response = await api.post<ApiResponse<null>>('/auth/logout');
+    logout: async (): Promise<ApiResponse<boolean>> => {
+        const response = await api.post<ApiResponse<boolean>>('/auth/logout');
         return response.data;
     },
 
     // Hàm quên mật khẩu
     forgotPassword: async (email: string): Promise<ApiResponse<any>> => {
         const response = await api.post<ApiResponse<any>>('/auth/forgot-password', { email });
+        return response.data;
+    },
+
+    // Gửi OTP đăng ký
+    sendRegistrationOtp: async (email: string): Promise<ApiResponse<any>> => {
+        const response = await api.post<ApiResponse<any>>('/auth/register/send-otp', { email });
+        return response.data;
+    },
+
+    // Gửi OTP quên mật khẩu
+    sendForgotPasswordOtp: async (email: string): Promise<ApiResponse<any>> => {
+        const response = await api.post<ApiResponse<any>>('/auth/forgot-password/send-otp', { email });
+        return response.data;
+    },
+
+    // Đặt lại mật khẩu
+    resetPassword: async (data: import('../types').ResetPasswordRequest): Promise<ApiResponse<any>> => {
+        const response = await api.post<ApiResponse<any>>('/auth/reset-password', data);
         return response.data;
     }
 };

@@ -16,6 +16,8 @@ export const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [step, setStep] = useState<1 | 2>(1); // 1: Info, 2: OTP
+  const [otpCode, setOtpCode] = useState('');
 
   // Tự động chuyển hướng nếu đã đăng nhập
   useEffect(() => {
@@ -24,30 +26,57 @@ export const Register = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
-    // Kiểm tra mật khẩu xác nhận trùng khớp
     if (password !== confirmPassword) {
       setErrorMessage('Mật khẩu xác nhận không khớp!');
       return;
     }
 
     setIsLoading(true);
+    try {
+      const response = await authService.sendRegistrationOtp(email);
+      if (response.success) {
+        setSuccessMessage('Mã OTP đã được gửi đến email của bạn!');
+        setStep(2);
+      } else {
+        setErrorMessage(response.message || 'Gửi OTP thất bại!');
+      }
+    } catch (error: any) {
+      const backendError = error.response?.data?.message || 
+                           error.response?.data?.errors?.[0] || 
+                           "Gửi OTP thất bại, vui lòng thử lại!";
+      setErrorMessage(backendError);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (otpCode.length !== 6) {
+      setErrorMessage('Mã OTP phải gồm 6 chữ số!');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      // Gọi API đăng ký qua authService
       const response = await authService.register({
         name: name,
         email: email,
-        password: password
+        password: password,
+        otpCode: otpCode
       });
 
       if (response.success) {
         setSuccessMessage('Đăng ký tài khoản thành công! Đang chuyển hướng sang trang Đăng nhập...');
-        // Chuyển hướng sang trang đăng nhập sau 2 giây
         setTimeout(() => {
           navigate('/login');
         }, 2000);
@@ -56,7 +85,6 @@ export const Register = () => {
       }
     } catch (error: any) {
       console.error("Lỗi đăng ký:", error);
-      // Trích xuất lỗi từ Backend
       const backendError = error.response?.data?.message || 
                            error.response?.data?.errors?.[0] || 
                            "Đăng ký thất bại, vui lòng thử lại!";
@@ -94,105 +122,158 @@ export const Register = () => {
           </div>
         )}
 
-        {/* Form Đăng ký */}
-        <form onSubmit={handleSubmit} className="w-full space-y-3">
-          {/* Tên hiển thị */}
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Họ và tên</label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nguyễn Văn A"
-                className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
-              />
+        {/* Form */}
+        {step === 1 ? (
+          <form onSubmit={handleSendOtp} className="w-full space-y-3">
+            {/* Tên hiển thị */}
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Họ và tên</label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nguyễn Văn A"
+                  className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Email */}
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Địa chỉ Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ten@vi-du.com"
-                className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
-              />
+            {/* Email */}
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Địa chỉ Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ten@vi-du.com"
+                  className="w-full pl-11 pr-4 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Mật khẩu */}
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Mật khẩu</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-11 pr-11 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
-              >
-                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-              </button>
+            {/* Mật khẩu */}
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Mật khẩu</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-11 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
+                >
+                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Xác nhận Mật khẩu */}
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Xác nhận mật khẩu</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-11 pr-11 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
-              >
-                {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-              </button>
+            {/* Xác nhận Mật khẩu */}
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Xác nhận mật khẩu</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-11 py-2.5 bg-black/40 border border-zinc-800 rounded-xl text-sm placeholder-zinc-650 text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Nút Đăng ký */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 bg-green-500 hover:bg-green-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-bold text-sm rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-95 shadow-md flex items-center justify-center gap-1.5 mt-4"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4.5 h-4.5 animate-spin stroke-[2.5]" />
-                <span>Đang xử lý...</span>
-              </>
-            ) : (
-              <>
-                <span>Đăng ký</span>
-                <ArrowRight className="w-4.5 h-4.5 stroke-[2.5]" />
-              </>
-            )}
-          </button>
-        </form>
+            {/* Nút Gửi OTP */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 bg-green-500 hover:bg-green-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-bold text-sm rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-95 shadow-md flex items-center justify-center gap-1.5 mt-4"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4.5 h-4.5 animate-spin stroke-[2.5]" />
+                  <span>Đang xử lý...</span>
+                </>
+              ) : (
+                <>
+                  <span>Tiếp tục (Gửi OTP)</span>
+                  <ArrowRight className="w-4.5 h-4.5 stroke-[2.5]" />
+                </>
+              )}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleRegister} className="w-full space-y-4">
+            <div className="space-y-1 text-center mb-4">
+              <p className="text-sm text-zinc-400">
+                Chúng tôi đã gửi mã OTP 6 số đến <span className="text-white font-bold">{email}</span>. Vui lòng kiểm tra hộp thư của bạn.
+              </p>
+            </div>
+            
+            <div className="space-y-1">
+              <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider pl-1">Nhập mã OTP</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+                <input
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  placeholder="123456"
+                  className="w-full pl-11 pr-4 py-3 bg-black/40 border border-zinc-800 rounded-xl text-lg text-center tracking-[0.5em] font-mono text-slate-200 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Nút Hoàn tất */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 bg-green-500 hover:bg-green-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-bold text-sm rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-95 shadow-md flex items-center justify-center gap-1.5 mt-4"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4.5 h-4.5 animate-spin stroke-[2.5]" />
+                  <span>Đang xử lý...</span>
+                </>
+              ) : (
+                <>
+                  <span>Xác nhận & Đăng ký</span>
+                  <CheckCircle2 className="w-4.5 h-4.5 stroke-[2.5]" />
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="w-full py-2 text-zinc-400 hover:text-white text-sm mt-2 transition-colors"
+            >
+              Quay lại chỉnh sửa thông tin
+            </button>
+          </form>
+        )}
 
         <div className="h-px bg-zinc-800 w-full my-5" />
 
