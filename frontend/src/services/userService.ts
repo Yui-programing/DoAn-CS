@@ -7,8 +7,8 @@ export const userService = {
         return response.data;
     },
 
-    updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>> => {
-        const response = await api.put<ApiResponse<UserProfile>>('/users/profile', data);
+    updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse<boolean>> => {
+        const response = await api.put<ApiResponse<boolean>>('/users/profile', data);
         return response.data;
     }
 };

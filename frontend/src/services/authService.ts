@@ -12,14 +12,14 @@ export const authService = {
     },
 
     // Hàm đăng ký
-    register: async (data: RegisterRequest): Promise<ApiResponse<string>> => {
-        const response = await api.post<ApiResponse<string>>('/auth/register', data);
+    register: async (data: RegisterRequest): Promise<ApiResponse<null>> => {
+        const response = await api.post<ApiResponse<null>>('/auth/register', data);
         return response.data;
     },
 
     // Hàm đăng xuất
-    logout: async (): Promise<ApiResponse<boolean>> => {
-        const response = await api.post<ApiResponse<boolean>>('/auth/logout');
+    logout: async (): Promise<ApiResponse<null>> => {
+        const response = await api.post<ApiResponse<null>>('/auth/logout');
         return response.data;
     }
 };
