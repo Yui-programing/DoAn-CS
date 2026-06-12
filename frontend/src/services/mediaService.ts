@@ -3,8 +3,8 @@ import type { ApiResponse, MediaItem, Favorite, PlayHistory } from '../types';
 
 export const mediaService = {
     // Để gửi file lên backend, Axios phải dùng FormData thay vì JSON
-    uploadMedia: async (formData: FormData): Promise<ApiResponse<MediaItem>> => {
-        const response = await api.post<ApiResponse<MediaItem>>('/media/upload', formData, {
+    uploadMedia: async (formData: FormData): Promise<ApiResponse<string>> => {
+        const response = await api.post<ApiResponse<string>>('/media/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
