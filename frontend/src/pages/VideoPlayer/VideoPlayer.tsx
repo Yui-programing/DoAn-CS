@@ -37,7 +37,7 @@ export const VideoPlayer = () => {
                 if (response.success && response.data) {
                     setVideoInfo({
                         title: response.data.title,
-                        artist: response.data.uploaderId || 'Chưa rõ tác giả',
+                        artist: response.data.ownerId || 'Chưa rõ tác giả',
 
                         filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
                     });

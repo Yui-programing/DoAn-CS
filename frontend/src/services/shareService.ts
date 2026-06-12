@@ -1,14 +1,14 @@
 import api from './api';
-import type { ApiResponse, SharedMedia, ShareMediaRequest } from '../types';
+import type { ApiResponse, SharedMediaItem, ShareMediaItemRequest } from '../types';
 
 export const shareService = {
-    shareMedia: async (data: ShareMediaRequest): Promise<ApiResponse<SharedMedia>> => {
-        const response = await api.post<ApiResponse<SharedMedia>>('/share', data);
+    shareMedia: async (data: ShareMediaItemRequest): Promise<ApiResponse<string>> => {
+        const response = await api.post<ApiResponse<string>>('/share', data);
         return response.data;
     },
 
-    getInbox: async (): Promise<ApiResponse<SharedMedia[]>> => {
-        const response = await api.get<ApiResponse<SharedMedia[]>>('/share');
+    getInbox: async (): Promise<ApiResponse<SharedMediaItem[]>> => {
+        const response = await api.get<ApiResponse<SharedMediaItem[]>>('/share');
         return response.data;
     }
 };
