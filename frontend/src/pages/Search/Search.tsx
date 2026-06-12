@@ -26,6 +26,26 @@ const categories = [
   { title: 'Podcast', color: 'from-violet-600 to-purple-800', query: 'Podcast' },
 ];
 
+// Helper format số lượt nghe rút gọn kiểu Spotify
+const formatViewCount = (count: number) => {
+  if (count === undefined || count === null) return '0 lượt nghe';
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M lượt nghe`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(0)}K lượt nghe`;
+  }
+  return `${count} lượt nghe`;
+};
+
+// Helper format thời lượng
+const formatDuration = (seconds: number) => {
+  if (!seconds) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
 export const Search = () => {
   const navigate = useNavigate();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
@@ -93,7 +113,7 @@ export const Search = () => {
       filePath: mediaService.getStreamUrl(song.id),
       coverUrl: song.coverUrl || undefined,
       album: song.artistName || undefined,
-      duration: 'Phát nhạc',
+      duration: formatDuration(song.durationInSeconds),
     };
 
     const queueTracks = tracksPool.map(item => ({
@@ -103,7 +123,7 @@ export const Search = () => {
       filePath: mediaService.getStreamUrl(item.id),
       coverUrl: item.coverUrl || undefined,
       album: item.artistName || undefined,
-      duration: 'Phát nhạc',
+      duration: formatDuration(item.durationInSeconds),
     }));
 
     if (currentTrack?.id === song.id) {
@@ -155,7 +175,7 @@ export const Search = () => {
                   </div>
 
                   <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl divide-y divide-zinc-800/30 overflow-hidden">
-                    {audioSongs.map((song) => {
+                    {audioSongs.map((song, index) => {
                       const isThisPlaying = currentTrack?.id === song.id && isPlaying;
                       return (
                         <div 
@@ -163,7 +183,11 @@ export const Search = () => {
                           className="flex items-center justify-between p-3.5 hover:bg-zinc-850/50 transition-all duration-200 group cursor-pointer"
                           onClick={() => handlePlaySong(song, audioSongs)}
                         >
+                          {/* Cột 1: Thông tin bài nhạc */}
                           <div className="flex items-center gap-4 min-w-0 flex-1">
+                            <span className={`text-xs font-bold w-4 text-right shrink-0 ${isThisPlaying ? 'text-green-400' : 'text-zinc-500'}`}>
+                              {index + 1}
+                            </span>
                             <div className="relative w-11 h-11 rounded-md overflow-hidden bg-zinc-800 shrink-0 shadow">
                               {song.coverUrl ? (
                                 <img 
@@ -191,24 +215,26 @@ export const Search = () => {
                                 {song.name}
                               </p>
                               <p className="text-xs text-zinc-400 truncate mt-0.5">
-                                {song.artistName || 'Nghệ sĩ tự do'} • {song.viewCount !== undefined ? song.viewCount.toLocaleString() : 0} lượt nghe
+                                {song.artistName || 'Nghệ sĩ tự do'}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3 pr-2 shrink-0">
+                          {/* Cột 2: Số lượt nghe */}
+                          <div className="w-48 text-right shrink-0 text-xs text-zinc-400 hidden md:block">
+                            <span className="font-medium">{formatViewCount(song.viewCount)}</span>
+                          </div>
+
+                          {/* Cột 3: Thời lượng & Action */}
+                          <div className="w-28 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
                             {isThisPlaying && (
-                              <span className="text-[10px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                              <span className="text-[9px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse hidden lg:inline-block">
                                 Đang phát
                               </span>
                             )}
-                            <button className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-green-500 hover:scale-105 flex items-center justify-center text-zinc-400 hover:text-black transition-all">
-                              {isThisPlaying ? (
-                                <Pause className="w-4 h-4 fill-current" />
-                              ) : (
-                                <Play className="w-4 h-4 fill-current ml-0.5" />
-                              )}
-                            </button>
+                            <span className={`font-semibold tracking-wider ${isThisPlaying ? 'text-green-400' : ''}`}>
+                              {formatDuration(song.durationInSeconds)}
+                            </span>
                           </div>
                         </div>
                       );
@@ -217,7 +243,7 @@ export const Search = () => {
                 </section>
               )}
 
-              {/* PHẦN 2.2: PLAYLISTS (MỚI THÊM THEO FILE PDF) */}
+              {/* PHẦN 2.2: PLAYLISTS */}
               {playlists.length > 0 && (
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-bold">
@@ -301,7 +327,7 @@ export const Search = () => {
                             {mv.name}
                           </h4>
                           <p className="text-xs text-zinc-400 mt-1 truncate">
-                            Nghệ sĩ: {mv.artistName || 'Nghệ sĩ tự do'}
+                            Nghệ sĩ: {mv.artistName || 'Nghệ sĩ tự do'} • {formatViewCount(mv.viewCount)}
                           </p>
                         </div>
                       </div>
@@ -310,7 +336,7 @@ export const Search = () => {
                 </section>
               )}
 
-              {/* PHẦN 2.4: NGHỆ SĨ (ARTIST) */}
+              {/* PHẦN 2.4: NGHỆ SĨ */}
               {artists.length > 0 && (
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-bold">
@@ -377,7 +403,7 @@ export const Search = () => {
             </div>
           </div>
 
-          {/* CỘT PHẢI: TRENDING NỔI BẬT (MỚI BỔ SUNG THEO YÊU CẦU PDF) */}
+          {/* CỘT PHẢI: TRENDING NỔI BẬT */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-zinc-350 font-bold">
               <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
@@ -399,12 +425,10 @@ export const Search = () => {
                       className="flex items-center justify-between p-3 hover:bg-zinc-850/40 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {/* Thứ hạng số */}
-                        <span className="w-5 text-center font-extrabold text-sm text-zinc-500 group-hover:text-green-400">
+                        <span className="w-5 text-center font-extrabold text-sm text-zinc-555 group-hover:text-green-400 shrink-0">
                           {idx + 1}
                         </span>
 
-                        {/* Avatar bài nhạc */}
                         <div className="relative w-9 h-9 rounded bg-zinc-800 overflow-hidden shrink-0">
                           {song.coverUrl ? (
                             <img src={song.coverUrl} alt={song.name} className="w-full h-full object-cover" />
@@ -422,21 +446,25 @@ export const Search = () => {
                           </div>
                         </div>
 
-                        {/* Tên & ca sĩ */}
                         <div className="min-w-0">
                           <p className={`font-bold text-xs truncate ${isThisPlaying ? 'text-green-400' : 'text-slate-200'}`}>
                             {song.name || song.title}
                           </p>
                           <p className="text-[10px] text-zinc-500 truncate mt-0.5">
-                            {song.artistName || 'Nghệ sĩ tự do'} • {song.viewCount !== undefined ? song.viewCount.toLocaleString() : 0} lượt nghe
+                            {song.artistName || 'Nghệ sĩ tự do'}
                           </p>
                         </div>
                       </div>
 
-                      {/* Nút Play hành động nhanh */}
-                      <button className="w-6 h-6 rounded-full bg-zinc-850 group-hover:bg-green-500 flex items-center justify-center text-zinc-500 group-hover:text-black hover:scale-105 transition-all shrink-0">
-                        {isThisPlaying ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current ml-0.5" />}
-                      </button>
+                      {/* Cột Lượt nghe ở Trending */}
+                      <div className="text-[10px] text-zinc-400 text-right pr-2 shrink-0 font-medium">
+                        {formatViewCount(song.viewCount)}
+                      </div>
+
+                      {/* Thời lượng ở Trending */}
+                      <div className="text-[10px] text-zinc-500 w-10 text-right shrink-0 font-semibold tracking-wider">
+                        {formatDuration(song.durationInSeconds)}
+                      </div>
                     </div>
                   );
                 })}

@@ -237,15 +237,15 @@ DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05',
 
 -- Insert MediaItem (Chỉ lưu các bài hát/MV thực tế có file thật)
 INSERT INTO MediaItem
-    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId)
+    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1780998869/TuneVault/Songs/lancuoi_wbqgz0.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1780998872/TuneVault/Covers/do2uqhldg52rurqgstbi.jpg', 210, 0, 'U1', @Artist1Id, @Album1Id),
-    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/emdaonay_zosad6.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id),
-    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL),
-    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL),
-    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL),
-    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', @Artist3Id, NULL),
-    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', @Artist3Id, NULL);
+    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1780998869/TuneVault/Songs/lancuoi_wbqgz0.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1780998872/TuneVault/Covers/do2uqhldg52rurqgstbi.jpg', 210, 0, 'U1', @Artist1Id, @Album1Id, 1200000),
+    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/emdaonay_zosad6.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id, 850000),
+    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL, 620000),
+    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL, 430000),
+    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL, 280000),
+    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', @Artist3Id, NULL, 150000),
+    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', @Artist3Id, NULL, 950000);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag

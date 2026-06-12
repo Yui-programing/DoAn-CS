@@ -44,32 +44,32 @@ namespace TuneVault.Infrastructure.Repositories
 
             string sql = @"
             WITH SearchResults AS (
-                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
                 FROM MediaItem m
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Artist 
                 WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
             SELECT COUNT(1) FROM SearchResults;
 
             WITH SearchResults AS (
-                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
                 FROM MediaItem m
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Artist 
                 WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
