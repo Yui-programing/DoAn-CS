@@ -53,5 +53,12 @@ export const mediaService = {
             params: { keyword, filterType: 'Song', pageSize }
         });
         return response.data;
+    },
+
+    searchAll: async (keyword: string, pageSize: number = 20): Promise<ApiResponse<any>> => {
+        const response = await api.get<ApiResponse<any>>('/search/full', {
+            params: { keyword, pageSize }
+        });
+        return response.data;
     }
 };
