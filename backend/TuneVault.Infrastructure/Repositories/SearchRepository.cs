@@ -53,7 +53,7 @@ namespace TuneVault.Infrastructure.Repositories
                 FROM Artist 
                 WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, CoverUrl, NULL AS ArtistName, 0 AS MediaType
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
@@ -69,7 +69,7 @@ namespace TuneVault.Infrastructure.Repositories
                 FROM Artist 
                 WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, CoverUrl, NULL AS ArtistName, 0 AS MediaType
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
