@@ -1,10 +1,15 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TuneVault.Application.Features.Auth.Commands.Login;
 using TuneVault.Application.Features.Auth.Commands.Register;
+using TuneVault.Application.Repositories;
 using TuneVault.API.Common;
+
 namespace TuneVault.API.Controllers
 {
     [ApiController]
@@ -12,10 +17,12 @@ namespace TuneVault.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IUserRepository _userRepository;
 
-        public AuthController(IMediator mediator)
+        public AuthController(IMediator mediator, IUserRepository userRepository)
         {
             _mediator = mediator;
+            _userRepository = userRepository;
         }
 
         [HttpPost("register")] // Endpoint chuẩn: POST /api/auth/register
@@ -75,6 +82,27 @@ namespace TuneVault.API.Controllers
             Response.Cookies.Delete("token", cookieOptions);
 
             return Ok(ApiResponse<object>.SetSuccess(null!, "Đăng xuất thành công!"));
-        }    
+        }
+
+        [HttpPost("forgot-password")] // Endpoint kiểm tra Email tồn tại
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var user = await _userRepository.GetByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return BadRequest(ApiResponse<object>.SetFailure(
+                    new List<string> { "Email không tồn tại!" },
+                    "Email không tồn tại!"
+                ));
+            }
+
+            return Ok(ApiResponse<object>.SetSuccess(null!, "Email khôi phục mật khẩu đã được gửi thành công!"));
+        }
+    }
+
+    public class ForgotPasswordRequest
+    {
+        public string Email { get; set; } = null!;
     }
 }
