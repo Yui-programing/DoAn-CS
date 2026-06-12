@@ -30,8 +30,8 @@ export const Home = () => {
           const mapped = searchRes.data.items.map((item: any) => ({
             id: item.id,
             title: item.name,
-            artist: 'Nghệ sĩ TuneVault',
-            coverUrl: item.imageUrl,
+            artist: item.artistName || 'Nghệ sĩ TuneVault',
+            coverUrl: item.coverUrl,
             filePath: mediaService.getStreamUrl(item.id),
             duration: 'Phát nhạc'
           }));

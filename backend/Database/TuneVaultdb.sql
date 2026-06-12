@@ -224,20 +224,15 @@ VALUES
     ('T3', N'Gaming'),
     ('T4', N'Chill');
 
--- Khai báo 10 Media Items ID
+-- Khai báo 5 Media Items ID thật (lưu online Cloudinary)
 DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05', 
         @M2 UNIQUEIDENTIFIER = 'DC1C6608-72FE-4CAD-8DEC-6E0911050456',
         @M3 UNIQUEIDENTIFIER = '4A012ECD-70E7-4DDB-90F7-D51A30A88491', 
         @M4 UNIQUEIDENTIFIER = '54D1B50E-1988-41BA-9B2E-B939595D512E',
-        @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C', 
-        @M6 UNIQUEIDENTIFIER = '455972D7-D1DC-4483-9794-6D809679C8E1',
-        @M7 UNIQUEIDENTIFIER = '8B813399-0E61-4729-B16F-59BD14B19E6D', 
-        @M8 UNIQUEIDENTIFIER = 'FF39B3C0-3900-4C48-8B70-FC126FFBF73F',
-        @M9 UNIQUEIDENTIFIER = 'B19B93F2-E96F-44DF-863F-1710E55F6164', 
-        @M10 UNIQUEIDENTIFIER = '60BBC102-FD22-4AF9-8DDA-C3BBFED408B9';
+        @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C';
 
 
--- Insert MediaItem (8 Audio, 2 Video)
+-- Insert MediaItem (Chỉ lưu 5 bài hát online thật)
 INSERT INTO MediaItem
     (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId)
 VALUES
@@ -245,13 +240,7 @@ VALUES
     (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id),
     (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL),
     (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL),
-    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL),
-    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', NULL, NULL),
-    (@M7, N'Nhạc tập trung Code', '/media/focus.mp3', NULL, 1800, 0, 'U2', NULL, NULL),
-    (@M8, N'Guitar Acoustic Không Lời', '/media/guitar.mp3', NULL, 240, 0, 'U2', NULL, NULL),
-    -- Video
-    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', NULL, 325, 1, 'U1', @Artist2Id, NULL),
-    (@M10, N'Hướng dẫn ReactJS cơ bản', '/media/react.mp4', NULL, 1200, 1, 'U2', NULL, NULL);
+    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag
@@ -261,10 +250,7 @@ VALUES
     (@M2, 'T1'),
     (@M3, 'T3'),
     (@M4, 'T3'),
-    (@M5, 'T3'),
-    (@M6, 'T4'),
-    (@M7, 'T4'),
-    (@M9, 'T3');
+    (@M5, 'T3');
 
 -- Khai báo Playlist
 DECLARE @P1 UNIQUEIDENTIFIER = NEWID();
@@ -274,7 +260,7 @@ DECLARE @P2 UNIQUEIDENTIFIER = NEWID();
 INSERT INTO Playlist
     (Id, Title, OwnerId, TracksCount, TotalDuration)
 VALUES
-    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 3, 4205),
+    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 2, 405),
     (@P2, N'Playlist chiến Valorant', 'U1', 3, 600);
 
 -- Insert PlaylistTrack
@@ -283,7 +269,6 @@ INSERT INTO PlaylistTrack
 VALUES
     (@P1, @M1),
     (@P1, @M2),
-    (@P1, @M6),
     (@P2, @M3),
     (@P2, @M4),
     (@P2, @M5);

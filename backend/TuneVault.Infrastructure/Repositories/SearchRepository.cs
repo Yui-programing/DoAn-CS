@@ -44,22 +44,26 @@ namespace TuneVault.Infrastructure.Repositories
 
             string sql = @"
             WITH SearchResults AS (
-                SELECT Id, Title AS Name, 'Song' AS Type, CoverUrl AS ImageUrl 
-                FROM MediaItem WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName
+                FROM MediaItem m
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
+                WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
-                FROM Artist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
-                
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName
+                FROM Artist 
+                WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
             )
             SELECT COUNT(1) FROM SearchResults;
 
             WITH SearchResults AS (
-                SELECT Id, Title AS Name, 'Song' AS Type, CoverUrl AS ImageUrl 
-                FROM MediaItem WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName
+                FROM MediaItem m
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
+                WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS ImageUrl 
-                FROM Artist WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
-              
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName
+                FROM Artist 
+                WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
             )
             SELECT * FROM SearchResults
             ORDER BY Type, Name
