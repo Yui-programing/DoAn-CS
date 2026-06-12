@@ -14,6 +14,7 @@ namespace TuneVault.Application.Models
         public string CoverUrl { get; set; } = null!;
         public string? ArtistName { get; set; }
         public int MediaType { get; set; }
+        public int ViewCount { get; set; }
     }
 
     public class SuggestionResultDto

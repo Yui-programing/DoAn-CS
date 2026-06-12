@@ -191,7 +191,7 @@ export const Search = () => {
                                 {song.name}
                               </p>
                               <p className="text-xs text-zinc-400 truncate mt-0.5">
-                                {song.artistName || 'Nghệ sĩ tự do'}
+                                {song.artistName || 'Nghệ sĩ tự do'} • {song.viewCount !== undefined ? song.viewCount.toLocaleString() : 0} lượt nghe
                               </p>
                             </div>
                           </div>
@@ -428,7 +428,7 @@ export const Search = () => {
                             {song.name || song.title}
                           </p>
                           <p className="text-[10px] text-zinc-500 truncate mt-0.5">
-                            {song.artistName || 'Nghệ sĩ tự do'}
+                            {song.artistName || 'Nghệ sĩ tự do'} • {song.viewCount !== undefined ? song.viewCount.toLocaleString() : 0} lượt nghe
                           </p>
                         </div>
                       </div>
