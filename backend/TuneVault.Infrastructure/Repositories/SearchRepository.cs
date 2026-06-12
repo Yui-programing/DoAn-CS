@@ -52,6 +52,10 @@ namespace TuneVault.Infrastructure.Repositories
                 SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType
                 FROM Artist 
                 WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
+                UNION ALL
+                SELECT Id, Title AS Name, 'Playlist' AS Type, CoverUrl, NULL AS ArtistName, 0 AS MediaType
+                FROM Playlist
+                WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
             SELECT COUNT(1) FROM SearchResults;
 
@@ -64,6 +68,10 @@ namespace TuneVault.Infrastructure.Repositories
                 SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType
                 FROM Artist 
                 WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
+                UNION ALL
+                SELECT Id, Title AS Name, 'Playlist' AS Type, CoverUrl, NULL AS ArtistName, 0 AS MediaType
+                FROM Playlist
+                WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
             )
             SELECT * FROM SearchResults
             ORDER BY Type, Name
