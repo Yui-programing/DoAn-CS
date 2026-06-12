@@ -1,26 +1,48 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
-import { Play, Pause, Sparkles, Heart, Music } from 'lucide-react';
-
-const featuredPlaylists = [
-  { id: '1', title: 'Giai điệu thư giãn cuối tuần', tracks: '3 bài hát', duration: '1h 10m', color: 'from-emerald-500/20 to-zinc-900' },
-  { id: '2', title: 'Playlist chiến Valorant', tracks: '3 bài hát', duration: '10m', color: 'from-red-500/20 to-zinc-900' },
-  { id: '3', title: 'Tuyển tập Indie Việt', tracks: '12 bài hát', duration: '45m', color: 'from-blue-500/20 to-zinc-900' },
-  { id: '4', title: 'Lofi Cafe Sài Gòn', tracks: '1 bài hát', duration: '1h 00m', color: 'from-amber-500/20 to-zinc-900' },
-];
-
-// Thay thế bằng các tệp nhạc MP3 local hoạt động thực tế
-const mockTracks = [
-  { id: 'm1', title: 'Lần Cuối', artist: 'Ngọt Band', duration: '3:35', filePath: '/media/lancuoi.mp3', coverUrl: '/media/lancuoi.jpg', plays: '1.2M lượt nghe' },
-  { id: 'm2', title: 'Em Dạo Này', artist: 'Ngọt Band', duration: '3:43', filePath: '/media/emdaonay.mp3', coverUrl: '/media/emdaonay.jpg', plays: '980K lượt nghe' },
-  { id: 'm3', title: 'Die For You', artist: 'Riot Games Music', duration: '3:20', filePath: '/media/dieforyou.mp3', coverUrl: '/media/dieforyou.jpg', plays: '4.5M lượt nghe' },
-  { id: 'm4', title: 'Ignite', artist: 'Riot Games Music', duration: '3:15', filePath: '/media/ignite.mp3', coverUrl: '/media/ignite.jpg', plays: '3.1M lượt nghe' },
-  { id: 'B19B93F2-E96F-44DF-863F-1710E55F6164', title: 'MV Đừng làm trái tim anh đau', artist: 'Sơn Tùng M-TP', duration: '10:00', filePath: '/videoplayback.mp4', coverUrl: '', plays: '100M lượt xem' }
-];
+// Import thêm Loader2 để làm icon xoay vòng lúc chờ mạng
+import { Play, Pause, Sparkles, Heart, Music, Loader2 } from 'lucide-react';
+// Import dịch vụ API để lấy dữ liệu thật
+import { playlistService, mediaService } from '../../services';
 
 export const Home = () => {
   const navigate = useNavigate();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  // BƯỚC 1: Khai báo State chứa dữ liệu thật
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [recentTracks, setRecentTracks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // BƯỚC 2: Tự động gọi API khi vừa mở trang Home
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Gọi API lấy Playlist thật từ Backend
+        const playlistRes = await playlistService.getMyPlaylists();
+        if (playlistRes.success) {
+          setPlaylists(playlistRes.data);
+        }
+
+        // Gọi API lấy Lịch sử bài hát thật
+        const historyRes = await mediaService.getPlayHistory();
+        if (historyRes.success) {
+          // Lọc mảng lịch sử để lấy ra đúng bài hát (mediaItem)
+          const tracks = historyRes.data.map((h: any) => h.mediaItem).filter(Boolean);
+          setRecentTracks(tracks);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu trang chủ:', error);
+      } finally {
+        setIsLoading(false); // Gọi xong (dù thành công hay lỗi) thì tắt vòng xoay
+      }
+    };
+
+    fetchHomeData();
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -29,23 +51,29 @@ export const Home = () => {
     return 'Chào buổi tối';
   };
 
-  const handleTrackClick = (track: typeof mockTracks[0]) => {
-    // Kiểm tra xem bài hát này có phải là video hay không (dựa vào đuôi file .mp4)
-    const isVideo = track.filePath.endsWith('.mp4');
+  const handleTrackClick = (track: any) => {
+    const isVideo = track.filePath?.endsWith('.mp4');
 
     if (isVideo) {
-      // Nếu là video, chuyển hướng sang trang Video Player
       navigate(`/video/${track.id}`);
     } else {
-      // Nếu là nhạc bình thường, phát qua Player Bar ở dưới
       if (currentTrack?.id === track.id) {
         togglePlay();
       } else {
-        playTrack(track, mockTracks);
+        playTrack(track, recentTracks);
       }
     }
   };
 
+  // MÀN HÌNH CHỜ: Nếu API chưa trả về kịp thì hiện vòng xoay
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
+        <Loader2 className="w-10 h-10 text-green-500 animate-spin" />
+        <p className="text-zinc-400 font-medium">Đang tải dữ liệu từ máy chủ...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -66,84 +94,92 @@ export const Home = () => {
         <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-radial from-green-500/10 to-transparent blur-3xl" />
       </div>
 
-      {/* Danh sách Playlist nổi bật */}
+      {/* BƯỚC 3: Hiển thị danh sách Playlists THẬT */}
       <section className="space-y-4">
-        <h3 className="text-xl font-bold tracking-tight">Thư viện gợi ý</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {featuredPlaylists.map((playlist) => (
-            <div
-              key={playlist.id}
-              className={`p-5 rounded-xl bg-gradient-to-b ${playlist.color} border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-300 cursor-pointer group relative`}
-            >
-              <h4 className="font-bold text-base line-clamp-1 group-hover:text-green-400 transition-colors">
-                {playlist.title}
-              </h4>
-              <p className="text-xs text-zinc-400 mt-1">{playlist.tracks} • {playlist.duration}</p>
+        <h3 className="text-xl font-bold tracking-tight">Thư viện gợi ý (Dữ liệu thật)</h3>
+        {playlists.length === 0 ? (
+          <p className="text-zinc-500 text-sm">Chưa có playlist nào. Hãy tạo trên Backend nhé!</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {playlists.map((playlist) => (
+              <div
+                key={playlist.id}
+                onClick={() => navigate(`/playlist/${playlist.id}`)}
+                className="p-5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-zinc-900 border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-300 cursor-pointer group relative"
+              >
+                <h4 className="font-bold text-base line-clamp-1 group-hover:text-green-400 transition-colors">
+                  {playlist.title}
+                </h4>
+                <p className="text-xs text-zinc-400 mt-1">{playlist.description || 'Không có mô tả'}</p>
 
-              {/* Nút phát nhanh khi hover */}
-              <button className="absolute right-4 bottom-4 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95">
-                <Play className="w-5 h-5 fill-current ml-0.5" />
-              </button>
-            </div>
-          ))}
-        </div>
+                <button className="absolute right-4 bottom-4 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:scale-105 active:scale-95">
+                  <Play className="w-5 h-5 fill-current ml-0.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Bài hát mới thịnh hành */}
+      {/* BƯỚC 4: Hiển thị Lịch sử bài hát THẬT */}
       <section className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây</h3>
+          <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây (Dữ liệu thật)</h3>
           <button className="text-xs text-green-400 hover:underline font-bold">Xem tất cả</button>
         </div>
 
-        <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden">
-          {mockTracks.map((track, index) => {
-            const isCurrent = currentTrack?.id === track.id;
-            return (
-              <div
-                key={track.id}
-                onClick={() => handleTrackClick(track)}
-                className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer ${isCurrent ? 'bg-zinc-900/30' : ''
-                  }`}
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <span className={`text-sm font-bold w-4 text-right ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
-                    {isCurrent && isPlaying ? '•' : index + 1}
-                  </span>
-                  <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center border border-zinc-800 overflow-hidden relative group-hover:border-zinc-700 shrink-0">
-                    {track.coverUrl ? (
-                      <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover" />
-                    ) : (
-                      <Music className="w-5 h-5 text-zinc-500" />
-                    )}
-                    <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                      }`}>
-                      {isCurrent && isPlaying ? (
-                        <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
+        {recentTracks.length === 0 ? (
+          <p className="text-zinc-500 text-sm">Bạn chưa nghe bài nào trên hệ thống này.</p>
+        ) : (
+          <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden">
+            {recentTracks.map((track, index) => {
+              const isCurrent = currentTrack?.id === track.id;
+              return (
+                <div
+                  key={track.id || index}
+                  onClick={() => handleTrackClick(track)}
+                  className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors border-b border-zinc-900/50 last:border-0 group cursor-pointer ${isCurrent ? 'bg-zinc-900/30' : ''}`}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span className={`text-sm font-bold w-4 text-right ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
+                      {isCurrent && isPlaying ? '•' : index + 1}
+                    </span>
+                    <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center border border-zinc-800 overflow-hidden relative group-hover:border-zinc-700 shrink-0">
+                      {track.coverUrl ? (
+                        <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover" />
                       ) : (
-                        <Play className="w-4.5 h-4.5 text-green-400 fill-current ml-0.5" />
+                        <Music className="w-5 h-5 text-zinc-500" />
                       )}
+                      <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        {isCurrent && isPlaying ? (
+                          <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
+                        ) : (
+                          <Play className="w-4.5 h-4.5 text-green-400 fill-current ml-0.5" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
+                        {track.title}
+                      </h4>
+                      <p className="text-xs text-zinc-400 truncate">{track.artist || 'Không có tên ca sĩ'}</p>
                     </div>
                   </div>
-                  <div className="min-w-0">
-                    <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
-                      {track.title}
-                    </h4>
-                    <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
+
+                  <div className="flex items-center gap-8 text-xs text-zinc-400">
+                    <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
+                      <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
+                    </button>
+                    <span className={`font-semibold ${isCurrent ? 'text-green-400' : ''}`}>
+                      {/* Vì DTO Backend có thể chưa tính thời lượng nên tạm để trống */}
+                      Phát nhạc
+                    </span>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-8 text-xs text-zinc-400">
-                  <span className="hidden sm:inline">{track.plays}</span>
-                  <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
-                    <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
-                  </button>
-                  <span className={`font-semibold ${isCurrent ? 'text-green-400' : ''}`}>{track.duration}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

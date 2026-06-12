@@ -1,21 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, Pause, Volume2, Maximize, ArrowLeft, Loader2 } from 'lucide-react';
+// Import dịch vụ API để gọi dữ liệu thật
+import { mediaService } from '../../services';
 import './VideoPlayer.css';
-
-// Mock danh sách video để lấy thông tin hiển thị (nếu chưa tích hợp API)
-const mockVideos: Record<string, { title: string; artist: string; filePath: string }> = {
-    'm9': {
-        title: 'Valorant Champions Tour Highlights',
-        artist: 'Riot Games Music',
-        filePath: 'http://localhost:5000/api/media/e1a63c32-b6ab-4cb7-a5ad-611ff1a94245/stream' // Thay đổi GUID khớp với dữ liệu trong database của bạn
-    },
-    'm10': {
-        title: 'Hướng dẫn ReactJS cơ bản',
-        artist: 'Phương Duy',
-        filePath: 'http://localhost:5000/api/media/f47ac10b-58cc-4372-a567-0e02b2c3d479/stream'
-    }
-};
 
 export const VideoPlayer = () => {
     const { id } = useParams<{ id: string }>();
@@ -27,17 +15,44 @@ export const VideoPlayer = () => {
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(0.8);
+
     const [isLoading, setIsLoading] = useState(true);
     const [showControls, setShowControls] = useState(true);
 
-    // Lấy link phát video từ API của Backend (với ID tương ứng từ Route)
-    const videoInfo = (id && mockVideos[id]) || {
-        title: 'Đang phát Video',
-        artist: 'TuneVault Media',
-        filePath: `http://localhost:5000/api/media/${id}/stream`
-    };
+    // BƯỚC 1: Khai báo State để lưu thông tin video từ Backend
+    const [videoInfo, setVideoInfo] = useState<{
+        title: string;
+        artist: string;
+        filePath: string;
+    } | null>(null);
 
-    // Tự động ẩn thanh điều khiển (Controls Overlay) sau 3 giây nếu không di chuột
+    // BƯỚC 2: Gọi API lấy chi tiết video dựa trên ID ở URL
+    useEffect(() => {
+        const fetchVideoDetails = async () => {
+            if (!id) return;
+            try {
+                setIsLoading(true);
+                // Gọi API lấy Meta Data của Video
+                const response = await mediaService.getMediaDetails(id);
+                if (response.success && response.data) {
+                    setVideoInfo({
+                        title: response.data.title,
+                        artist: response.data.uploaderId || 'Chưa rõ tác giả',
+
+                        filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
+                    });
+                }
+            } catch (error) {
+                console.error("Lỗi khi tải thông tin video:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchVideoDetails();
+    }, [id]);
+
+    // Tự động ẩn thanh điều khiển sau 3 giây
     useEffect(() => {
         let timeoutId: number;
         const handleMouseMove = () => {
@@ -57,7 +72,6 @@ export const VideoPlayer = () => {
         };
     }, [isPlaying]);
 
-    // Nút Play / Pause
     const togglePlay = () => {
         if (!videoRef.current) return;
         if (isPlaying) {
@@ -69,22 +83,19 @@ export const VideoPlayer = () => {
         }
     };
 
-    // Đồng bộ thời gian hiện tại của video
     const handleTimeUpdate = () => {
         if (videoRef.current) {
             setCurrentTime(videoRef.current.currentTime);
         }
     };
 
-    // Đọc tổng độ dài video khi tải xong thông tin (metadata)
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
             setDuration(videoRef.current.duration);
-            setIsLoading(false);
+            setIsLoading(false); // Khi video đã có sẵn sẵng để phát, tắt Loading
         }
     };
 
-    // Kéo thanh trượt để tua video
     const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newTime = parseFloat(e.target.value);
         setCurrentTime(newTime);
@@ -93,7 +104,6 @@ export const VideoPlayer = () => {
         }
     };
 
-    // Điều chỉnh âm lượng bằng slider
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newVolume = parseFloat(e.target.value);
         setVolume(newVolume);
@@ -102,7 +112,6 @@ export const VideoPlayer = () => {
         }
     };
 
-    // Phóng to toàn màn hình
     const toggleFullscreen = () => {
         if (videoRef.current) {
             if (videoRef.current.requestFullscreen) {
@@ -111,7 +120,6 @@ export const VideoPlayer = () => {
         }
     };
 
-    // Định dạng hiển thị thời gian (phút:giây)
     const formatTime = (timeInSeconds: number) => {
         if (isNaN(timeInSeconds)) return '0:00';
         const mins = Math.floor(timeInSeconds / 60);
@@ -119,20 +127,36 @@ export const VideoPlayer = () => {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
+    // BƯỚC 4: Hiển thị nếu lỗi không tìm thấy Video
+    if (!videoInfo && !isLoading) {
+        return (
+            <div className="w-screen h-screen bg-black flex flex-col items-center justify-center text-white space-y-4">
+                <h2 className="text-2xl font-bold text-red-500">Lỗi: Không tìm thấy Video!</h2>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="px-6 py-2 bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors"
+                >
+                    Quay lại
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="video-player-container w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden select-none">
-
-            {/* Video chính */}
-            <video
-                ref={videoRef}
-                src={videoInfo.filePath}
-                className="w-full h-full object-contain cursor-pointer"
-                onClick={togglePlay}
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
-                onWaiting={() => setIsLoading(true)}
-                onPlaying={() => setIsLoading(false)}
-            />
+            {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
+            {videoInfo && (
+                <video
+                    ref={videoRef}
+                    src={videoInfo.filePath}
+                    className="w-full h-full object-contain cursor-pointer"
+                    onClick={togglePlay}
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onWaiting={() => setIsLoading(true)}
+                    onPlaying={() => setIsLoading(false)}
+                />
+            )}
 
             {/* Vòng quay chờ tải Video (Loading) */}
             {isLoading && (
@@ -141,7 +165,7 @@ export const VideoPlayer = () => {
                 </div>
             )}
 
-            {/* Nút quay lại góc trái phía trên */}
+            {/* Nút quay lại */}
             <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                 <button
                     onClick={() => navigate(-1)}
@@ -151,68 +175,59 @@ export const VideoPlayer = () => {
                 </button>
             </div>
 
-            {/* Thanh điều khiển video dưới đáy */}
-            <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <div className="space-y-4 max-w-5xl mx-auto">
-
-                    {/* Tên video & tác giả */}
-                    <div className="mb-2">
-                        <h2 className="text-xl font-extrabold text-slate-100">{videoInfo.title}</h2>
-                        <p className="text-sm text-zinc-400 font-semibold">{videoInfo.artist}</p>
-                    </div>
-
-                    {/* Thanh chạy tiến trình tua video */}
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-zinc-400">{formatTime(currentTime)}</span>
-                        <input
-                            type="range"
-                            min={0}
-                            max={duration || 100}
-                            value={currentTime}
-                            onChange={handleProgressChange}
-                            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-green-500 outline-none transition-all hover:h-2"
-                        />
-                        <span className="text-xs font-bold text-zinc-400">{formatTime(duration)}</span>
-                    </div>
-
-                    {/* Nút bấm (Play/Pause, Âm lượng, Toàn màn hình) */}
-                    <div className="flex items-center justify-between pt-1">
-                        <div className="flex items-center gap-6">
-
-                            {/* Nút Play/Pause */}
-                            <button
-                                onClick={togglePlay}
-                                className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md"
-                            >
-                                {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
-                            </button>
-
-                            {/* Slider Âm lượng */}
-                            <div className="flex items-center gap-2 group">
-                                <Volume2 className="w-5 h-5 text-zinc-400 hover:text-slate-100 cursor-pointer" />
-                                <input
-                                    type="range"
-                                    min={0}
-                                    max={1}
-                                    step={0.05}
-                                    value={volume}
-                                    onChange={handleVolumeChange}
-                                    className="w-20 h-1 rounded-full appearance-none bg-zinc-850 accent-green-500 outline-none"
-                                />
-                            </div>
+            {/* Thanh điều khiển video dưới đáy (Liên kết với videoInfo) */}
+            {videoInfo && (
+                <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className="space-y-4 max-w-5xl mx-auto">
+                        <div className="mb-2">
+                            <h2 className="text-xl font-extrabold text-slate-100">{videoInfo.title}</h2>
+                            <p className="text-sm text-zinc-400 font-semibold">{videoInfo.artist}</p>
                         </div>
 
-                        {/* Phóng to toàn màn hình */}
-                        <button
-                            onClick={toggleFullscreen}
-                            className="p-2 text-zinc-450 hover:text-green-400 transition-colors"
-                        >
-                            <Maximize className="w-6 h-6" />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-zinc-400">{formatTime(currentTime)}</span>
+                            <input
+                                type="range"
+                                min={0}
+                                max={duration || 100}
+                                value={currentTime}
+                                onChange={handleProgressChange}
+                                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-green-500 outline-none transition-all hover:h-2"
+                            />
+                            <span className="text-xs font-bold text-zinc-400">{formatTime(duration)}</span>
+                        </div>
 
+                        <div className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-6">
+                                <button
+                                    onClick={togglePlay}
+                                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md"
+                                >
+                                    {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                                </button>
+                                <div className="flex items-center gap-2 group">
+                                    <Volume2 className="w-5 h-5 text-zinc-400 hover:text-slate-100 cursor-pointer" />
+                                    <input
+                                        type="range"
+                                        min={0}
+                                        max={1}
+                                        step={0.05}
+                                        value={volume}
+                                        onChange={handleVolumeChange}
+                                        className="w-20 h-1 rounded-full appearance-none bg-zinc-850 accent-green-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                onClick={toggleFullscreen}
+                                className="p-2 text-zinc-450 hover:text-green-400 transition-colors"
+                            >
+                                <Maximize className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
