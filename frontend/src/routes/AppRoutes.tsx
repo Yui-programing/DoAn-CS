@@ -8,6 +8,8 @@ import Profile from '../pages/Profile/Profile';
 import Notifications from '../pages/Notifications/Notifications';
 import ShareInbox from '../pages/ShareInbox/ShareInbox';
 import Login from '../pages/Login/Login';
+import Register from '../pages/Register/Register';
+import ForgotPassword from '../pages/ForgotPassword/ForgotPassword';
 import { VideoPlayer } from '../pages/VideoPlayer/VideoPlayer';
 
 // Import cánh cửa bảo vệ bạn vừa tạo
@@ -18,24 +20,28 @@ export const AppRoutes = () => {
     <Routes>
       {/* 1. Các trang ai cũng vào được (Public Route) */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* 2. CÁC TRANG CẦN BẢO VỆ (Protected Route) */}
-      <Route element={<ProtectedRoute />}>
+      {/* Nhóm trang dùng chung MainLayout */}
+      <Route path="/" element={<MainLayout />}>
+        {/* Các trang ai cũng truy cập được (Public) */}
+        <Route index element={<Home />} />
+        <Route path="search" element={<Search />} />
+        <Route path="playlist/:id" element={<PlaylistDetail />} />
 
-        {/* Nhóm trang có Sidebar và Header chung */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Home />} />
-          <Route path="search" element={<Search />} />
+        {/* Các trang cần đăng nhập mới vào được (Protected) */}
+        <Route element={<ProtectedRoute />}>
           <Route path="library" element={<Library />} />
-          <Route path="playlist/:id" element={<PlaylistDetail />} />
           <Route path="profile" element={<Profile />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="share" element={<ShareInbox />} />
         </Route>
+      </Route>
 
-        {/* Trang xem video toàn màn hình (vẫn cần đăng nhập) */}
+      {/* Trang xem video toàn màn hình (Cần đăng nhập) */}
+      <Route element={<ProtectedRoute />}>
         <Route path="/video/:id" element={<VideoPlayer />} />
-
       </Route>
     </Routes>
   );

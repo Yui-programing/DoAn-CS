@@ -31,6 +31,9 @@ FROM nginx:alpine
 # Sao chép toàn bộ thư mục sản phẩm tĩnh 'dist' từ tầng build sang thư mục phân phối của Nginx
 COPY --from=build /app/dist /usr/share/nginx/html 
 
+# Sao chép file cấu hình Nginx tùy chỉnh để hỗ trợ SPA Routing (tránh lỗi 404 khi F5)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Mở cổng 80 nội bộ của container Nginx
 EXPOSE 80
 

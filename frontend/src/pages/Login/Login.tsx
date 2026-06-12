@@ -1,11 +1,11 @@
 import { useAuth } from '../../contexts/AuthContext.tsx';
-import { useState } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, NavLink, Link } from 'react-router-dom';
 import { Music, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
-import api from '../../services/api';
+import { authService } from '../../services/authService';
 
 export const Login = () => {
-  const { loginState } = useAuth();
+  const { isAuthenticated, loginState } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,20 +13,27 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Tự động chuyển hướng nếu đã đăng nhập
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(''); // Xóa lỗi cũ nếu có
     setIsLoading(true);  // Bật trạng thái đang xoay (Task 4)
 
     try {
-      // Gọi API thực tế lên Backend (Task 1)
-      const response = await api.post('/auth/login', {
+      // Gọi API thực tế lên Backend qua authService
+      const response = await authService.login({
         email: email,
         password: password
       });
 
-      // Nếu Backend trả về 200 OK
-      if (response.data) {
+      // Nếu Backend trả về thành công
+      if (response.success) {
         loginState(); // Bật trạng thái đã đăng nhập an toàn
         navigate('/'); // Cho vào nhà
       }
@@ -85,7 +92,7 @@ export const Login = () => {
           <div className="space-y-1">
             <div className="flex justify-between items-center px-1">
               <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Mật khẩu</label>
-              <a href="#" className="text-[10px] text-green-400 font-bold hover:underline">Quên mật khẩu?</a>
+              <Link to="/forgot-password" className="text-[10px] text-green-400 font-bold hover:underline">Quên mật khẩu?</Link>
             </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
@@ -133,15 +140,8 @@ export const Login = () => {
         <div className="flex flex-col items-center gap-2 text-xs">
           <p className="text-zinc-500 font-semibold">
             Chưa có tài khoản?{' '}
-            <a href="#" className="text-green-400 font-bold hover:underline">Đăng ký ngay</a>
+            <Link to="/register" className="text-green-400 font-bold hover:underline">Đăng ký ngay</Link>
           </p>
-
-          <NavLink
-            to="/"
-            className="text-zinc-400 hover:text-green-400 font-bold hover:underline transition-colors mt-2"
-          >
-            Bỏ qua đăng nhập (Vào App trực tiếp)
-          </NavLink>
         </div>
 
       </div>

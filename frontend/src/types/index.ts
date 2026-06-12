@@ -106,6 +106,7 @@ export interface RegisterRequest {
 }
 
 export interface UpdateProfileRequest {
+    fullName: string;
     bio?: string;
     avatarUrl?: string;
 }

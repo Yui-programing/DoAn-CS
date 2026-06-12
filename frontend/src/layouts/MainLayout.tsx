@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import { usePlayer } from '../contexts/PlayerContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Home, 
   Search, 
@@ -29,6 +30,7 @@ const formatTime = (seconds: number) => {
 };
 
 export const MainLayout = () => {
+  const { isAuthenticated, user, logoutState } = useAuth();
   const {
     currentTrack,
     isPlaying,
@@ -225,13 +227,23 @@ export const MainLayout = () => {
 
           {/* Footer Sidebar / Nút đăng nhập/đăng xuất */}
           <div className="mt-auto">
-            <NavLink 
-              to="/login" 
-              className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-all duration-200"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Đăng nhập / Thoát</span>
-            </NavLink>
+            {isAuthenticated ? (
+              <button 
+                onClick={logoutState}
+                className="w-full flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-all duration-200 text-left"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Đăng xuất</span>
+              </button>
+            ) : (
+              <NavLink 
+                to="/login" 
+                className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-green-400 hover:bg-green-950/20 hover:text-green-300 transition-all duration-200"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Đăng nhập</span>
+              </NavLink>
+            )}
           </div>
         </aside>
 
@@ -247,13 +259,30 @@ export const MainLayout = () => {
               </span>
             </div>
             
-            {/* Avatar góc phải */}
-            <NavLink to="/profile" className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all">
-              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
-                PD
+            {/* Avatar / Nút điều khiển đăng nhập đăng ký */}
+            {isAuthenticated && user ? (
+              <NavLink to="/profile" className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all">
+                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
+                  {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <span className="text-sm font-semibold text-zinc-300">{user.fullName || 'Tài khoản'}</span>
+              </NavLink>
+            ) : (
+              <div className="flex items-center gap-6">
+                <Link 
+                  to="/register" 
+                  className="text-sm font-bold text-zinc-450 hover:text-slate-100 transition-colors"
+                >
+                  Đăng ký
+                </Link>
+                <Link 
+                  to="/login" 
+                  className="px-6 py-2.5 bg-white text-black font-bold text-sm rounded-full hover:scale-105 transition-transform active:scale-95 shadow-md"
+                >
+                  Đăng nhập
+                </Link>
               </div>
-              <span className="text-sm font-semibold text-zinc-300">Phương Duy</span>
-            </NavLink>
+            )}
           </header>
 
           {/* Nội dung động thay đổi theo route */}

@@ -46,5 +46,19 @@ export const mediaService = {
     getPlayHistory: async (): Promise<ApiResponse<PlayHistory[]>> => {
         const response = await api.get<ApiResponse<PlayHistory[]>>('/history');
         return response.data;
+    },
+
+    searchSongs: async (keyword: string, pageSize: number = 10): Promise<ApiResponse<any>> => {
+        const response = await api.get<ApiResponse<any>>('/search/full', {
+            params: { keyword, filterType: 'Song', pageSize }
+        });
+        return response.data;
+    },
+
+    searchAll: async (keyword: string, pageSize: number = 20): Promise<ApiResponse<any>> => {
+        const response = await api.get<ApiResponse<any>>('/search/full', {
+            params: { keyword, pageSize }
+        });
+        return response.data;
     }
 };

@@ -21,5 +21,11 @@ export const authService = {
     logout: async (): Promise<ApiResponse<boolean>> => {
         const response = await api.post<ApiResponse<boolean>>('/auth/logout');
         return response.data;
+    },
+
+    // Hàm quên mật khẩu
+    forgotPassword: async (email: string): Promise<ApiResponse<any>> => {
+        const response = await api.post<ApiResponse<any>>('/auth/forgot-password', { email });
+        return response.data;
     }
 };

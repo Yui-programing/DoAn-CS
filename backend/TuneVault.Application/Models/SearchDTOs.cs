@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,6 +12,10 @@ namespace TuneVault.Application.Models
         public string Name { get; set; } = null!;
         public string Type { get; set; } = null!; // "Song", "Artist", "Playlist"
         public string CoverUrl { get; set; } = null!;
+        public string? ArtistName { get; set; }
+        public int MediaType { get; set; }
+        public int ViewCount { get; set; }
+        public int DurationInSeconds { get; set; }
     }
 
     public class SuggestionResultDto
