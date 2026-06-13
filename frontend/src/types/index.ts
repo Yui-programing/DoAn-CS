@@ -70,11 +70,10 @@ export interface SharedPlaylist {
 export interface Notification {
     id: string;
     userId: string;
-    type: string;
-    message: string;
+    type: number;
+    payloadJson: string;
     isRead: boolean;
     createdAt: string;
-    referenceId?: string;
 }
 
 export interface Favorite {

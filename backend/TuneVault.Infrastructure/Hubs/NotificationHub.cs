@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace TuneVault.API.Hubs
+namespace TuneVault.Infrastructure.Hubs
 {
     [Authorize]
     public class NotificationHub : Hub

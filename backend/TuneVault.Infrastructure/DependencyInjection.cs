@@ -31,9 +31,9 @@ namespace TuneVault.Infrastructure
             services.AddScoped<ISharedRepository, SharedMediaRepository>();
             services.AddScoped<ISearchRepository,  SearchRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
-            // Đăng ký Service
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.IEmailService, EmailService>();
+            services.AddScoped<TuneVault.Application.Common.Interfaces.INotificationService, NotificationService>();
 
             return services;
         }

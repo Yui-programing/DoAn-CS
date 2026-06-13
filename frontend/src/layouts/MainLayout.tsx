@@ -20,6 +20,7 @@ import {
   Music,
   LogOut
 } from 'lucide-react';
+import { NotificationBell } from '../components/NotificationBell';
 
 // Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
 const formatTime = (seconds: number) => {
@@ -261,12 +262,15 @@ export const MainLayout = () => {
             
             {/* Avatar / Nút điều khiển đăng nhập đăng ký */}
             {isAuthenticated && user ? (
-              <NavLink to="/profile" className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all">
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
-                  {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <span className="text-sm font-semibold text-zinc-300">{user.fullName || 'Tài khoản'}</span>
-              </NavLink>
+              <div className="flex items-center gap-4">
+                <NotificationBell />
+                <NavLink to="/profile" className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all">
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
+                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="text-sm font-semibold text-zinc-300">{user.fullName || 'Tài khoản'}</span>
+                </NavLink>
+              </div>
             ) : (
               <div className="flex items-center gap-6">
                 <Link 

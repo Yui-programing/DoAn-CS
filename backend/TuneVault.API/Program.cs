@@ -3,7 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TuneVault.Application;
 using TuneVault.Infrastructure;
-using TuneVault.API.Hubs;
+using TuneVault.Infrastructure.Hubs;
 
 
 using Microsoft.OpenApi.Models;
@@ -74,12 +74,21 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
 
-    //Cấu hình đọc token từ cookie
+    // Cấu hình đọc token từ Cookie HOẶC Query String (cho SignalR)
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
-            // Kiểm tra xem trong Cookie có chứa key "token" không (token ở đây chính là tên cookie được đặt ởAuthController)
+            // 1. Dành cho SignalR (Gửi token qua query string 'access_token')
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+            {
+                context.Token = accessToken;
+                return Task.CompletedTask;
+            }
+
+            // 2. Dành cho API thường (Đọc từ Cookie)
             if (context.Request.Cookies.TryGetValue("token", out var token))
             {
                 context.Token = token;

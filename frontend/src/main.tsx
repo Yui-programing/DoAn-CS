@@ -5,14 +5,17 @@ import { PlayerProvider } from './contexts/PlayerContext.tsx'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
+import { NotificationProvider } from './contexts/NotificationContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <PlayerProvider>
-          <App />
-        </PlayerProvider>
+        <NotificationProvider>
+          <PlayerProvider>
+            <App />
+          </PlayerProvider>
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
