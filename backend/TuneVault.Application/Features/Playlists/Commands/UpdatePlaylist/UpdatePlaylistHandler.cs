@@ -1,4 +1,4 @@
-﻿using FluentValidation.Validators;
+using FluentValidation.Validators;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,13 +21,7 @@ namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
 
         public async Task<Guid> Handle(UpdatePlaylistCommand request, CancellationToken cancellationToken)
         {
-            // 1. Authorization Check: Verify if the current user is the owner of the playlist
-            var isOwner = await _playlistRepository.IsOwnerAsync(request.Id, request.OwnerId);
-            if (!isOwner)
-            {
-                throw new UnauthorizedAccessException("Bạn không có quyền cập nhật playlist này.");
-            }
-            // 2. Map command request data to your Domain Entity
+            // 1. Map command request data to your Domain Entity
             var playlist = new Playlist
             {
                 Id = request.Id,

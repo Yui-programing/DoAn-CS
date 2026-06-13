@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,13 +19,6 @@ namespace TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack
         // 2. Sửa kiểu trả về của hàm Handle thành Task<Guid>
         public async Task<Guid> Handle(AddPlaylistTrackCommand request, CancellationToken cancellationToken)
         {
-            // 1. Authorization Check: Kiểm tra quyền sở hữu playlist
-            var isOwner = await _playlistRepository.IsOwnerAsync(request.PlaylistId, request.UserId);
-            if (!isOwner)
-            {
-                // Thay vì return Fail, ta throw Exception (Bạn có thể custom lại class Exception này nếu muốn)
-                throw new UnauthorizedAccessException("Không có quyền để thêm track vào playlist");
-            }
 
             var isPlaylistDeleted = await _playlistRepository.IsPlaylistDeletedAsync(request.PlaylistId);
 
