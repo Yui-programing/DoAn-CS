@@ -2,8 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist;
@@ -20,10 +19,11 @@ public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistComman
 
     public async Task<Guid> Handle(CreatePlaylistCommand request, CancellationToken cancellationToken)
     {
+        Guid newPlaylistId = Guid.NewGuid();
         // 1. Map command request data to your Domain Entity
         var playlist = new Playlist
         {
-            Id = Guid.NewGuid(), // Generate the target Guid
+            Id = newPlaylistId, // Generate the target Guid
             Title = request.Title,
             Description = request.Description,
             IsPublic = request.IsPublic,
@@ -34,6 +34,6 @@ public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistComman
         var createdId = await _playlistRepository.CreateAsync(playlist);
 
         // 3. Return the exact response format you designed
-        return request.Id;
+        return newPlaylistId;
     }
 }

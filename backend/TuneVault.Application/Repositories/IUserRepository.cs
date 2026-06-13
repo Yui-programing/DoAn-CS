@@ -1,4 +1,4 @@
-﻿// Đường dẫn: TuneVault.Application.Repositories/IUserRepository.cs
+// Đường dẫn: TuneVault.Application.Repositories/IUserRepository.cs
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Repositories
@@ -8,6 +8,7 @@ namespace TuneVault.Application.Repositories
         // 1. Dành cho Authentication (Đăng nhập / Đăng ký)
         Task<User?> GetByEmailAsync(string email);
         Task<bool> CreateUserWithProfileAsync(User user, string fullName);
+        Task<bool> UpdatePasswordAsync(string userId, string passwordHash);
 
         // 2. Dành cho Profile (Lấy thông tin và Cập nhật)
         Task<UserProfile?> GetProfileByUserIdAsync(string userId); 

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 
 namespace TuneVault.Application.Features.Auth.Commands.Register
 {
@@ -7,5 +7,6 @@ namespace TuneVault.Application.Features.Auth.Commands.Register
         public string Name { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
+        public string OtpCode { get; set; } = null!;
     }
 }

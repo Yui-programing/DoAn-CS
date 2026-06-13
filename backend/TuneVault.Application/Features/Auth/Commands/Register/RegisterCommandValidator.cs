@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace TuneVault.Application.Features.Auth.Commands.Register
 {
@@ -17,6 +17,10 @@ namespace TuneVault.Application.Features.Auth.Commands.Register
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Mật khẩu không được để trống.")
                 .MinimumLength(6).WithMessage("Mật khẩu phải có ít nhất 6 ký tự.");
+
+            RuleFor(x => x.OtpCode)
+                .NotEmpty().WithMessage("Mã OTP không được để trống.")
+                .Length(6).WithMessage("Mã OTP phải có đúng 6 ký tự.");
         }
     }
 }

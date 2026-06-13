@@ -1,6 +1,7 @@
 ---------------------------------------------------------
 -- 1. DROP TABLES (Xóa bảng theo thứ tự từ con đến cha)
 ---------------------------------------------------------
+IF OBJECT_ID('OtpVerification', 'U') IS NOT NULL DROP TABLE OtpVerification;
 IF OBJECT_ID('MediaTag', 'U') IS NOT NULL DROP TABLE MediaTag;
 IF OBJECT_ID('Tag', 'U') IS NOT NULL DROP TABLE Tag;
 IF OBJECT_ID('PlaylistTrack', 'U') IS NOT NULL DROP TABLE PlaylistTrack;
@@ -15,10 +16,23 @@ IF OBJECT_ID('Album', 'U') IS NOT NULL DROP TABLE Album;
 IF OBJECT_ID('Artist', 'U') IS NOT NULL DROP TABLE Artist;
 IF OBJECT_ID('UserProfile', 'U') IS NOT NULL DROP TABLE UserProfile;
 IF OBJECT_ID('User', 'U') IS NOT NULL DROP TABLE [User];
+GO
 
 ---------------------------------------------------------
 -- 2. CREATE TABLES
 ---------------------------------------------------------
+-- Bảng lưu trữ OTP
+CREATE TABLE OtpVerification
+(
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    Email NVARCHAR(256) NOT NULL,
+    OtpCode NVARCHAR(6) NOT NULL,
+    Purpose NVARCHAR(50) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    ExpiresAt DATETIME2 NOT NULL,
+    IsUsed BIT NOT NULL DEFAULT 0
+);
+
 -- Bảng chứa thông tin Đăng nhập & Phân quyền
 CREATE TABLE [User]
 (
@@ -176,6 +190,7 @@ CREATE TABLE Notification
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserId) REFERENCES UserProfile(Id) ON DELETE CASCADE
 );
+GO
 
 ---------------------------------------------------------
 -- 3. INSERT SEED DATA (Dữ liệu mẫu)
@@ -184,8 +199,8 @@ CREATE TABLE Notification
 INSERT INTO [User]
     (Id, Email, PasswordHash, [Role])
 VALUES
-    ('U1', 'hoangphuc@gmail.com', '$2a$11$abcdefghijklmnopqrstuv...', 'User'),
-    ('U2', 'khachhang2@gmail.com', '$2a$11$abcdefghijklmnopqrstuv...', 'User');
+    ('U1', 'hoangphuc@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
+    ('U2', 'khachhang2@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User');
 
 -- Insert UserProfile
 INSERT INTO UserProfile
@@ -197,13 +212,15 @@ VALUES
 -- Khai báo biến để tái sử dụng Id
 DECLARE @Artist1Id UNIQUEIDENTIFIER = NEWID();
 DECLARE @Artist2Id UNIQUEIDENTIFIER = NEWID();
+DECLARE @Artist3Id UNIQUEIDENTIFIER = NEWID();
 
 -- Insert Artist
 INSERT INTO Artist
     (Id, Name, Bio)
 VALUES
     (@Artist1Id, N'Ngọt Band', N'Ban nhạc Indie Việt Nam'),
-    (@Artist2Id, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi');
+    (@Artist2Id, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi'),
+    (@Artist3Id, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam');
 
 DECLARE @Album1Id UNIQUEIDENTIFIER = NEWID();
 
@@ -222,28 +239,26 @@ VALUES
     ('T3', N'Gaming'),
     ('T4', N'Chill');
 
--- Khai báo 10 Media Items ID
-DECLARE @M1 UNIQUEIDENTIFIER = NEWID(), @M2 UNIQUEIDENTIFIER = NEWID(),
-        @M3 UNIQUEIDENTIFIER = NEWID(), @M4 UNIQUEIDENTIFIER = NEWID(),
-        @M5 UNIQUEIDENTIFIER = NEWID(), @M6 UNIQUEIDENTIFIER = NEWID(),
-        @M7 UNIQUEIDENTIFIER = NEWID(), @M8 UNIQUEIDENTIFIER = NEWID(),
-        @M9 UNIQUEIDENTIFIER = NEWID(), @M10 UNIQUEIDENTIFIER = NEWID();
+-- Khai báo các Media Items ID thật (lưu online Cloudinary & wwwroot local)
+DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05', 
+        @M2 UNIQUEIDENTIFIER = 'DC1C6608-72FE-4CAD-8DEC-6E0911050456',
+        @M3 UNIQUEIDENTIFIER = '4A012ECD-70E7-4DDB-90F7-D51A30A88491', 
+        @M4 UNIQUEIDENTIFIER = '54D1B50E-1988-41BA-9B2E-B939595D512E',
+        @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C',
+        @M6 UNIQUEIDENTIFIER = '455972D7-D1DC-4483-9794-6D809679C8E1',
+        @M9 UNIQUEIDENTIFIER = 'B19B93F2-E96F-44DF-863F-1710E55F6164';
 
--- Insert MediaItem (8 Audio, 2 Video)
+-- Insert MediaItem (Chỉ lưu các bài hát/MV thực tế có file thật)
 INSERT INTO MediaItem
-    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId)
+    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', '/media/lancuoi.mp3', NULL , 210, 0, 'U1', @Artist1Id, @Album1Id),
-    (@M2, N'Em Dạo Này', '/media/emdaonay.mp3', NULL, 195, 0, 'U1', @Artist1Id, @Album1Id),
-    (@M3, N'Die For You', '/media/dieforyou.mp3', NULL, 205, 0, 'U1', @Artist2Id, NULL),
-    (@M4, N'Ignite', '/media/ignite.mp3', NULL, 180, 0, 'U1', @Artist2Id, NULL),
-    (@M5, N'Ticking Away', '/media/tickingaway.mp3', NULL, 215, 0, 'U2', @Artist2Id, NULL),
-    (@M6, N'Lofi Cafe Sài Gòn', '/media/lofi1.mp3', NULL, 3600, 0, 'U1', NULL, NULL),
-    (@M7, N'Nhạc tập trung Code', '/media/focus.mp3', NULL, 1800, 0, 'U2', NULL, NULL),
-    (@M8, N'Guitar Acoustic Không Lời', '/media/guitar.mp3', NULL, 240, 0, 'U2', NULL, NULL),
-    -- Video
-    (@M9, N'Valorant Champions Tour Highlights', '/media/vct_highlight.mp4', NULL, 600, 1, 'U1', @Artist2Id, NULL),
-    (@M10, N'Hướng dẫn ReactJS cơ bản', '/media/react.mp4', NULL, 1200, 1, 'U2', NULL, NULL);
+    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1780998869/TuneVault/Songs/lancuoi_wbqgz0.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1780998872/TuneVault/Covers/do2uqhldg52rurqgstbi.jpg', 210, 0, 'U1', @Artist1Id, @Album1Id, 1200000),
+    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/emdaonay_zosad6.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id, 850000),
+    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL, 620000),
+    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL, 430000),
+    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL, 280000),
+    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', @Artist3Id, NULL, 150000),
+    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', @Artist3Id, NULL, 950000);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag
@@ -255,7 +270,6 @@ VALUES
     (@M4, 'T3'),
     (@M5, 'T3'),
     (@M6, 'T4'),
-    (@M7, 'T4'),
     (@M9, 'T3');
 
 -- Khai báo Playlist
@@ -266,7 +280,7 @@ DECLARE @P2 UNIQUEIDENTIFIER = NEWID();
 INSERT INTO Playlist
     (Id, Title, OwnerId, TracksCount, TotalDuration)
 VALUES
-    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 3, 4205),
+    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 3, 663),
     (@P2, N'Playlist chiến Valorant', 'U1', 3, 600);
 
 -- Insert PlaylistTrack
@@ -291,3 +305,4 @@ INSERT INTO Notification
     (UserId, Type, PayloadJson)
 VALUES
     ('U2', 0, N'{"SenderId": "U1", "Message": "Lê Phạm Hoàng Phúc đã chia sẻ một playlist cho bạn."}');
+GO

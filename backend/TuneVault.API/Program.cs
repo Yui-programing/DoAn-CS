@@ -73,11 +73,37 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
+
+    //Cấu hình đọc token từ cookie
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            // Kiểm tra xem trong Cookie có chứa key "token" không (token ở đây chính là tên cookie được đặt ởAuthController)
+            if (context.Request.Cookies.TryGetValue("token", out var token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // GỌI GOM CẤU HÌNH CỦA CÁC TẦNG DƯỚI TẠI ĐÂY
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
+
+// ✅ ĐƯA CẤU HÌNH CORS LÊN ĐÂY (TRƯỚC khi gọi builder.Build)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Cổng 3000 của Frontend
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
@@ -96,6 +122,9 @@ if (app.Environment.IsDevelopment())
 // app.UseHttpsRedirection();
 
 app.UseRouting();
+
+// ✅ KÍCH HOẠT CORS TẠI ĐÂY (Sau UseRouting và Trước UseAuthentication)
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication(); // Quẹt thẻ kiểm tra danh tính
 app.UseAuthorization();  // Quét quyền hạn

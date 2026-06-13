@@ -61,4 +61,12 @@ public class MediaItemRepository : IMediaItemRepository
         int rowsAffected = await db.ExecuteAsync(sql, new { Id = id });
         return rowsAffected > 0;
     }
+        public async Task IncrementPlayCountAsync(Guid id)
+    {
+        // Tăng cột ViewCount trong bảng MediaItem lên 1 đơn vị
+        const string sql = "UPDATE MediaItem SET ViewCount = ViewCount + 1 WHERE Id = @Id";
+        using IDbConnection db = new SqlConnection(_connectionString);
+        await db.ExecuteAsync(sql, new { Id = id });
+    }
+
 }

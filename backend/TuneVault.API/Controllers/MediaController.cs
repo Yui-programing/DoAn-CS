@@ -9,7 +9,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using TuneVault.API.Common;
 using TuneVault.Application.Features.Medias.Commands.UploadMedia;
-using TuneVault.Application.Interfaces;
 using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 using TuneVault.Domain.Enums;
@@ -84,7 +83,7 @@ public class MediaController : ControllerBase
         }
 
         // 5. Gán thời gian phát nhạc mặc định
-        int duration = 180; 
+        int duration = 180;
 
         // 6. Lưu metadata xuống SQL Server thông qua MediatR Command
         var command = new UploadMediaCommand
@@ -112,6 +111,57 @@ public class MediaController : ControllerBase
             return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy media."));
 
         return Ok(ApiResponse<MediaItem>.SetSuccess(media));
+    }
+
+    // API ghi nhận lượt nghe nhạc
+    [HttpGet("{id:guid}/stream")]
+    [AllowAnonymous] // cho phép mọi người đều có thể stream nhạc kh bắt buộc đăng nhập
+    public async Task<IActionResult> StreamMedia(Guid id)
+    {
+        var media = await _mediaItemRepository.GetByIdAsync(id);
+        if (media == null)
+            return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy file media."));
+
+        // Nếu là URL tuyệt đối (trên mây như Cloudinary) thì redirect
+        if (media.FilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+            media.FilePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return Redirect(media.FilePath);
+        }
+
+        // Nếu là đường dẫn cục bộ (ví dụ: /media/react.mp4)
+        var relativePath = media.FilePath.TrimStart('/');
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
+        
+        // Dự phòng: Tìm ở thư mục frontend public/media nếu đang ở môi trường chạy dev
+        if (!System.IO.File.Exists(filePath))
+        {
+            var parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
+            if (parentDir != null)
+            {
+                filePath = Path.Combine(parentDir, "frontend", "public", relativePath);
+            }
+        }
+
+        if (!System.IO.File.Exists(filePath))
+        {
+            return NotFound(ApiResponse<object>.SetFailure(message: $"Không tìm thấy file vật lý tại {filePath}."));
+        }
+
+        // Xác định Content-Type
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        var contentType = extension switch
+        {
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            _ => "application/octet-stream"
+        };
+
+        // Bật enableRangeProcessing = true để hỗ trợ Range header phát video/audio
+        var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        return File(fileStream, contentType, enableRangeProcessing: true);
     }
 }
 

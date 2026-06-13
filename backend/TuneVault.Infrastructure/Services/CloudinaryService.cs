@@ -2,7 +2,7 @@ using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using System.IO;
 using Microsoft.Extensions.Options;
-using TuneVault.Application.Interfaces;
+using TuneVault.Application.Repositories;
 using TuneVault.Infrastructure.Configurations;
 
 namespace TuneVault.Infrastructure.Services;

@@ -9,11 +9,11 @@ namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
     public class UpdatePlaylistCommand: IRequest<Guid>
     {
         public Guid Id { get; set; }
-        public String title { get; set; } = string.Empty;
+        public String Title { get; set; } = string.Empty;
 
-        public String? description { get; set; }
+        public String? Description { get; set; }
 
-        public bool isPublic { get; set; }
+        public bool IsPublic { get; set; }
 
         public string OwnerId { get; set; } = null!;
     }

@@ -1,9 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
-
-using TuneVault.Application.Features.Playlists.Interfaces;
+using TuneVault.Application.Repositories;
 
 namespace TuneVault.Application.Features.Playlists.Commands.RemovePlaylistTrack
 {
@@ -17,12 +16,16 @@ namespace TuneVault.Application.Features.Playlists.Commands.RemovePlaylistTrack
         }
         public async Task<Guid> Handle(RemovePlaylistTrackCommand request, CancellationToken cancellationToken)
         {
-            // 1. Authorization Check: Verify if the current user is the owner of the track
-            var isOwner = await _playlistRepository.IsOwnerAsync(request.PlaylistId, request.UserId);
-            if (!isOwner)
+            var isPlaylistDeleted = await _playlistRepository.IsPlaylistDeletedAsync(request.PlaylistId);
+            if (isPlaylistDeleted)
             {
-                throw new UnauthorizedAccessException("Bạn không có quyền xóa track khỏi playlist này.");
-                
+                throw new InvalidOperationException("Playlist này đã bị xóa, không thể xóa track.");
+            }
+
+            var isPlaylistEmpty = await _playlistRepository.IsPlaylistEmptyAsync(request.PlaylistId);
+            if (isPlaylistEmpty)
+            {
+                throw new InvalidOperationException("Playlist này đã rỗng, không thể xóa track.");
             }
 
             var isMediaItemAdded = await _playlistRepository.IsMediaItemInPlaylistAsync(request.PlaylistId, request.MediaItemId);

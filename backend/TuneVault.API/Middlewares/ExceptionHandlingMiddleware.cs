@@ -43,12 +43,17 @@ namespace TuneVault.API.Middlewares
             // 2. Phân loại và bẫy các Exception cụ thể từ tầng Application quăng ra
             if (exception is ValidationException validationException)
             {
-                // Lỗi nhập liệu từ FluentValidation
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                message = "Dữ liệu đầu vào không hợp lệ!";
-                errors = validationException.Errors
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
+                if (validationException.Errors != null && validationException.Errors.Any())
+                {
+                    message = "Dữ liệu đầu vào không hợp lệ!";
+                    errors = validationException.Errors.Select(e => e.ErrorMessage).ToList();
+                }
+                else
+                {
+                    message = validationException.Message;
+                    errors = new List<string> { validationException.Message };
+                }
             }
             else if (exception is UnauthorizedAccessException)
             {
