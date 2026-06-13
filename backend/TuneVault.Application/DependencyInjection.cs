@@ -20,7 +20,7 @@ namespace TuneVault.Application
                 .ToList();
 
             foreach (var authorizerType in authorizerTypes)
- 1           {
+            {
                 var interfaces = authorizerType.GetInterfaces()
                     .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IAuthorizer<>));
 
