@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TuneVault.Application;
 using TuneVault.Infrastructure;
+using TuneVault.API.Hubs;
 
 
 using Microsoft.OpenApi.Models;
@@ -12,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Thêm Controller
 builder.Services.AddControllers();
+// SignalR for real-time notifications
+builder.Services.AddSignalR();
 
 // Cấu hình Endpoints cho Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -98,5 +101,7 @@ app.UseAuthentication(); // Quẹt thẻ kiểm tra danh tính
 app.UseAuthorization();  // Quét quyền hạn
 
 app.MapControllers();
+// Map SignalR hubs
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
