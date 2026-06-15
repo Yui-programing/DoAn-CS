@@ -10,5 +10,10 @@ export const notificationService = {
     markAsRead: async (id: string): Promise<ApiResponse<boolean>> => {
         const response = await api.put<ApiResponse<boolean>>(`/notifications/${id}/read`);
         return response.data;
+    },
+
+    markAllAsRead: async (): Promise<ApiResponse<number>> => {
+        const response = await api.put<ApiResponse<number>>('/notifications/read-all');
+        return response.data;
     }
 };
