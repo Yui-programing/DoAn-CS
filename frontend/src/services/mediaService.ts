@@ -21,6 +21,19 @@ export const mediaService = {
         return `${baseUrl}/media/${id}/stream`;
     },
 
+    // Hàm tiện ích: Tạo full URL cho ảnh bìa (coverUrl) nếu nó là đường dẫn relative
+    getImageUrl: (coverUrl: string | null | undefined) => {
+        if (!coverUrl) return '';
+        // Nếu là link Cloudinary hoặc external link thì giữ nguyên
+        if (coverUrl.startsWith('http')) return coverUrl;
+        
+        // Lấy gốc URL của backend (Bỏ chữ /api đi)
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        const rootUrl = baseUrl.replace('/api', '');
+        
+        return `${rootUrl}${coverUrl.startsWith('/') ? '' : '/'}${coverUrl}`;
+    },
+
     // --- Chức năng Tương tác (Thả tim) ---
     addFavorite: async (mediaItemId: string): Promise<ApiResponse<boolean>> => {
         const response = await api.post<ApiResponse<boolean>>('/favorites', { mediaItemId });

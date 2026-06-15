@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,6 +15,7 @@ namespace TuneVault.Application.Features.Playlists.Commands.CreatePlaylist
         public String? Description { get; set; }
 
         public bool IsPublic { get; set; }
+        public int Type { get; set; } = 0; // 0: Playlist, 1: Album
         public string OwnerId { get; set; } = null!; 
 
     }

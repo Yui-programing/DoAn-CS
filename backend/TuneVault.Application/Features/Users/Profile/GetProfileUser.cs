@@ -11,6 +11,7 @@ namespace TuneVault.Application.Features.Users.Profile
 
     public class UserProfileDto
     {
+        public string Id { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string? Bio { get; set; }
         public string? AvatarUrl { get; set; }
@@ -38,6 +39,7 @@ namespace TuneVault.Application.Features.Users.Profile
             // 2. Trả về thông tin profile cho Frontend
             return new UserProfileDto
             {
+                Id = user.Id,
                 FullName = user.FullName,
                 Bio = user.Bio,
                 AvatarUrl = user.AvatarUrl

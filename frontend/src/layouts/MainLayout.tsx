@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
+import { mediaService } from '../services';
 import { 
   Home, 
   Search, 
@@ -316,7 +317,7 @@ export const MainLayout = () => {
           <div className="w-14 h-14 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 overflow-hidden shrink-0 shadow-inner">
             {currentTrack ? (
               currentTrack.coverUrl ? (
-                <img src={currentTrack.coverUrl} alt={currentTrack.title} className="w-full h-full object-cover animate-fadeIn" />
+                <img src={mediaService.getImageUrl(currentTrack.coverUrl)} alt={currentTrack.title} className="w-full h-full object-cover animate-fadeIn" />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center">
                   <Music className="w-6 h-6 text-green-400" />

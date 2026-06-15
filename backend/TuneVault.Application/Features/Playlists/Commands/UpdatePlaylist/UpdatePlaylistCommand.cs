@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
@@ -9,11 +9,13 @@ namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
     public class UpdatePlaylistCommand: IRequest<Guid>
     {
         public Guid Id { get; set; }
-        public String Title { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
 
-        public String? Description { get; set; }
+        public string? Description { get; set; }
 
         public bool IsPublic { get; set; }
+
+        public int Type { get; set; } = 0; // 0: Playlist, 1: Album
 
         public string OwnerId { get; set; } = null!;
     }

@@ -204,19 +204,26 @@ DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05',
         @M4 UNIQUEIDENTIFIER = '54D1B50E-1988-41BA-9B2E-B939595D512E',
         @M5 UNIQUEIDENTIFIER = '32290D85-65EC-4E07-957A-6F605756952C',
         @M6 UNIQUEIDENTIFIER = '455972D7-D1DC-4483-9794-6D809679C8E1',
-        @M9 UNIQUEIDENTIFIER = 'B19B93F2-E96F-44DF-863F-1710E55F6164';
+        @M7 UNIQUEIDENTIFIER = 'F1A8C3BD-E29B-4D82-A3D9-58D4F7C118A4',
+        @M8 UNIQUEIDENTIFIER = '6C2D9B3E-74AF-4C11-9A3F-2B8E5D6C78F0',
+        @M9 UNIQUEIDENTIFIER = 'B19B93F2-E96F-44DF-863F-1710E55F6164',
+        @M10 UNIQUEIDENTIFIER = 'A7B3D5E1-2C9F-4B8A-8D6E-3F1C4A5B6D7C';
 
 -- Insert MediaItem (Chỉ lưu các bài hát/MV thực tế có file thật)
 INSERT INTO MediaItem
     (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistName, AlbumName, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1780998869/TuneVault/Songs/lancuoi_wbqgz0.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1780998872/TuneVault/Covers/do2uqhldg52rurqgstbi.jpg', 210, 0, 'U1', N'Ngọt Band', N'Tuyển tập Indie', 1200000),
-    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/emdaonay_zosad6.jpg', 195, 0, 'U1', N'Ngọt Band', N'Tuyển tập Indie', 850000),
-    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', N'Riot Games Music', NULL, 620000),
-    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', N'Riot Games Music', NULL, 430000),
-    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', N'Riot Games Music', NULL, 280000),
-    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', N'Sơn Tùng M-TP', NULL, 150000),
-    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', N'Sơn Tùng M-TP', NULL, 950000);
+    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, 'U1', N'Ngọt Band', N'Tuyển tập Indie', 1200000),
+    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, 'U1', N'Ngọt Band', N'Tuyển tập Indie', 850000),
+    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, 'U1', N'Riot Games Music', NULL, 620000),
+    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, 'U1', N'Riot Games Music', NULL, 430000),
+    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, 'U2', N'Riot Games Music', NULL, 280000),
+    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, 'U2', N'Riot Games Music', NULL, 280000),
+    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, 'U1', N'Sơn Tùng M-TP', NULL, 150000),
+    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', NULL, 296, 0, 'U1', NULL, NULL, 150000),
+    (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, 'U1', N'Justatee x Phương Ly', NULL, 950000),
+    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, 'U1', N'Sơn Tùng M-TP', NULL, 950000);
+    
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag
