@@ -101,6 +101,16 @@ export const Home = () => {
     };
 
     fetchHomeData();
+
+    // Lắng nghe sự kiện để tự động load lại danh sách bài hát sau khi upload thành công
+    const handleMediaUploaded = () => {
+      fetchHomeData();
+    };
+    window.addEventListener('mediaUploaded', handleMediaUploaded);
+
+    return () => {
+      window.removeEventListener('mediaUploaded', handleMediaUploaded);
+    };
   }, [isAuthenticated]);
 
   const getGreeting = () => {

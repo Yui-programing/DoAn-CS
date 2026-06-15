@@ -12,8 +12,7 @@ IF OBJECT_ID('Notification', 'U') IS NOT NULL DROP TABLE Notification;
 IF OBJECT_ID('Follow', 'U') IS NOT NULL DROP TABLE Follow;
 IF OBJECT_ID('Playlist', 'U') IS NOT NULL DROP TABLE Playlist;
 IF OBJECT_ID('MediaItem', 'U') IS NOT NULL DROP TABLE MediaItem;
-IF OBJECT_ID('Album', 'U') IS NOT NULL DROP TABLE Album;
-IF OBJECT_ID('Artist', 'U') IS NOT NULL DROP TABLE Artist;
+
 IF OBJECT_ID('UserProfile', 'U') IS NOT NULL DROP TABLE UserProfile;
 IF OBJECT_ID('User', 'U') IS NOT NULL DROP TABLE [User];
 GO
@@ -54,24 +53,6 @@ CREATE TABLE UserProfile
     FOREIGN KEY (Id) REFERENCES [User](Id) ON DELETE CASCADE
 );
 
-CREATE TABLE Artist
-(
-    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    [Name] NVARCHAR(255) NOT NULL,
-    Bio NVARCHAR(MAX) NULL,
-    AvatarUrl NVARCHAR(1000) NULL
-);
-
-CREATE TABLE Album
-(
-    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    Title NVARCHAR(255) NOT NULL,
-    CoverImageUrl NVARCHAR(1000) NULL,
-    ReleaseDate DATETIME2 NOT NULL,
-    ArtistId UNIQUEIDENTIFIER NULL,
-    FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE SET NULL
-);
-
 CREATE TABLE Tag
 (
     Id NVARCHAR(50) PRIMARY KEY,
@@ -90,13 +71,11 @@ CREATE TABLE MediaItem
     DurationInSeconds INT NOT NULL DEFAULT 0,
     MediaType INT NOT NULL DEFAULT 0,
     OwnerId NVARCHAR(450) NOT NULL,
-    AlbumId UNIQUEIDENTIFIER NULL,
-    ArtistId UNIQUEIDENTIFIER NULL,
+    AlbumName NVARCHAR(255) NULL,
+    ArtistName NVARCHAR(255) NULL,
     IsPrivate BIT NOT NULL DEFAULT 0,
     ViewCount INT NOT NULL DEFAULT 0,
-    FOREIGN KEY (OwnerId) REFERENCES UserProfile(Id) ON DELETE CASCADE,
-    FOREIGN KEY (AlbumId) REFERENCES Album(Id) ON DELETE SET NULL,
-    FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE SET NULL
+    FOREIGN KEY (OwnerId) REFERENCES UserProfile(Id) ON DELETE CASCADE
 );
 
 CREATE TABLE Playlist
@@ -104,6 +83,7 @@ CREATE TABLE Playlist
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     Title NVARCHAR(255) NOT NULL,
     [Description] NVARCHAR(MAX) NULL,
+    [Type] INT NOT NULL DEFAULT 0,
     IsPublic BIT NOT NULL DEFAULT 1,
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     OwnerId NVARCHAR(450) NOT NULL,
@@ -157,11 +137,9 @@ CREATE TABLE Follow
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     FollowerId NVARCHAR(450) NOT NULL,
     FollowingUserId NVARCHAR(450) NULL,
-    FollowingArtistId UNIQUEIDENTIFIER NULL,
     FollowedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (FollowerId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
-    FOREIGN KEY (FollowingUserId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
-    FOREIGN KEY (FollowingArtistId) REFERENCES Artist(Id) ON DELETE CASCADE
+    FOREIGN KEY (FollowingUserId) REFERENCES UserProfile(Id) ON DELETE NO ACTION
 );
 
 CREATE TABLE MediaShare
@@ -209,26 +187,6 @@ VALUES
     ('U1', N'Lê Phạm Hoàng Phúc', 'https://avatar.com/phuc.jpg', N'Sinh viên ĐH Sài Gòn. Thường đi uống cafe thư giãn lúc rảnh.'),
     ('U2', N'Khách hàng 2', 'https://avatar.com/kh2.jpg', N'Đang sống và làm việc tại TP.HCM.');
 
--- Khai báo biến để tái sử dụng Id
-DECLARE @Artist1Id UNIQUEIDENTIFIER = NEWID();
-DECLARE @Artist2Id UNIQUEIDENTIFIER = NEWID();
-DECLARE @Artist3Id UNIQUEIDENTIFIER = NEWID();
-
--- Insert Artist
-INSERT INTO Artist
-    (Id, Name, Bio)
-VALUES
-    (@Artist1Id, N'Ngọt Band', N'Ban nhạc Indie Việt Nam'),
-    (@Artist2Id, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi'),
-    (@Artist3Id, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam');
-
-DECLARE @Album1Id UNIQUEIDENTIFIER = NEWID();
-
--- Insert Album
-INSERT INTO Album
-    (Id, Title, ReleaseDate, ArtistId)
-VALUES
-    (@Album1Id, N'Tuyển tập Indie', '2025-01-01', @Artist1Id);
 
 -- Insert Tags
 INSERT INTO Tag
@@ -250,15 +208,15 @@ DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05',
 
 -- Insert MediaItem (Chỉ lưu các bài hát/MV thực tế có file thật)
 INSERT INTO MediaItem
-    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistId, AlbumId, ViewCount)
+    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, ArtistName, AlbumName, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1780998869/TuneVault/Songs/lancuoi_wbqgz0.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1780998872/TuneVault/Covers/do2uqhldg52rurqgstbi.jpg', 210, 0, 'U1', @Artist1Id, @Album1Id, 1200000),
-    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/emdaonay_zosad6.jpg', 195, 0, 'U1', @Artist1Id, @Album1Id, 850000),
-    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', @Artist2Id, NULL, 620000),
-    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', @Artist2Id, NULL, 430000),
-    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', @Artist2Id, NULL, 280000),
-    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', @Artist3Id, NULL, 150000),
-    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', @Artist3Id, NULL, 950000);
+    (@M1, N'Lần Cuối', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1780998869/TuneVault/Songs/lancuoi_wbqgz0.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1780998872/TuneVault/Covers/do2uqhldg52rurqgstbi.jpg', 210, 0, 'U1', N'Ngọt Band', N'Tuyển tập Indie', 1200000),
+    (@M2, N'Em Dạo Này', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081282/emdaonay_ffabqb.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/emdaonay_zosad6.jpg', 195, 0, 'U1', N'Ngọt Band', N'Tuyển tập Indie', 850000),
+    (@M3, N'Die For You', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081272/dieforyou_hpbjxj.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/dieforyou_k4phf1.jpg', 205, 0, 'U1', N'Riot Games Music', NULL, 620000),
+    (@M4, N'Ignite', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781081270/ignite_z4d6xk.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781081286/ignite_ffmaw4.jpg', 180, 0, 'U1', N'Riot Games Music', NULL, 430000),
+    (@M5, N'Billy Mode', 'https://res.cloudinary.com/dec7kmvib/video/upload/v1781082696/billy-ep---billy-mode--zenless-zone-zero_zdsss5.mp3', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 215, 0, 'U2', N'Riot Games Music', NULL, 280000),
+    (@M6, N'Come My Way', '/CMW.mp3', NULL, 258, 0, 'U1', N'Sơn Tùng M-TP', NULL, 150000),
+    (@M9, N'MV Đừng làm trái tim anh đau', '/videoplayback.mp4', 'https://res.cloudinary.com/dec7kmvib/image/upload/v1781082737/Screenshot_2026-06-10_160231_ymozkd.png', 325, 1, 'U1', N'Sơn Tùng M-TP', NULL, 950000);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag

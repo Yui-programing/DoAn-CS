@@ -22,8 +22,8 @@ public class MediaItemRepository : IMediaItemRepository
     public async Task<Guid> AddAsync(MediaItem mediaItem)
     {
         const string sql = @"
-            INSERT INTO MediaItem (Id, Title, Description, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumId, ArtistId, IsPrivate, ViewCount)
-            VALUES (@Id, @Title, @Description, @FilePath, @CoverUrl, @DurationInSeconds, @MediaType, @OwnerId, @AlbumId, @ArtistId, @IsPrivate, 0)";
+            INSERT INTO MediaItem (Id, Title, Description, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumName, ArtistName, IsPrivate, ViewCount)
+            VALUES (@Id, @Title, @Description, @FilePath, @CoverUrl, @DurationInSeconds, @MediaType, @OwnerId, @AlbumName, @ArtistName, @IsPrivate, 0)";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, mediaItem);

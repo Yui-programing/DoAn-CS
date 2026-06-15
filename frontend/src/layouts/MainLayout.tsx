@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,8 +18,11 @@ import {
   Repeat, 
   Shuffle, 
   Music,
-  LogOut
+  LogOut,
+  UploadCloud
 } from 'lucide-react';
+import { NotificationBell } from '../components/NotificationBell';
+import { UploadMediaModal } from '../components/UploadMediaModal';
 
 // Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
 const formatTime = (seconds: number) => {
@@ -31,6 +34,7 @@ const formatTime = (seconds: number) => {
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const {
     currentTrack,
     isPlaying,
@@ -179,6 +183,15 @@ export const MainLayout = () => {
               <Library className="w-5 h-5" />
               <span>Thư viện</span>
             </NavLink>
+
+            {/* Nút bật Modal Upload */}
+            <button 
+              onClick={() => setIsUploadModalOpen(true)}
+              className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50 transition-all duration-200 text-left"
+            >
+              <UploadCloud className="w-5 h-5" />
+              <span>Tải lên nhạc</span>
+            </button>
 
             <div className="h-px bg-zinc-900 my-2" />
 
@@ -400,6 +413,12 @@ export const MainLayout = () => {
         </div>
 
       </footer>
+
+      {/* Modal Tải lên */}
+      <UploadMediaModal 
+        isOpen={isUploadModalOpen} 
+        onClose={() => setIsUploadModalOpen(false)} 
+      />
     </div>
   );
 };
