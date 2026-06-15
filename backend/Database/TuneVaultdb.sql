@@ -220,7 +220,7 @@ VALUES
     (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, 'U2', N'Riot Games Music', NULL, 280000),
     (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, 'U2', N'Riot Games Music', NULL, 280000),
     (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, 'U1', N'Sơn Tùng M-TP', NULL, 150000),
-    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', NULL, 296, 0, 'U1', NULL, NULL, 150000),
+    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, 'U1', NULL, NULL, 150000),
     (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, 'U1', N'Justatee x Phương Ly', NULL, 950000),
     (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, 'U1', N'Sơn Tùng M-TP', NULL, 950000);
     
