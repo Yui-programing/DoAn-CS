@@ -18,7 +18,7 @@ namespace TuneVault.Infrastructure
                                       ?? throw new InvalidOperationException("Không tìm thấy chuỗi kết nối 'DefaultConnection'.");
             // Bind config từ appsettings.json
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
-            
+
             // Đăng ký SQL Connection
             services.AddTransient<IDbConnection>(sp => new SqlConnection(connectionString));
 
@@ -26,13 +26,14 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             services.AddScoped<IMediaItemRepository, MediaItemRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IPlayHistoryRepository, PlayHistoryRepository>();
             services.AddScoped<ISharedRepository, SharedMediaRepository>();
             services.AddScoped<ISearchRepository,  SearchRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
-            // Đăng ký Service
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.IEmailService, EmailService>();
+            services.AddScoped<TuneVault.Application.Common.Interfaces.INotificationService, NotificationService>();
 
             return services;
         }

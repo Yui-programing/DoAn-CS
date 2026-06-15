@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TuneVault.Application;
 using TuneVault.Infrastructure;
+using TuneVault.Infrastructure.Hubs;
 
 
 using Microsoft.OpenApi.Models;
@@ -12,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Thêm Controller
 builder.Services.AddControllers();
+// SignalR for real-time notifications
+builder.Services.AddSignalR();
 
 // Cấu hình Endpoints cho Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -71,12 +74,21 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
 
-    //Cấu hình đọc token từ cookie
+    // Cấu hình đọc token từ Cookie HOẶC Query String (cho SignalR)
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
-            // Kiểm tra xem trong Cookie có chứa key "token" không (token ở đây chính là tên cookie được đặt ởAuthController)
+            // 1. Dành cho SignalR (Gửi token qua query string 'access_token')
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+            {
+                context.Token = accessToken;
+                return Task.CompletedTask;
+            }
+
+            // 2. Dành cho API thường (Đọc từ Cookie)
             if (context.Request.Cookies.TryGetValue("token", out var token))
             {
                 context.Token = token;
@@ -117,7 +129,7 @@ if (app.Environment.IsDevelopment())
 
 // Tạm thời tắt chuyển hướng HTTPS khi chạy local
 // app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseRouting();
 
 // ✅ KÍCH HOẠT CORS TẠI ĐÂY (Sau UseRouting và Trước UseAuthentication)
@@ -127,5 +139,7 @@ app.UseAuthentication(); // Quẹt thẻ kiểm tra danh tính
 app.UseAuthorization();  // Quét quyền hạn
 
 app.MapControllers();
+// Map SignalR hubs
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

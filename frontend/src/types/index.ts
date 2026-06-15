@@ -9,6 +9,7 @@ export interface ApiResponse<T> {
 // === Các Models (Entities & DTOs) ===
 
 export interface UserProfile {
+    id: string;
     fullName: string;
     bio?: string;
     avatarUrl?: string;
@@ -41,6 +42,7 @@ export interface Playlist {
     description?: string;
     isPublic: boolean;
     tracksCount: number;
+    type: number;
     createdAt: string;
 }
 
@@ -70,11 +72,10 @@ export interface SharedPlaylist {
 export interface Notification {
     id: string;
     userId: string;
-    type: string;
-    message: string;
+    type: number;
+    payloadJson: string;
     isRead: boolean;
     createdAt: string;
-    referenceId?: string;
 }
 
 export interface Favorite {
@@ -126,12 +127,14 @@ export interface CreatePlaylistRequest {
     title: string;
     description?: string;
     isPublic: boolean;
+    type: number;
 }
 
 export interface UpdatePlaylistRequest {
     title: string;
     description?: string;
     isPublic: boolean;
+    type: number;
 }
 
 export interface ShareMediaItemRequest {

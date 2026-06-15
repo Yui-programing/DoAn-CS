@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ListMusic, Plus, Loader2 } from 'lucide-react';
+import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';
 // Import API Service
-import { playlistService } from '../../services';
+import { playlistService, mediaService } from '../../services';
 
 export const Library = () => {
   // BƯỚC 1: Khai báo State
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // BƯỚC 2: Tự động gọi API lấy Playlist thật khi vào trang Thư viện
   useEffect(() => {
@@ -26,6 +28,15 @@ export const Library = () => {
     };
 
     fetchLibraryData();
+
+    // Lắng nghe event khi có playlist mới
+    const handlePlaylistChanged = () => {
+      fetchLibraryData();
+    };
+    window.addEventListener('playlistChanged', handlePlaylistChanged);
+    return () => {
+      window.removeEventListener('playlistChanged', handlePlaylistChanged);
+    };
   }, []);
 
   // MÀN HÌNH CHỜ
@@ -47,10 +58,13 @@ export const Library = () => {
           <h2 className="text-2xl font-bold tracking-tight">Thư viện của bạn (Từ API)</h2>
         </div>
 
-        {/* Nút thêm Playlist (Task sau chúng ta sẽ code chức năng bấm vào đây tạo mới) */}
-        <button className="flex items-center gap-1 bg-green-500 hover:bg-green-400 text-black text-xs font-bold px-4 py-2 rounded-full transition-transform active:scale-95">
+        {/* Nút thêm Playlist */}
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-1 bg-green-500 hover:bg-green-400 text-black text-xs font-bold px-4 py-2 rounded-full transition-transform active:scale-95"
+        >
           <Plus className="w-4 h-4" />
-          <span>Tạo playlist</span>
+          <span>Tạo mới</span>
         </button>
       </div>
 
@@ -77,8 +91,12 @@ export const Library = () => {
             >
               <div className="flex items-center gap-4">
                 {/* Thumbnail */}
-                <div className="w-16 h-16 rounded-lg flex items-center justify-center border border-zinc-800 shadow-inner shrink-0 bg-gradient-to-br from-green-500/10 to-zinc-900">
-                  <ListMusic className="w-7 h-7 text-zinc-500" />
+                <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center border border-zinc-800 shadow-inner shrink-0 bg-gradient-to-br from-green-500/10 to-zinc-900">
+                  {item.coverUrl ? (
+                    <img src={mediaService.getImageUrl(item.coverUrl)} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <ListMusic className="w-7 h-7 text-zinc-500" />
+                  )}
                 </div>
 
                 {/* Thông tin */}
@@ -87,7 +105,7 @@ export const Library = () => {
                     {item.title}
                   </h4>
                   <p className="text-xs text-zinc-400 mt-1 capitalize">
-                    Danh sách phát • Bạn tạo
+                    {item.type === 1 ? 'Album' : 'Playlist'} • Bạn tạo
                   </p>
                   <p className="text-[10px] text-zinc-500 mt-0.5">{item.description || 'Không có mô tả'}</p>
                 </div>
@@ -96,6 +114,12 @@ export const Library = () => {
           ))}
         </div>
       )}
+
+      {/* Modal tạo Playlist/Album */}
+      <CreatePlaylistModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
     </div>
   );
 };

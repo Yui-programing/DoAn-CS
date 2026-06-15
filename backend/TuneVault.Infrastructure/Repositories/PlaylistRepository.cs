@@ -24,8 +24,8 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task<Guid> CreateAsync(Playlist playlist)
     {
         const string sql = @"
-            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt)
-            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE())";
+            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt, Type)
+            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE(), @Type)";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, playlist);
@@ -50,7 +50,7 @@ public class PlaylistRepository : IPlaylistRepository
     {
         const string sql = @"
             UPDATE Playlist 
-            SET Title = @title, Description = @description, IsPublic = @isPublic
+            SET Title = @title, Description = @description, IsPublic = @isPublic, Type = @type
             WHERE Id = @Id";
 
         using IDbConnection db = new SqlConnection(_connectionString);
@@ -189,7 +189,7 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId)
     {
         const string sql = @"
-        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration
+        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration, Type
         FROM Playlist 
         WHERE OwnerId = @UserId
         ORDER BY CreatedAt DESC"; // Sắp xếp cái mới nhất lên đầu
@@ -205,6 +205,8 @@ public class PlaylistRepository : IPlaylistRepository
         SELECT 
             m.Id AS MediaItemId, 
             m.Title, 
+            m.ArtistName,
+            m.CoverUrl,
             m.DurationInSeconds, 
             pt.AddedAt
         FROM PlaylistTrack pt
