@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { X, UploadCloud, Film, Music, Check, AlertCircle, Loader2 } from "lucide-react";
+import {
+  X,
+  UploadCloud,
+  Film,
+  Music,
+  Check,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { mediaService } from "../services/mediaService";
 
 interface UploadMediaModalProps {
@@ -7,12 +15,15 @@ interface UploadMediaModalProps {
   onSuccess?: () => void;
 }
 
-export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) => {
+export const UploadMediaModal = ({
+  onClose,
+  onSuccess,
+}: UploadMediaModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [mediaType, setMediaType] = useState<0 | 1>(0); // 0 = Audio, 1 = Video
   const [isPrivate, setIsPrivate] = useState(false);
-  
+
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string>("");
@@ -51,10 +62,11 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
       setError("Vui lòng chọn tệp Media để tải lên.");
       return;
     }
-
     setIsUploading(true);
     setError("");
-    setUploadStatus("Đang tải dữ liệu lên Cloudinary (Quá trình này có thể mất vài phút)...");
+    setUploadStatus(
+      "Đang tải dữ liệu lên Cloudinary (Quá trình này có thể mất vài phút)...",
+    );
 
     try {
       const formData = new FormData();
@@ -80,7 +92,8 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
       }
     } catch (err: any) {
       console.error(err);
-      const backendError = err.response?.data?.errors?.[0] || err.response?.data?.message;
+      const backendError =
+        err.response?.data?.errors?.[0] || err.response?.data?.message;
       setError(backendError || "Có lỗi xảy ra khi kết nối tới máy chủ.");
       setIsUploading(false);
     }
@@ -93,9 +106,11 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-900 bg-zinc-950">
           <div className="flex items-center gap-2">
             <UploadCloud className="w-5 h-5 text-green-400" />
-            <h3 className="text-lg font-bold text-slate-100">Đăng tác phẩm mới</h3>
+            <h3 className="text-lg font-bold text-slate-100">
+              Đăng tác phẩm mới
+            </h3>
           </div>
-          <button 
+          <button
             onClick={onClose}
             disabled={isUploading}
             type="button"
@@ -106,7 +121,10 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-850">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-850"
+        >
           {error && (
             <div className="flex items-center gap-2 p-3.5 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-bold animate-fadeIn">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -117,8 +135,12 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
           {isUploading && (
             <div className="flex flex-col items-center justify-center p-6 bg-zinc-900/40 border border-zinc-900 rounded-xl text-center space-y-3">
               <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
-              <p className="text-sm font-semibold text-green-400">{uploadStatus}</p>
-              <span className="text-xs text-zinc-500">Vui lòng giữ cửa sổ này mở và không tải lại trang</span>
+              <p className="text-sm font-semibold text-green-400">
+                {uploadStatus}
+              </p>
+              <span className="text-xs text-zinc-500">
+                Vui lòng giữ cửa sổ này mở và không tải lại trang
+              </span>
             </div>
           )}
 
@@ -134,7 +156,11 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
                   <div className="flex items-center gap-4">
                     <div className="w-28 h-28 bg-zinc-900 rounded-xl border border-zinc-800 flex items-center justify-center overflow-hidden relative shadow-inner shrink-0">
                       {coverPreview ? (
-                        <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
+                        <img
+                          src={coverPreview}
+                          alt="Cover Preview"
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <Music className="w-8 h-8 text-zinc-700" />
                       )}
@@ -142,14 +168,16 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
                     <div className="flex-1">
                       <label className="inline-block px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-slate-100 text-xs font-bold rounded-lg cursor-pointer transition-colors">
                         Chọn ảnh bìa
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          onChange={handleCoverChange} 
-                          className="hidden" 
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverChange}
+                          className="hidden"
                         />
                       </label>
-                      <p className="text-[10px] text-zinc-500 mt-2">Định dạng JPG, PNG. Tối đa 2MB.</p>
+                      <p className="text-[10px] text-zinc-500 mt-2">
+                        Định dạng JPG, PNG. Tối đa 2MB.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -193,18 +221,22 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
                     Tệp tác phẩm ({mediaType === 0 ? "Audio" : "Video"})
                   </label>
                   <div className="border border-dashed border-zinc-800 hover:border-green-500/50 bg-zinc-900/10 hover:bg-zinc-900/30 rounded-xl p-5 flex flex-col items-center justify-center text-center transition-all relative cursor-pointer">
-                    <input 
-                      type="file" 
-                      accept={mediaType === 0 ? "audio/*" : "video/*"} 
-                      onChange={handleMediaFileChange} 
-                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                    <input
+                      type="file"
+                      accept={mediaType === 0 ? "audio/*" : "video/*"}
+                      onChange={handleMediaFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                     <UploadCloud className="w-8 h-8 text-zinc-500 mb-2" />
                     <span className="text-xs font-bold text-zinc-300">
-                      {mediaFile ? mediaFile.name : "Kéo thả hoặc nhấp để chọn tệp"}
+                      {mediaFile
+                        ? mediaFile.name
+                        : "Kéo thả hoặc nhấp để chọn tệp"}
                     </span>
                     <span className="text-[10px] text-zinc-500 mt-1">
-                      {mediaType === 0 ? "Hỗ trợ MP3, WAV, FLAC (Tối đa 15MB)" : "Hỗ trợ MP4, WEBM (Tối đa 100MB)"}
+                      {mediaType === 0
+                        ? "Hỗ trợ MP3, WAV, FLAC (Tối đa 15MB)"
+                        : "Hỗ trợ MP4, WEBM (Tối đa 100MB)"}
                     </span>
                   </div>
                 </div>
@@ -241,14 +273,18 @@ export const UploadMediaModal = ({ onClose, onSuccess }: UploadMediaModalProps) 
                 {/* Privacy toggle */}
                 <div className="flex items-center justify-between p-3.5 bg-zinc-900/40 border border-zinc-900 rounded-xl">
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-bold text-slate-200">Chế độ riêng tư</span>
-                    <span className="text-[10px] text-zinc-500">Chỉ mình bạn mới có quyền nghe/xem</span>
+                    <span className="text-xs font-bold text-slate-200">
+                      Chế độ riêng tư
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      Chỉ mình bạn mới có quyền nghe/xem
+                    </span>
                   </div>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={isPrivate}
                     onChange={(e) => setIsPrivate(e.target.checked)}
-                    className="w-4 h-4 accent-green-500 cursor-pointer rounded" 
+                    className="w-4 h-4 accent-green-500 cursor-pointer rounded"
                   />
                 </div>
               </div>
