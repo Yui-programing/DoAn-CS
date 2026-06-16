@@ -22,8 +22,8 @@ public class MediaItemRepository : IMediaItemRepository
     public async Task<Guid> AddAsync(MediaItem mediaItem)
     {
         const string sql = @"
-            INSERT INTO MediaItem (Id, Title, Description, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumName, ArtistName, IsPrivate, ViewCount)
-            VALUES (@Id, @Title, @Description, @FilePath, @CoverUrl, @DurationInSeconds, @MediaType, @OwnerId, @AlbumName, @ArtistName, @IsPrivate, 0)";
+            INSERT INTO MediaItem (Id, Title, Description, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumId, ArtistId, IsPrivate, ApprovalStatus, ViewCount)
+            VALUES (@Id, @Title, @Description, @FilePath, @CoverUrl, @DurationInSeconds, @MediaType, @OwnerId, @AlbumId, @ArtistId, @IsPrivate, @ApprovalStatus, 0)";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, mediaItem);
@@ -44,6 +44,21 @@ public class MediaItemRepository : IMediaItemRepository
         return await db.QueryAsync<MediaItem>(sql, new { OwnerId = ownerId });
     }
 
+    public async Task<IEnumerable<MediaItem>> GetPendingMediaItemsAsync()
+    {
+        const string sql = "SELECT * FROM MediaItem WHERE ApprovalStatus = 'Pending' ORDER BY Id DESC";
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.QueryAsync<MediaItem>(sql);
+    }
+
+    public async Task<bool> UpdateMediaItemStatusAsync(Guid id, string status)
+    {
+        const string sql = "UPDATE MediaItem SET ApprovalStatus = @Status WHERE Id = @Id";
+        using IDbConnection db = new SqlConnection(_connectionString);
+        int rowsAffected = await db.ExecuteAsync(sql, new { Status = status, Id = id });
+        return rowsAffected > 0;
+    }
+
     public async Task UpdateAsync(MediaItem mediaItem)
     {
         const string sql = @"
@@ -61,7 +76,7 @@ public class MediaItemRepository : IMediaItemRepository
         int rowsAffected = await db.ExecuteAsync(sql, new { Id = id });
         return rowsAffected > 0;
     }
-        public async Task IncrementPlayCountAsync(Guid id)
+    public async Task IncrementPlayCountAsync(Guid id)
     {
         // Tăng cột ViewCount trong bảng MediaItem lên 1 đơn vị
         const string sql = "UPDATE MediaItem SET ViewCount = ViewCount + 1 WHERE Id = @Id";

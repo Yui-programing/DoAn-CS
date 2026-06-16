@@ -1,43 +1,38 @@
-import { useRef, useEffect, useState } from 'react';
-import { NavLink, Outlet, Link } from 'react-router-dom';
-import { usePlayer } from '../contexts/PlayerContext';
-import { useAuth } from '../contexts/AuthContext';
-import { mediaService } from '../services';
-import { 
-  Home, 
-  Search, 
-  Library, 
-  Bell, 
-  Mail, 
-  User, 
-  Play, 
+import { useRef, useEffect } from "react";
+import { NavLink, Outlet, Link } from "react-router-dom";
+import { usePlayer } from "../contexts/PlayerContext";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  Home,
+  Search,
+  Library,
+  Bell,
+  Mail,
+  User,
+  Play,
   Pause,
-  SkipBack, 
-  SkipForward, 
-  Volume2, 
-  Volume1,
-  VolumeX,
-  Heart, 
-  Repeat, 
-  Shuffle, 
+  SkipBack,
+  SkipForward,
+  Volume2,
+  Heart,
+  Repeat,
+  Shuffle,
   Music,
   LogOut,
-  UploadCloud
-} from 'lucide-react';
-import { NotificationBell } from '../components/NotificationBell';
-import { UploadMediaModal } from '../components/UploadMediaModal';
+  ShieldCheck,
+} from "lucide-react";
+import { NotificationBell } from "../components/NotificationBell";
 
 // Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
 const formatTime = (seconds: number) => {
-  if (isNaN(seconds)) return '0:00';
+  if (isNaN(seconds)) return "0:00";
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 };
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const {
     currentTrack,
     isPlaying,
@@ -51,7 +46,7 @@ export const MainLayout = () => {
     setVolume,
     setCurrentTime,
     setDuration,
-    setIsPlaying
+    setIsPlaying,
   } = usePlayer();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -61,7 +56,7 @@ export const MainLayout = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.play().catch((err) => {
-        console.log('Tự động phát bị chặn bởi trình duyệt:', err);
+        console.log("Tự động phát bị chặn bởi trình duyệt:", err);
         setIsPlaying(false);
       });
     } else {
@@ -76,42 +71,9 @@ export const MainLayout = () => {
     }
   }, [volume]);
 
-  // Lưu lại âm lượng trước khi tắt tiếng
-  const prevVolumeRef = useRef(volume > 0 ? volume : 0.5);
-  useEffect(() => {
-    if (volume > 0) {
-      prevVolumeRef.current = volume;
-    }
-  }, [volume]);
-
-  const toggleMute = () => {
-    if (volume > 0) {
-      setVolume(0);
-    } else {
-      setVolume(prevVolumeRef.current);
-    }
-  };
-
-  // Xác định icon loa tương ứng với mức âm lượng
-  const renderVolumeIcon = () => {
-    if (volume === 0) {
-      return <VolumeX className="w-5 h-5 hover:text-slate-100 cursor-pointer" onClick={toggleMute} />;
-    } else if (volume < 0.5) {
-      return <Volume1 className="w-5 h-5 hover:text-slate-100 cursor-pointer" onClick={toggleMute} />;
-    } else {
-      return <Volume2 className="w-5 h-5 hover:text-slate-100 cursor-pointer" onClick={toggleMute} />;
-    }
-  };
-
-  const progressBarRef = useRef<HTMLDivElement | null>(null);
-  const volumeBarRef = useRef<HTMLDivElement | null>(null);
-  const isDraggingProgress = useRef(false);
-  const [hoverTime, setHoverTime] = useState<number | null>(null);
-  const [hoverPosition, setHoverPosition] = useState<number>(0);
-
   // Xử lý sự kiện cập nhật tiến trình thời gian
   const handleTimeUpdate = () => {
-    if (audioRef.current && !isDraggingProgress.current) {
+    if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
     }
   };
@@ -123,167 +85,28 @@ export const MainLayout = () => {
     }
   };
 
-  const wasPlayingBeforeDrag = useRef(false);
-  const dragTime = useRef(0);
-
-  // Cập nhật vị trí kéo nhạc (chỉ cập nhật giao diện, không cập nhật thẻ audio liên tục khi đang kéo)
-  const handleProgressMove = (clientX: number) => {
-    if (!progressBarRef.current || duration === 0) return;
-    const rect = progressBarRef.current.getBoundingClientRect();
-    const clickX = clientX - rect.left;
+  // Tua nhạc bằng thanh trượt
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || duration === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
     const width = rect.width;
-    const newProgress = Math.min(Math.max(clickX / width, 0), 1);
+    const newProgress = clickX / width;
     const newTime = newProgress * duration;
-    
-    dragTime.current = newTime;
-    setCurrentTime(newTime);
+    seek(newTime);
   };
 
-  const handleProgressMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || duration === 0) return;
-    isDraggingProgress.current = true;
-    
-    // Lưu lại trạng thái phát nhạc trước khi kéo
-    wasPlayingBeforeDrag.current = isPlaying;
-    
-    // Tạm thời dừng nhạc khi bắt đầu kéo
-    if (isPlaying) {
-      setIsPlaying(false);
-      audioRef.current.pause();
-    }
-
-    handleProgressMove(e.clientX);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      handleProgressMove(moveEvent.clientX);
-    };
-
-    const handleMouseUp = () => {
-      isDraggingProgress.current = false;
-      
-      // Cập nhật thời gian nhạc thực tế khi thả chuột ra
-      if (audioRef.current) {
-        audioRef.current.currentTime = dragTime.current;
-      }
-      
-      // Phát tiếp nếu trước khi kéo nhạc đang phát
-      if (wasPlayingBeforeDrag.current) {
-        setIsPlaying(true);
-        if (audioRef.current) {
-          audioRef.current.play().catch((err) => console.log('Lỗi phát tiếp:', err));
-        }
-      }
-
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleProgressTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!audioRef.current || duration === 0) return;
-    isDraggingProgress.current = true;
-    
-    wasPlayingBeforeDrag.current = isPlaying;
-    
-    if (isPlaying) {
-      setIsPlaying(false);
-      audioRef.current.pause();
-    }
-
-    handleProgressMove(e.touches[0].clientX);
-
-    const handleTouchMove = (moveEvent: TouchEvent) => {
-      if (moveEvent.touches.length > 0) {
-        handleProgressMove(moveEvent.touches[0].clientX);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      isDraggingProgress.current = false;
-      
-      if (audioRef.current) {
-        audioRef.current.currentTime = dragTime.current;
-      }
-      
-      if (wasPlayingBeforeDrag.current) {
-        setIsPlaying(true);
-        if (audioRef.current) {
-          audioRef.current.play().catch((err) => console.log('Lỗi phát tiếp:', err));
-        }
-      }
-
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-
-    document.addEventListener('touchmove', handleTouchMove);
-    document.addEventListener('touchend', handleTouchEnd);
-  };
-
-  const handleProgressMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressBarRef.current || duration === 0) return;
-    const rect = progressBarRef.current.getBoundingClientRect();
-    const hoverX = e.clientX - rect.left;
-    const width = rect.width;
-    const percentage = Math.min(Math.max(hoverX / width, 0), 1);
-    setHoverTime(percentage * duration);
-    setHoverPosition(percentage * 100);
-  };
-
-  const handleProgressMouseLeave = () => {
-    setHoverTime(null);
-  };
-
-  // Cập nhật vị trí kéo âm lượng
-  const handleVolumeMove = (clientX: number) => {
-    if (!volumeBarRef.current) return;
-    const rect = volumeBarRef.current.getBoundingClientRect();
-    const clickX = clientX - rect.left;
+  // Tua âm lượng bằng thanh trượt
+  const handleVolumeBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
     const width = rect.width;
     const newVolume = Math.min(Math.max(clickX / width, 0), 1);
     setVolume(newVolume);
   };
 
-  const handleVolumeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    handleVolumeMove(e.clientX);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      handleVolumeMove(moveEvent.clientX);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleVolumeTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    handleVolumeMove(e.touches[0].clientX);
-
-    const handleTouchMove = (moveEvent: TouchEvent) => {
-      if (moveEvent.touches.length > 0) {
-        handleVolumeMove(moveEvent.touches[0].clientX);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-
-    document.addEventListener('touchmove', handleTouchMove);
-    document.addEventListener('touchend', handleTouchEnd);
-  };
-
   return (
     <div className="h-screen w-screen bg-black text-slate-100 flex flex-col overflow-hidden font-sans">
-      
       {/* THẺ AUDIO ẨN CHƠI NHẠC THỰC TẾ */}
       {currentTrack && (
         <audio
@@ -298,7 +121,6 @@ export const MainLayout = () => {
 
       {/* Khung chính: Sidebar + Main Content */}
       <div className="flex-1 flex overflow-hidden p-2 gap-2">
-        
         {/* 1. SIDEBAR (Bên trái) */}
         <aside className="w-64 bg-zinc-950 rounded-xl flex flex-col p-4 gap-6 shrink-0 border border-zinc-900">
           {/* Logo */}
@@ -310,19 +132,21 @@ export const MainLayout = () => {
               <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
                 TuneVault
               </h1>
-              <span className="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">Spotify Clone</span>
+              <span className="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">
+                Spotify Clone
+              </span>
             </div>
           </div>
 
           {/* Navigation links */}
           <nav className="flex flex-col gap-1.5 flex-1">
-            <NavLink 
-              to="/" 
-              className={({ isActive }) => 
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
                 `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
-                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                  isActive
+                    ? "bg-zinc-900 text-green-400 shadow-sm"
+                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
                 }`
               }
             >
@@ -330,13 +154,13 @@ export const MainLayout = () => {
               <span>Trang chủ</span>
             </NavLink>
 
-            <NavLink 
-              to="/search" 
-              className={({ isActive }) => 
+            <NavLink
+              to="/search"
+              className={({ isActive }) =>
                 `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
-                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                  isActive
+                    ? "bg-zinc-900 text-green-400 shadow-sm"
+                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
                 }`
               }
             >
@@ -344,13 +168,13 @@ export const MainLayout = () => {
               <span>Tìm kiếm</span>
             </NavLink>
 
-            <NavLink 
-              to="/library" 
-              className={({ isActive }) => 
+            <NavLink
+              to="/library"
+              className={({ isActive }) =>
                 `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
-                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                  isActive
+                    ? "bg-zinc-900 text-green-400 shadow-sm"
+                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
                 }`
               }
             >
@@ -358,24 +182,15 @@ export const MainLayout = () => {
               <span>Thư viện</span>
             </NavLink>
 
-            {/* Nút bật Modal Upload */}
-            <button 
-              onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50 transition-all duration-200 text-left"
-            >
-              <UploadCloud className="w-5 h-5" />
-              <span>Tải lên nhạc</span>
-            </button>
-
             <div className="h-px bg-zinc-900 my-2" />
 
-            <NavLink 
-              to="/notifications" 
-              className={({ isActive }) => 
+            <NavLink
+              to="/notifications"
+              className={({ isActive }) =>
                 `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
-                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                  isActive
+                    ? "bg-zinc-900 text-green-400 shadow-sm"
+                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
                 }`
               }
             >
@@ -383,13 +198,13 @@ export const MainLayout = () => {
               <span>Thông báo</span>
             </NavLink>
 
-            <NavLink 
-              to="/share" 
-              className={({ isActive }) => 
+            <NavLink
+              to="/share"
+              className={({ isActive }) =>
                 `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
-                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                  isActive
+                    ? "bg-zinc-900 text-green-400 shadow-sm"
+                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
                 }`
               }
             >
@@ -397,25 +212,41 @@ export const MainLayout = () => {
               <span>Hộp thư chia sẻ</span>
             </NavLink>
 
-            <NavLink 
-              to="/profile" 
-              className={({ isActive }) => 
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
                 `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-zinc-900 text-green-400 shadow-sm' 
-                    : 'text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50'
+                  isActive
+                    ? "bg-zinc-900 text-green-400 shadow-sm"
+                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
                 }`
               }
             >
               <User className="w-5 h-5" />
               <span>Hồ sơ</span>
             </NavLink>
+
+            {user?.role === "Admin" && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                    isActive
+                      ? "bg-zinc-900 text-green-400 shadow-sm"
+                      : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
+                  }`
+                }
+              >
+                <ShieldCheck className="w-5 h-5" />
+                <span>Quản trị</span>
+              </NavLink>
+            )}
           </nav>
 
           {/* Footer Sidebar / Nút đăng nhập/đăng xuất */}
           <div className="mt-auto">
             {isAuthenticated ? (
-              <button 
+              <button
                 onClick={logoutState}
                 className="w-full flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-all duration-200 text-left"
               >
@@ -423,8 +254,8 @@ export const MainLayout = () => {
                 <span>Đăng xuất</span>
               </button>
             ) : (
-              <NavLink 
-                to="/login" 
+              <NavLink
+                to="/login"
                 className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-green-400 hover:bg-green-950/20 hover:text-green-300 transition-all duration-200"
               >
                 <LogOut className="w-5 h-5" />
@@ -439,34 +270,43 @@ export const MainLayout = () => {
           {/* Header trong suốt mờ ảo */}
           <header className="h-16 flex items-center justify-between px-6 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/50 shrink-0 z-10">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-zinc-400">Trạng thái hệ thống:</span>
+              <span className="text-sm font-semibold text-zinc-400">
+                Trạng thái hệ thống:
+              </span>
               <span className="flex items-center gap-1.5 bg-green-500/10 text-green-400 text-xs px-2.5 py-1 rounded-full font-bold border border-green-500/20">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
                 Connected
               </span>
             </div>
-            
+
             {/* Avatar / Nút điều khiển đăng nhập đăng ký */}
             {isAuthenticated && user ? (
               <div className="flex items-center gap-4">
                 <NotificationBell />
-                <NavLink to="/profile" className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all">
+                <NavLink
+                  to="/profile"
+                  className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all"
+                >
                   <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
-                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                    {user.fullName
+                      ? user.fullName.charAt(0).toUpperCase()
+                      : "U"}
                   </div>
-                  <span className="text-sm font-semibold text-zinc-300">{user.fullName || 'Tài khoản'}</span>
+                  <span className="text-sm font-semibold text-zinc-300">
+                    {user.fullName || "Tài khoản"}
+                  </span>
                 </NavLink>
               </div>
             ) : (
               <div className="flex items-center gap-6">
-                <Link 
-                  to="/register" 
+                <Link
+                  to="/register"
                   className="text-sm font-bold text-zinc-450 hover:text-slate-100 transition-colors"
                 >
                   Đăng ký
                 </Link>
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="px-6 py-2.5 bg-white text-black font-bold text-sm rounded-full hover:scale-105 transition-transform active:scale-95 shadow-md"
                 >
                   Đăng nhập
@@ -484,13 +324,16 @@ export const MainLayout = () => {
 
       {/* 3. PLAYER BAR (Dưới cùng) */}
       <footer className="h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between shrink-0">
-        
         {/* Phía bên trái: Thông tin bài hát đang phát */}
         <div className="flex items-center gap-4 w-1/3">
           <div className="w-14 h-14 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 overflow-hidden shrink-0 shadow-inner">
             {currentTrack ? (
               currentTrack.coverUrl ? (
-                <img src={mediaService.getImageUrl(currentTrack.coverUrl)} alt={currentTrack.title} className="w-full h-full object-cover animate-fadeIn" />
+                <img
+                  src={currentTrack.coverUrl}
+                  alt={currentTrack.title}
+                  className="w-full h-full object-cover animate-fadeIn"
+                />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center">
                   <Music className="w-6 h-6 text-green-400" />
@@ -502,10 +345,10 @@ export const MainLayout = () => {
           </div>
           <div className="min-w-0">
             <h4 className="text-sm font-bold truncate hover:underline cursor-pointer">
-              {currentTrack ? currentTrack.title : 'Chưa có bài hát'}
+              {currentTrack ? currentTrack.title : "Chưa có bài hát"}
             </h4>
             <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer">
-              {currentTrack ? currentTrack.artist : 'Chọn một bài hát để nghe'}
+              {currentTrack ? currentTrack.artist : "Chọn một bài hát để nghe"}
             </p>
           </div>
           {currentTrack && (
@@ -518,20 +361,20 @@ export const MainLayout = () => {
         {/* Ở giữa: Các nút điều khiển nhạc & Thanh tiến trình */}
         <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
           <div className="flex items-center gap-6">
-            <button className="text-zinc-550 hover:text-slate-100 transition-colors hover:cursor-pointer">
+            <button className="text-zinc-550 hover:text-slate-100 transition-colors">
               <Shuffle className="w-4 h-4" />
             </button>
-            <button 
+            <button
               onClick={prevTrack}
-              className="text-zinc-400 hover:text-slate-100 transition-colors hover:cursor-pointer"
+              className="text-zinc-400 hover:text-slate-100 transition-colors"
             >
               <SkipBack className="w-5 h-5 fill-current" />
             </button>
-            
-            <button 
+
+            <button
               onClick={togglePlay}
               disabled={!currentTrack}
-              className="w-10 h-10 bg-slate-100 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md hover:cursor-pointer"
+              className="w-10 h-10 bg-slate-100 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md"
             >
               {isPlaying ? (
                 <Pause className="w-4 h-4 fill-current" />
@@ -540,47 +383,36 @@ export const MainLayout = () => {
               )}
             </button>
 
-            <button 
+            <button
               onClick={nextTrack}
-              className="text-zinc-400 hover:text-slate-100 transition-colors hover:cursor-pointer"
+              className="text-zinc-400 hover:text-slate-100 transition-colors"
             >
               <SkipForward className="w-5 h-5 fill-current" />
             </button>
-            <button className="text-zinc-550 hover:text-slate-100 transition-colors hover:cursor-pointer">
+            <button className="text-zinc-550 hover:text-slate-100 transition-colors">
               <Repeat className="w-4 h-4" />
             </button>
           </div>
-          
+
           {/* Thanh chạy tiến trình phát nhạc */}
           <div className="w-full flex items-center gap-2.5 text-[10px] text-zinc-500 font-bold">
             <span>{formatTime(currentTime)}</span>
-            <div 
-              ref={progressBarRef}
-              onMouseDown={handleProgressMouseDown}
-              onTouchStart={handleProgressTouchStart}
-              onMouseMove={handleProgressMouseMove}
-              onMouseLeave={handleProgressMouseLeave}
-              className="flex-1 h-1 bg-zinc-700 rounded-full relative group cursor-pointer"
+            <div
+              onClick={handleProgressBarClick}
+              className="flex-1 h-1 bg-zinc-800 rounded-full relative group cursor-pointer"
             >
-              {/* Tooltip hiển thị thời gian khi di chuột qua */}
-              {hoverTime !== null && (
-                <div 
-                  className="absolute bottom-3 -translate-x-1/2 bg-zinc-800 border border-zinc-700 text-white text-[10px] px-1.5 py-0.5 rounded shadow-lg pointer-events-none transition-all z-20"
-                  style={{ left: `${hoverPosition}%` }}
-                >
-                  {formatTime(hoverTime)}
-                </div>
-              )}
-              
-              <div 
-                className="absolute top-0 left-0 h-full bg-slate-100 rounded-full group-hover:bg-green-500"
-                style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+              <div
+                className="absolute top-0 left-0 h-full bg-green-500 rounded-full group-hover:bg-green-400"
+                style={{
+                  width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+                }}
               />
-              
-              {/* White dot thumb: hình tròn màu trắng căn giữa trục dọc và trục ngang của thanh kéo, chỉ hiện khi hover */}
-              <div 
-                className="absolute top-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                style={{ left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`, transform: 'translate(-50%, -50%)' }}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{
+                  left: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+                  transform: "translate(-50%, -50%)",
+                }}
               />
             </div>
             <span>{formatTime(duration)}</span>
@@ -589,32 +421,25 @@ export const MainLayout = () => {
 
         {/* Phía bên phải: Âm lượng & Tiện ích */}
         <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-400">
-          {renderVolumeIcon()}
-          <div 
-            ref={volumeBarRef}
-            onMouseDown={handleVolumeMouseDown}
-            onTouchStart={handleVolumeTouchStart}
-            className="w-24 h-1 bg-zinc-700 rounded-full cursor-pointer relative group"
+          <Volume2 className="w-5 h-5 hover:text-slate-100 cursor-pointer" />
+          <div
+            onClick={handleVolumeBarClick}
+            className="w-24 h-1 bg-zinc-800 rounded-full cursor-pointer relative group"
           >
-            <div 
-              className="absolute top-0 left-0 h-full bg-slate-100 rounded-full group-hover:bg-green-500"
+            <div
+              className="absolute top-0 left-0 h-full bg-green-500 rounded-full group-hover:bg-green-400"
               style={{ width: `${volume * 100}%` }}
             />
-            {/* White dot thumb: hình tròn màu trắng căn giữa tương tự thanh nhạc, chỉ hiện khi hover */}
-            <div 
-              className="absolute top-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-              style={{ left: `${volume * 100}%`, transform: 'translate(-50%, -50%)' }}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-slate-100 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{
+                left: `${volume * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
             />
           </div>
         </div>
-
       </footer>
-
-      {/* Modal Tải lên */}
-      <UploadMediaModal 
-        isOpen={isUploadModalOpen} 
-        onClose={() => setIsUploadModalOpen(false)} 
-      />
     </div>
   );
 };

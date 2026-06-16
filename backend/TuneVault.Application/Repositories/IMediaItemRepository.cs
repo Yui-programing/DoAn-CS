@@ -14,4 +14,7 @@ public interface IMediaItemRepository
     Task<bool> DeleteAsync(Guid id);
     //Phương thức tăng lượng nghe cho chức năng 4 và 10
     Task IncrementPlayCountAsync(Guid id);
+    // Admin / Moderation
+    Task<IEnumerable<MediaItem>> GetPendingMediaItemsAsync();
+    Task<bool> UpdateMediaItemStatusAsync(Guid id, string status);
 }

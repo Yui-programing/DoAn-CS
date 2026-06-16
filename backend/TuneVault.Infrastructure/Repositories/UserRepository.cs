@@ -21,7 +21,7 @@ namespace TuneVault.Infrastructure.Repositories
             const string sql = "SELECT * FROM [User] WHERE Email = @Email";
             return await _dbConnection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
         }
-          //  Hàm kiểm tra xem id đã tồn tại dưới DB chưa
+        //  Hàm kiểm tra xem id đã tồn tại dưới DB chưa
         public async Task<UserProfile?> GetProfileByUserIdAsync(string id)
         {
             const string sql = "SELECT * FROM [UserProfile] WHERE Id = @Id";
@@ -42,14 +42,86 @@ namespace TuneVault.Infrastructure.Repositories
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, profile);
             return rowsAffected > 0;
         }
-        
-         
+
+
 
 
         public async Task<bool> UpdatePasswordAsync(string userId, string passwordHash)
         {
             const string sql = "UPDATE [User] SET PasswordHash = @PasswordHash WHERE Id = @Id";
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { PasswordHash = passwordHash, Id = userId });
+            return rowsAffected > 0;
+        }
+
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            const string sql = @"
+                SELECT u.Id, u.Email, u.PasswordHash, u.[Role], u.CreatedAt, u.IsActive,
+                       p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio
+                FROM [User] u
+                LEFT JOIN UserProfile p ON u.Id = p.Id";
+
+            var userDictionary = new Dictionary<string, User>();
+
+            await _dbConnection.QueryAsync<User, UserProfile, User>(
+                sql,
+                (user, profile) =>
+                {
+                    if (!userDictionary.TryGetValue(user.Id, out var existingUser))
+                    {
+                        existingUser = user;
+                        existingUser.Profile = profile;
+                        userDictionary.Add(existingUser.Id, existingUser);
+                    }
+                    return existingUser;
+                },
+                splitOn: "ProfileId"
+            );
+
+            return userDictionary.Values;
+        }
+
+        public async Task<User?> GetUserWithProfileByIdAsync(string userId)
+        {
+            const string sql = @"
+                SELECT u.Id, u.Email, u.PasswordHash, u.[Role], u.CreatedAt, u.IsActive,
+                       p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio
+                FROM [User] u
+                LEFT JOIN UserProfile p ON u.Id = p.Id
+                WHERE u.Id = @Id";
+
+            var userDictionary = new Dictionary<string, User>();
+
+            var result = await _dbConnection.QueryAsync<User, UserProfile, User>(
+                sql,
+                (user, profile) =>
+                {
+                    if (!userDictionary.TryGetValue(user.Id, out var existingUser))
+                    {
+                        existingUser = user;
+                        existingUser.Profile = profile;
+                        userDictionary.Add(existingUser.Id, existingUser);
+                    }
+                    return existingUser;
+                },
+                new { Id = userId },
+                splitOn: "ProfileId"
+            );
+
+            return userDictionary.Values.FirstOrDefault();
+        }
+
+        public async Task<bool> UpdateUserRoleAsync(string userId, string role)
+        {
+            const string sql = "UPDATE [User] SET [Role] = @Role WHERE Id = @Id";
+            int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { Role = role, Id = userId });
+            return rowsAffected > 0;
+        }
+
+        public async Task<bool> SetUserActiveStateAsync(string userId, bool isActive)
+        {
+            const string sql = "UPDATE [User] SET IsActive = @IsActive WHERE Id = @Id";
+            int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { IsActive = isActive, Id = userId });
             return rowsAffected > 0;
         }
 

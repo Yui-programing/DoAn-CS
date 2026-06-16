@@ -38,6 +38,7 @@ public class MediaController : ControllerBase
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
+    [Authorize(Roles = "Artist")]
     public async Task<IActionResult> UploadMedia([FromForm] UploadMediaRequest request)
     {
         var userId = GetUserIdFromJwt();
@@ -103,6 +104,18 @@ public class MediaController : ControllerBase
         return Ok(ApiResponse<Guid>.SetSuccess(mediaId, "Tải lên file media thành công!"));
     }
 
+    [HttpGet("my-media")]
+    [Authorize(Roles = "Artist")]
+    public async Task<IActionResult> GetMyMedia()
+    {
+        var userId = GetUserIdFromJwt();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
+
+        var mediaItems = await _mediaItemRepository.GetByOwnerIdAsync(userId);
+        return Ok(ApiResponse<IEnumerable<MediaItem>>.SetSuccess(mediaItems, "Lấy danh sách media của tôi thành công."));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetMediaDetail(Guid id)
     {
@@ -123,7 +136,7 @@ public class MediaController : ControllerBase
             return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy file media."));
 
         // Nếu là URL tuyệt đối (trên mây như Cloudinary) thì redirect
-        if (media.FilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+        if (media.FilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
             media.FilePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
             // Fix lỗi ASP.NET Core không cho phép ký tự tiếng Việt (Non-ASCII) trong Header Location
@@ -134,7 +147,7 @@ public class MediaController : ControllerBase
         // Nếu là đường dẫn cục bộ (ví dụ: /media/react.mp4)
         var relativePath = media.FilePath.TrimStart('/');
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
-        
+
         // Dự phòng: Tìm ở thư mục frontend public/media nếu đang ở môi trường chạy dev
         if (!System.IO.File.Exists(filePath))
         {

@@ -10,6 +10,11 @@ export const mediaService = {
         return response.data;
     },
 
+    getMyMedia: async (): Promise<ApiResponse<MediaItem[]>> => {
+        const response = await api.get<ApiResponse<MediaItem[]>>('/media/my-media');
+        return response.data;
+    },
+
     getMediaDetails: async (id: string): Promise<ApiResponse<MediaItem>> => {
         const response = await api.get<ApiResponse<MediaItem>>(`/media/${id}`);
         return response.data;

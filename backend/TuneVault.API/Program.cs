@@ -7,6 +7,7 @@ using TuneVault.Infrastructure.Hubs;
 
 
 using Microsoft.OpenApi.Models;
+using TuneVault.API.Filters;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +47,9 @@ builder.Services.AddSwaggerGen(c =>
             new List<string>()
         }
     });
+
+    // Thêm Filter để hiển thị file upload đúng cách
+    c.OperationFilter<FileUploadOperationFilter>();
 });
 
 // --- 2. CẤU HÌNH ĐỌC VÀ GIẢI MÃ JWT TOKEN ---

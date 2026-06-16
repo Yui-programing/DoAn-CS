@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using System.Threading.Tasks;
 using TuneVault.Application.Models;
 using TuneVault.Application.Repositories;
 using Dapper;
@@ -22,7 +21,6 @@ namespace TuneVault.Infrastructure.Repositories
         {
             string safeKeyword = string.IsNullOrWhiteSpace(keyword) ? "" : $"%{keyword.Trim()}%";
 
-            // Sửa cột FullName thành ArtistName để đúng cấu trúc bảng MediaItem
             string sql = @"
             SELECT DISTINCT TOP (@Limit) Title AS Text, 'Song' AS Type
             FROM MediaItem 
@@ -30,11 +28,11 @@ namespace TuneVault.Infrastructure.Repositories
 
             UNION
 
-            SELECT DISTINCT TOP (@Limit) ArtistName AS Text, 'Artist' AS Type
-            FROM MediaItem
-            WHERE ArtistName LIKE @Keyword AND ArtistName IS NOT NULL
+            SELECT DISTINCT TOP (@Limit) Name AS Text, 'Artist' AS Type
+            FROM Artist 
+            WHERE Name LIKE @Keyword
         
-            ORDER BY Text ASC;";
+            ORDER BY Text ASC;"; // Có thể sắp xếp theo bảng chữ cái
 
             return await _dbConnection.QueryAsync<SuggestionResultDto>(sql, new { Keyword = safeKeyword, Limit = limit });
         }
@@ -44,26 +42,17 @@ namespace TuneVault.Infrastructure.Repositories
             int offset = (pageNumber - 1) * pageSize;
             string safeKeyword = string.IsNullOrWhiteSpace(keyword) ? "" : $"%{keyword.Trim()}%";
 
-            // Chuyển logic Artist sang lấy từ cột ArtistName trong MediaItem
-            // Dùng GROUP BY ArtistName để gom cụm, lấy Max(CoverUrl) làm đại diện hoặc để NULL
             string sql = @"
             WITH SearchResults AS (
-                -- 1. Tìm kiếm theo Bài hát (Song)
-                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, m.ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
                 FROM MediaItem m
-                WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
-                
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
+                WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                
-                -- 2. Tìm kiếm theo Nghệ sĩ (Artist) - Lấy từ cột ArtistName của MediaItem
-                SELECT MIN(Id) AS Id, ArtistName AS Name, 'Artist' AS Type, MAX(CoverUrl) AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, SUM(ViewCount) AS ViewCount, 0 AS DurationInSeconds
-                FROM MediaItem
-                WHERE ArtistName LIKE @Keyword AND ArtistName IS NOT NULL AND (@FilterType IS NULL OR @FilterType = 'Artist')
-                GROUP BY ArtistName
-                
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
+                FROM Artist 
+                WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                
-                -- 3. Tìm kiếm theo danh sách phát (Playlist)
                 SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
@@ -71,22 +60,15 @@ namespace TuneVault.Infrastructure.Repositories
             SELECT COUNT(1) FROM SearchResults;
 
             WITH SearchResults AS (
-                -- 1. Tìm kiếm theo Bài hát (Song)
-                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, m.ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
                 FROM MediaItem m
-                WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
-                
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
+                WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                
-                -- 2. Tìm kiếm theo Nghệ sĩ (Artist) - Lấy từ cột ArtistName của MediaItem
-                SELECT MIN(Id) AS Id, ArtistName AS Name, 'Artist' AS Type, MAX(CoverUrl) AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, SUM(ViewCount) AS ViewCount, 0 AS DurationInSeconds
-                FROM MediaItem
-                WHERE ArtistName LIKE @Keyword AND ArtistName IS NOT NULL AND (@FilterType IS NULL OR @FilterType = 'Artist')
-                GROUP BY ArtistName
-                
+                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
+                FROM Artist 
+                WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                
-                -- 3. Tìm kiếm theo danh sách phát (Playlist)
                 SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')

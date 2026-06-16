@@ -1,151 +1,155 @@
 // === Cấu trúc Response dùng chung cho mọi API ===
 export interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    message: string;
-    errors: string[] | null;
+  success: boolean;
+  data: T;
+  message: string;
+  errors: string[] | null;
 }
 
 // === Các Models (Entities & DTOs) ===
 
 export interface UserProfile {
-    id: string;
-    fullName: string;
-    bio?: string;
-    avatarUrl?: string;
+  id?: string;
+  email?: string;
+  role?: string;
+  isActive?: boolean;
+  fullName?: string;
+  bio?: string;
+  avatarUrl?: string;
 }
 
 export type MediaType = 0 | 1;
 export const MediaTypes = {
-    Audio: 0 as MediaType,
-    Video: 1 as MediaType
+  Audio: 0 as MediaType,
+  Video: 1 as MediaType,
 };
 
 export interface MediaItem {
-    id: string;
-    title: string;
-    description?: string;
-    filePath: string;
-    coverUrl?: string;
-    durationInSeconds: number;
-    mediaType: MediaType;
-    ownerId: string;
-    albumId?: string;
-    artistId?: string;
-    isPrivate: boolean;
-    viewCount: number;
+  id: string;
+  title: string;
+  description?: string;
+  filePath: string;
+  coverUrl?: string;
+  durationInSeconds: number;
+  mediaType: MediaType;
+  ownerId: string;
+  albumId?: string;
+  artistId?: string;
+  isPrivate: boolean;
+  viewCount: number;
+  approvalStatus?: string;
 }
 
 export interface Playlist {
-    id: string;
-    title: string;
-    description?: string;
-    isPublic: boolean;
-    tracksCount: number;
-    type: number;
-    createdAt: string;
-    ownerId: string;
+  id: string;
+  title: string;
+  description?: string;
+  isPublic: boolean;
+  tracksCount: number;
+  createdAt: string;
+  type: number;
+  ownerId?: string;
 }
 
 export interface PlaylistTrack {
-    mediaItemId: string;
-    title: string;
-    durationInSeconds: number;
-    addedAt: string;
+  mediaItemId: string;
+  title: string;
+  durationInSeconds: number;
+  addedAt: string;
 }
 
 export interface SharedMediaItem {
-    mediaItemId: string;
-    senderId: string;
-    receiverId: string;
-    sharedAt: string;
-    message?: string;
+  mediaItemId: string;
+  senderId: string;
+  receiverId: string;
+  sharedAt: string;
+  message?: string;
 }
 
 export interface SharedPlaylist {
-    playlistId: string;
-    senderId: string;
-    receiverId: string;
-    sharedAt: string;
-    message?: string;
+  playlistId: string;
+  senderId: string;
+  receiverId: string;
+  sharedAt: string;
+  message?: string;
 }
 
 export interface Notification {
-    id: string;
-    userId: string;
-    type: number;
-    payloadJson: string;
-    isRead: boolean;
-    createdAt: string;
+  id: string;
+  userId: string;
+  type: number;
+  payloadJson: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface Favorite {
-    id: string;
-    userId: string;
-    mediaItemId: string;
-    mediaItem?: MediaItem;
-    createdAt: string;
+  id: string;
+  userId: string;
+  mediaItemId: string;
+  mediaItem?: MediaItem;
+  createdAt: string;
 }
 
 export interface PlayHistory {
-    id: string;
-    userId: string;
-    mediaItemId: string;
-    mediaItem?: MediaItem;
-    playedAt: string;
+  id: string;
+  userId: string;
+  mediaItemId: string;
+  mediaItem?: MediaItem;
+  playedAt: string;
 }
 
 // === Các Request DTOs (Dùng khi gửi POST/PUT) ===
 export interface LoginRequest {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface RegisterRequest {
-    name: string;
-    email: string;
-    password: string;
-    otpCode: string;
+  name: string;
+  email: string;
+  password: string;
+  otpCode: string;
 }
 
 export interface SendOtpRequest {
-    email: string;
+  email: string;
 }
 
 export interface ResetPasswordRequest {
-    email: string;
-    otpCode: string;
-    newPassword: string;
+  email: string;
+  otpCode: string;
+  newPassword: string;
 }
 
 export interface UpdateProfileRequest {
-    fullName: string;
-    bio?: string;
-    avatarUrl?: string;
+  fullName: string;
+  bio?: string;
+  avatarUrl?: string;
 }
 
 export interface CreatePlaylistRequest {
-    title: string;
-    description?: string;
-    isPublic: boolean;
-    type: number;
+  title: string;
+  description?: string;
+  isPublic: boolean;
 }
 
 export interface UpdatePlaylistRequest {
-    title: string;
-    description?: string;
-    isPublic: boolean;
-    type: number;
+  title: string;
+  description?: string;
+  isPublic: boolean;
 }
 
 export interface ShareMediaItemRequest {
-    receiverId: string;
-    mediaItemId: string;
-    message?: string;
+  receiverId: string;
+  mediaItemId: string;
+  message?: string;
 }
 
 export interface SharePlaylistRequest {
-    receiverid: string; // Chú ý: Backend C# đang viết chữ 'i' thường (ShareDto.cs)
-    playlistId: string;
-    message?: string;
+  receiverid: string; // Chú ý: Backend C# đang viết chữ 'i' thường (ShareDto.cs)
+  playlistId: string;
+  message?: string;
 }
+
+export type { AdminUser } from "./admin";

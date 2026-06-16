@@ -11,7 +11,13 @@ namespace TuneVault.Application.Repositories
         Task<bool> UpdatePasswordAsync(string userId, string passwordHash);
 
         // 2. Dành cho Profile (Lấy thông tin và Cập nhật)
-        Task<UserProfile?> GetProfileByUserIdAsync(string userId); 
-        Task<bool> UpdateProfileAsync(UserProfile profile); 
+        Task<UserProfile?> GetProfileByUserIdAsync(string userId);
+        Task<bool> UpdateProfileAsync(UserProfile profile);
+        Task<User?> GetUserWithProfileByIdAsync(string userId);
+
+        // 3. Dành cho Admin
+        Task<IEnumerable<User>> GetAllUsersAsync();
+        Task<bool> UpdateUserRoleAsync(string userId, string role);
+        Task<bool> SetUserActiveStateAsync(string userId, bool isActive);
     }
 }
