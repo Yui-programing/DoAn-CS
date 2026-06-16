@@ -355,7 +355,7 @@ export const Home = () => {
                       <span className={`text-sm font-bold w-4 text-right shrink-0 ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
                         {isCurrent && isPlaying ? '•' : index + 1}
                       </span>
-                      <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800/80 overflow-hidden shrink-0 shadow-inner group-hover:shadow-green-500/10 transition-shadow">
+                      <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800/80 overflow-hidden relative shrink-0 shadow-inner group-hover:shadow-green-500/10 transition-shadow">
                         {track.coverUrl ? (
                           <img src={mediaService.getImageUrl(track.coverUrl)} alt="Cover" className="w-full h-full object-cover animate-fadeIn" />
                         ) : (
