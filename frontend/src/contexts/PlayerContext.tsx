@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { mediaService } from '../services';
 
 export interface Track {
   id: string;
@@ -48,6 +49,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     } else if (!queue.some(t => t.id === track.id)) {
       setQueue([track]);
     }
+
+    // Ghi nhận lượt nghe và lưu lịch sử
+    mediaService.recordPlayHistory(track.id).catch(err => {
+      console.log('Không thể ghi nhận lượt nghe:', err);
+    });
   };
 
   // Đổi trạng thái Play/Pause

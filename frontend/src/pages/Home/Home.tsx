@@ -6,6 +6,8 @@ import { Play, Pause, Sparkles, Heart, Music, Loader2 } from 'lucide-react';
 // Import dịch vụ API để lấy dữ liệu thật
 import { playlistService, mediaService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
+import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
+import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 
 // Helper format số lượt nghe rút gọn kiểu Spotify (1.2M, 850K, ...)
 const formatViewCount = (count: number) => {
@@ -41,6 +43,9 @@ export const Home = () => {
   // Phân tách nhạc gợi ý dựa vào loại media (0 = Audio, 1 = Video)
   const audioTracks = suggestedTracks.filter((track: any) => track.mediaType === 0);
   const videoTracks = suggestedTracks.filter((track: any) => track.mediaType === 1);
+
+  // Trạng thái cho Add to Playlist Modal
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
 
   // BƯỚC 2: Tự động gọi API khi vừa mở trang Home
   useEffect(() => {
@@ -101,6 +106,16 @@ export const Home = () => {
     };
 
     fetchHomeData();
+
+    // Lắng nghe sự kiện để tự động load lại danh sách bài hát sau khi upload thành công
+    const handleMediaUploaded = () => {
+      fetchHomeData();
+    };
+    window.addEventListener('mediaUploaded', handleMediaUploaded);
+
+    return () => {
+      window.removeEventListener('mediaUploaded', handleMediaUploaded);
+    };
   }, [isAuthenticated]);
 
   const getGreeting = () => {
@@ -206,7 +221,7 @@ export const Home = () => {
         {audioTracks.length === 0 ? (
           <p className="text-zinc-500 text-sm">Chưa có bài hát nào trên hệ thống.</p>
         ) : (
-          <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden divide-y divide-zinc-900/50">
+          <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent divide-y divide-zinc-900/50">
             {audioTracks.map((track, index) => {
               const isCurrent = currentTrack?.id === track.id;
               return (
@@ -222,7 +237,7 @@ export const Home = () => {
                     </span>
                     <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center border border-zinc-800 overflow-hidden relative group-hover:border-zinc-700 shrink-0">
                       {track.coverUrl ? (
-                        <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                        <img src={mediaService.getImageUrl(track.coverUrl)} alt="Cover" className="w-full h-full object-cover" />
                       ) : (
                         <Music className="w-5 h-5 text-zinc-600" />
                       )}
@@ -247,8 +262,8 @@ export const Home = () => {
                     <span className="font-medium">{formatViewCount(track.viewCount)}</span>
                   </div>
 
-                  {/* CỘT 3: Thời lượng + Heart Action */}
-                  <div className="w-28 flex items-center justify-end gap-6 shrink-0 text-xs text-zinc-400">
+                  {/* CỘT 3: Thời lượng + Heart Action + 3-Dot Menu */}
+                  <div className="w-36 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
                     {isAuthenticated && (
                       <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
                         <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
@@ -257,6 +272,12 @@ export const Home = () => {
                     <span className={`font-semibold tracking-wider ${isCurrent ? 'text-green-400' : ''}`}>
                       {track.duration}
                     </span>
+                    {isAuthenticated && (
+                      <TrackDropdownMenu 
+                        onAddToPlaylist={() => setSelectedMediaId(track.id)}
+                        onShare={() => console.log('Share')}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -284,7 +305,7 @@ export const Home = () => {
                 >
                   <div className="aspect-video w-full rounded-lg overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors">
                     {track.coverUrl ? (
-                      <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={mediaService.getImageUrl(track.coverUrl)} alt={track.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                         <Music className="w-8 h-8 text-zinc-600" />
@@ -320,7 +341,7 @@ export const Home = () => {
           {recentTracks.length === 0 ? (
             <p className="text-zinc-500 text-sm">Bạn chưa nghe bài nào trên hệ thống này.</p>
           ) : (
-            <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-hidden divide-y divide-zinc-900/50">
+            <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent divide-y divide-zinc-900/50">
               {recentTracks.map((track, index) => {
                 const isCurrent = currentTrack?.id === track.id;
                 return (
@@ -334,11 +355,11 @@ export const Home = () => {
                       <span className={`text-sm font-bold w-4 text-right shrink-0 ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
                         {isCurrent && isPlaying ? '•' : index + 1}
                       </span>
-                      <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center border border-zinc-800 overflow-hidden relative group-hover:border-zinc-700 shrink-0">
+                      <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800/80 overflow-hidden relative shrink-0 shadow-inner group-hover:shadow-green-500/10 transition-shadow">
                         {track.coverUrl ? (
-                          <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                          <img src={mediaService.getImageUrl(track.coverUrl)} alt="Cover" className="w-full h-full object-cover animate-fadeIn" />
                         ) : (
-                          <Music className="w-5 h-5 text-zinc-655" />
+                          <Music className="w-5 h-5 text-zinc-550" />
                         )}
                         <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                           {isCurrent && isPlaying ? (
@@ -362,13 +383,17 @@ export const Home = () => {
                     </div>
 
                     {/* CỘT 3 */}
-                    <div className="w-28 flex items-center justify-end gap-6 shrink-0 text-xs text-zinc-400">
+                    <div className="w-36 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
                       <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
                         <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
                       </button>
                       <span className={`font-semibold tracking-wider ${isCurrent ? 'text-green-400' : ''}`}>
                         {track.duration}
                       </span>
+                      <TrackDropdownMenu 
+                        onAddToPlaylist={() => setSelectedMediaId(track.id)}
+                        onShare={() => console.log('Share')}
+                      />
                     </div>
                   </div>
                 );
@@ -376,6 +401,15 @@ export const Home = () => {
             </div>
           )}
         </section>
+      )}
+
+      {/* Modal Add to Playlist */}
+      {selectedMediaId && (
+        <AddToPlaylistModal
+          isOpen={true}
+          onClose={() => setSelectedMediaId(null)}
+          mediaItemId={selectedMediaId}
+        />
       )}
     </div>
   );

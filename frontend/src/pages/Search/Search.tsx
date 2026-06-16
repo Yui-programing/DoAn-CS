@@ -12,8 +12,12 @@ import {
   Film, 
   User, 
   Sparkles,
-  ListMusic 
+  ListMusic,
+  Heart
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
+import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 
 const categories = [
   { title: 'Nhạc Pop', color: 'from-pink-500 to-rose-600', query: 'Pop' },
@@ -54,6 +58,9 @@ export const Search = () => {
   const [results, setResults] = useState<any[]>([]);
   const [trendingTracks, setTrendingTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  
+  const { user } = useAuth();
 
   // Lấy danh sách nhạc Trending khi mở trang lần đầu
   useEffect(() => {
@@ -191,7 +198,7 @@ export const Search = () => {
                             <div className="relative w-11 h-11 rounded-md overflow-hidden bg-zinc-800 shrink-0 shadow">
                               {song.coverUrl ? (
                                 <img 
-                                  src={song.coverUrl} 
+                                  src={mediaService.getImageUrl(song.coverUrl)} 
                                   alt={song.name} 
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
                                 />
@@ -226,15 +233,26 @@ export const Search = () => {
                           </div>
 
                           {/* Cột 3: Thời lượng & Action */}
-                          <div className="w-28 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
+                          <div className="w-36 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
                             {isThisPlaying && (
                               <span className="text-[9px] bg-green-500/10 border border-green-500/20 text-green-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse hidden lg:inline-block">
                                 Đang phát
                               </span>
                             )}
+                            {user && (
+                              <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
+                                <Heart className={`w-4 h-4 ${isThisPlaying ? 'text-green-400 fill-current' : ''}`} />
+                              </button>
+                            )}
                             <span className={`font-semibold tracking-wider ${isThisPlaying ? 'text-green-400' : ''}`}>
                               {formatDuration(song.durationInSeconds)}
                             </span>
+                            {user && (
+                              <TrackDropdownMenu 
+                                onAddToPlaylist={() => setSelectedMediaId(song.id)}
+                                onShare={() => console.log('Share')}
+                              />
+                            )}
                           </div>
                         </div>
                       );
@@ -261,7 +279,7 @@ export const Search = () => {
                         <div className="aspect-square w-full rounded-lg bg-zinc-800 overflow-hidden relative shadow">
                           {pl.coverUrl ? (
                             <img 
-                              src={pl.coverUrl} 
+                              src={mediaService.getImageUrl(pl.coverUrl)} 
                               alt={pl.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                             />
@@ -305,7 +323,7 @@ export const Search = () => {
                         <div className="aspect-video w-full bg-zinc-800 relative overflow-hidden">
                           {mv.coverUrl ? (
                             <img 
-                              src={mv.coverUrl} 
+                              src={mediaService.getImageUrl(mv.coverUrl)} 
                               alt={mv.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
@@ -353,7 +371,7 @@ export const Search = () => {
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-zinc-850 shadow-md mb-3 relative group-hover:shadow-purple-500/10 transition-shadow">
                           {artist.coverUrl ? (
                             <img 
-                              src={artist.coverUrl} 
+                              src={mediaService.getImageUrl(artist.coverUrl)} 
                               alt={artist.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
                             />
@@ -431,7 +449,7 @@ export const Search = () => {
 
                         <div className="relative w-9 h-9 rounded bg-zinc-800 overflow-hidden shrink-0">
                           {song.coverUrl ? (
-                            <img src={song.coverUrl} alt={song.name} className="w-full h-full object-cover" />
+                            <img src={mediaService.getImageUrl(song.coverUrl)} alt={song.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <Music className="w-4 h-4 text-zinc-600" />
@@ -461,9 +479,17 @@ export const Search = () => {
                         {formatViewCount(song.viewCount)}
                       </div>
 
-                      {/* Thời lượng ở Trending */}
-                      <div className="text-[10px] text-zinc-500 w-10 text-right shrink-0 font-semibold tracking-wider">
-                        {formatDuration(song.durationInSeconds)}
+                      {/* Thời lượng & Action ở Trending */}
+                      <div className="w-24 flex items-center justify-end gap-3 shrink-0">
+                        <span className="text-[10px] text-zinc-500 font-semibold tracking-wider">
+                          {formatDuration(song.durationInSeconds)}
+                        </span>
+                        {user && (
+                          <TrackDropdownMenu 
+                            onAddToPlaylist={() => setSelectedMediaId(song.id)}
+                            onShare={() => console.log('Share')}
+                          />
+                        )}
                       </div>
                     </div>
                   );
@@ -472,6 +498,15 @@ export const Search = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal Add to Playlist */}
+      {selectedMediaId && (
+        <AddToPlaylistModal
+          isOpen={true}
+          onClose={() => setSelectedMediaId(null)}
+          mediaItemId={selectedMediaId}
+        />
       )}
     </div>
   );

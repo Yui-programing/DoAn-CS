@@ -2,19 +2,34 @@ import { useState, useEffect } from 'react';
 import { useParams, NavLink, useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Thêm icon Loader2
-import { Play, Pause, Clock, Heart, Music, ArrowLeft, Loader2 } from 'lucide-react';
+import { Play, Pause, Clock, Heart, Music, ArrowLeft, Loader2, Edit2, Trash2 } from 'lucide-react';
 // Import dịch vụ API
-import { playlistService } from '../../services';
+import { playlistService, mediaService } from '../../services';
+import { useAuth } from '../../contexts/AuthContext';
+import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';
+import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
+import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+
+// Helper format thời lượng giây thành phút:giây (ví dụ: 210s -> 3:30)
+const formatDuration = (seconds: number) => {
+  if (!seconds) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
 
 export const PlaylistDetail = () => {
   const { id } = useParams<{ id: string }>(); // Lấy ID của playlist từ thanh URL
   const navigate = useNavigate();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+  const { user } = useAuth();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
   const [playlistInfo, setPlaylistInfo] = useState<any>(null); // Chứa Tên, Mô tả
   const [tracks, setTracks] = useState<any[]>([]);             // Chứa danh sách bài hát
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
 
   // BƯỚC 2: Gọi API khi vào trang chi tiết
   useEffect(() => {
@@ -32,8 +47,16 @@ export const PlaylistDetail = () => {
         // 2. Lấy danh sách các bài hát trong Playlist này
         const tracksRes = await playlistService.getTracks(id);
         if (tracksRes.success) {
-          // Bóc tách bài hát (mediaItem) từ cục PlaylistTrack
-          const mappedTracks = tracksRes.data.map((pt: any) => pt.mediaItem).filter(Boolean);
+          // Bóc tách bài hát từ PlaylistTrackDto trả về
+          const mappedTracks = tracksRes.data.map((pt: any) => ({
+            id: pt.mediaItemId,
+            title: pt.title,
+            artist: pt.artistName || 'Không rõ ca sĩ',
+            coverUrl: pt.coverUrl,
+            duration: formatDuration(pt.durationInSeconds), // Gọi helper bên dưới hoặc tự viết
+            durationInSeconds: pt.durationInSeconds,
+            filePath: mediaService.getStreamUrl(pt.mediaItemId) // Sử dụng mediaService
+          }));
           setTracks(mappedTracks);
         }
       } catch (error) {
@@ -44,7 +67,47 @@ export const PlaylistDetail = () => {
     };
 
     fetchPlaylistDetail();
+
+    const handlePlaylistChanged = () => {
+      fetchPlaylistDetail();
+    };
+    window.addEventListener('playlistChanged', handlePlaylistChanged);
+    return () => {
+      window.removeEventListener('playlistChanged', handlePlaylistChanged);
+    };
   }, [id]);
+
+  const handleDeletePlaylist = async () => {
+    if (!id || !window.confirm('Bạn có chắc chắn muốn xóa không? Hành động này không thể hoàn tác.')) return;
+    try {
+      const res = await playlistService.deletePlaylist(id);
+      if (res.success) {
+        window.dispatchEvent(new Event('playlistChanged'));
+        navigate('/library');
+      } else {
+        alert(res.message || 'Xóa thất bại.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Lỗi kết nối khi xóa.');
+    }
+  };
+
+  const handleRemoveTrack = async (trackId: string) => {
+    if (!id || !window.confirm('Bạn có chắc chắn muốn xóa bài hát này khỏi playlist?')) return;
+    try {
+      const res = await playlistService.removeTrack(id, trackId);
+      if (res.success) {
+        setTracks(prev => prev.filter(t => t.id !== trackId));
+        window.dispatchEvent(new Event('playlistChanged'));
+      } else {
+        alert(res.message || 'Xóa thất bại.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Lỗi kết nối khi xóa.');
+    }
+  };
 
   const handleTrackClick = (track: any) => {
     const isVideo = track.filePath?.endsWith('.mp4');
@@ -121,7 +184,7 @@ export const PlaylistDetail = () => {
             {playlistInfo?.description || 'Không có mô tả cho playlist này.'}
           </p>
           <div className="text-xs text-zinc-300 font-semibold pt-1 flex flex-wrap items-center justify-center md:justify-start gap-1">
-            <span className="text-green-400">Bạn tạo</span>
+            <span className="text-green-400">{playlistInfo?.ownerId === user?.id ? 'Bạn tạo' : 'Người khác tạo'}</span>
             <span className="text-zinc-600">•</span>
             <span>{tracks.length} bài hát</span>
           </div>
@@ -144,6 +207,24 @@ export const PlaylistDetail = () => {
         <button className="text-zinc-400 hover:text-green-400 transition-colors p-2">
           <Heart className="w-6 h-6" />
         </button>
+
+        {user && playlistInfo && user.id === playlistInfo.ownerId && (
+          <>
+            <div className="w-px h-8 bg-zinc-800 mx-2"></div>
+            <button 
+              onClick={() => setIsEditModalOpen(true)}
+              className="text-zinc-400 hover:text-white transition-colors p-2 flex items-center gap-2 text-sm font-semibold"
+            >
+              <Edit2 className="w-5 h-5" /> Sửa
+            </button>
+            <button 
+              onClick={handleDeletePlaylist}
+              className="text-zinc-400 hover:text-red-400 transition-colors p-2 flex items-center gap-2 text-sm font-semibold"
+            >
+              <Trash2 className="w-5 h-5" /> Xóa
+            </button>
+          </>
+        )}
       </div>
 
       {/* BƯỚC 3 & 4: Danh sách bài hát THẬT */}
@@ -158,7 +239,9 @@ export const PlaylistDetail = () => {
               <tr className="border-b border-zinc-900 text-zinc-500 text-xs font-bold uppercase tracking-wider">
                 <th className="py-3 px-4 w-12 text-center">#</th>
                 <th className="py-3 px-4">Tiêu đề</th>
-                <th className="py-3 px-4 text-center"><Clock className="w-4 h-4 mx-auto" /></th>
+                <th className="py-3 px-4 w-12 text-center"></th>
+                <th className="py-3 px-4 w-16 text-center"><Clock className="w-4 h-4 mx-auto" /></th>
+                <th className="py-3 px-4 w-12 text-center"></th>
               </tr>
             </thead>
             <tbody>
@@ -176,7 +259,7 @@ export const PlaylistDetail = () => {
                     <td className="py-4 px-4 flex items-center gap-3">
                       <div className="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800/80 overflow-hidden shrink-0 shadow-inner">
                         {track.coverUrl ? (
-                          <img src={track.coverUrl} alt="Cover" className="w-full h-full object-cover animate-fadeIn" />
+                          <img src={mediaService.getImageUrl(track.coverUrl)} alt="Cover" className="w-full h-full object-cover animate-fadeIn" />
                         ) : (
                           <Music className="w-5 h-5 text-zinc-550" />
                         )}
@@ -188,8 +271,32 @@ export const PlaylistDetail = () => {
                         <p className="text-xs text-zinc-400 truncate max-w-xs">{track.artist || 'Không rõ ca sĩ'}</p>
                       </div>
                     </td>
-                    <td className={`py-4 px-4 text-center text-sm font-semibold ${isCurrent ? 'text-green-400' : 'text-zinc-400'}`}>
-                      Phát nhạc
+                    <td className="py-4 px-4 text-center align-middle">
+                      {user && (
+                        <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-colors mt-1">
+                          <Heart className={`w-4.5 h-4.5 text-zinc-400 hover:text-green-400 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
+                        </button>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 text-center align-middle">
+                      <span className={`font-semibold tracking-wider text-xs ${isCurrent ? 'text-green-400' : 'text-zinc-400'}`}>
+                        {track.duration}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center align-middle">
+                      {user && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <TrackDropdownMenu 
+                              onAddToPlaylist={() => setSelectedMediaId(track.id)}
+                              onShare={() => console.log('Share')}
+                              onRemoveFromPlaylist={
+                                user?.id === playlistInfo?.ownerId 
+                                  ? () => handleRemoveTrack(track.id) 
+                                  : undefined
+                              }
+                            />
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -197,6 +304,22 @@ export const PlaylistDetail = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Modal Edit Playlist/Album */}
+      <CreatePlaylistModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        playlistToEdit={playlistInfo}
+      />
+
+      {/* Modal Add to Playlist */}
+      {selectedMediaId && (
+        <AddToPlaylistModal
+          isOpen={true}
+          onClose={() => setSelectedMediaId(null)}
+          mediaItemId={selectedMediaId}
+        />
       )}
     </div>
   );

@@ -83,8 +83,8 @@ public class MediaController : ControllerBase
             coverUrl = await _cloudinaryService.UploadImageAsync(coverStream, request.CoverImage.FileName, "TuneVault/Covers");
         }
 
-        // 5. Gán thời gian phát nhạc mặc định
-        int duration = 180;
+        // 5. Gán thời gian phát nhạc lấy từ Client (nếu client không gửi thì mặc định 180s)
+        int duration = request.Duration > 0 ? request.Duration : 180;
 
         // 6. Lưu metadata xuống SQL Server thông qua MediatR Command
         var command = new UploadMediaCommand
@@ -139,7 +139,9 @@ public class MediaController : ControllerBase
         if (media.FilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
             media.FilePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
-            return Redirect(media.FilePath);
+            // Fix lỗi ASP.NET Core không cho phép ký tự tiếng Việt (Non-ASCII) trong Header Location
+            var encodedUrl = new Uri(media.FilePath).AbsoluteUri;
+            return Redirect(encodedUrl);
         }
 
         // Nếu là đường dẫn cục bộ (ví dụ: /media/react.mp4)
@@ -186,4 +188,5 @@ public class UploadMediaRequest
     public string? Description { get; set; }
     public MediaType MediaType { get; set; }
     public bool IsPrivate { get; set; }
+    public int Duration { get; set; } // Thời lượng tính bằng giây do frontend gửi lên
 }

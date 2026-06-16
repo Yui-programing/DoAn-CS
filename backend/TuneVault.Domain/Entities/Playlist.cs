@@ -1,4 +1,4 @@
-﻿namespace TuneVault.Domain.Entities
+namespace TuneVault.Domain.Entities
 {
     public class Playlist
     {
@@ -11,6 +11,6 @@
         public int TracksCount { get; set; }
         public int TotalDuration { get; set; }
 
-        
+        public int Type { get; set; } = 0;
     }
 }

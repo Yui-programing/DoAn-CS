@@ -18,6 +18,7 @@ export const VideoPlayer = () => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [showControls, setShowControls] = useState(true);
+    const [hasRecordedView, setHasRecordedView] = useState(false);
 
     // BƯỚC 1: Khai báo State để lưu thông tin video từ Backend
     const [videoInfo, setVideoInfo] = useState<{
@@ -154,7 +155,13 @@ export const VideoPlayer = () => {
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
                     onWaiting={() => setIsLoading(true)}
-                    onPlaying={() => setIsLoading(false)}
+                    onPlaying={() => {
+                        setIsLoading(false);
+                        if (!hasRecordedView && id) {
+                            mediaService.recordPlayHistory(id).catch(err => console.error("Không thể ghi nhận lượt nghe video:", err));
+                            setHasRecordedView(true);
+                        }
+                    }}
                 />
             )}
 

@@ -133,7 +133,7 @@ if (app.Environment.IsDevelopment())
 
 // Tạm thời tắt chuyển hướng HTTPS khi chạy local
 // app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseRouting();
 
 // ✅ KÍCH HOẠT CORS TẠI ĐÂY (Sau UseRouting và Trước UseAuthentication)
