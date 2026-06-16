@@ -28,6 +28,8 @@ public class UploadMediaCommandHandler : IRequestHandler<UploadMediaCommand, Gui
             DurationInSeconds = request.DurationInSeconds,
             MediaType = request.MediaType,
             OwnerId = request.OwnerId,
+            AlbumId = null,
+            ArtistId = null,
             AlbumName = request.AlbumName,
             ArtistName = request.ArtistName,
             IsPrivate = request.IsPrivate,
