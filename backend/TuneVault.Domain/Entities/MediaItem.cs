@@ -15,6 +15,7 @@ namespace TuneVault.Domain.Entities
         public Guid? AlbumId { get; set; }
         public Guid? ArtistId { get; set; }
         public bool IsPrivate { get; set; }
+        public string ApprovalStatus { get; set; } = "Pending"; // Pending, Approved, Rejected
         public int ViewCount { get; set; }
     }
 }

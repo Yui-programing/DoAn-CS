@@ -47,7 +47,7 @@ namespace TuneVault.Infrastructure.Repositories
                 SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
                 FROM MediaItem m
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
-                WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
+                WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
                 SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Artist 
@@ -63,7 +63,7 @@ namespace TuneVault.Infrastructure.Repositories
                 SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
                 FROM MediaItem m
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
-                WHERE m.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Song')
+                WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
                 SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
                 FROM Artist 

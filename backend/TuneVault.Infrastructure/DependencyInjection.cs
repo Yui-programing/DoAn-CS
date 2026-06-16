@@ -26,10 +26,11 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             services.AddScoped<IMediaItemRepository, MediaItemRepository>();
+            services.AddScoped<IArtistRegistrationRepository, ArtistRegistrationRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IPlayHistoryRepository, PlayHistoryRepository>();
             services.AddScoped<ISharedRepository, SharedMediaRepository>();
-            services.AddScoped<ISearchRepository,  SearchRepository>();
+            services.AddScoped<ISearchRepository, SearchRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.IEmailService, EmailService>();

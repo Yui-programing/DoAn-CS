@@ -306,3 +306,30 @@ INSERT INTO Notification
 VALUES
     ('U2', 0, N'{"SenderId": "U1", "Message": "Lê Phạm Hoàng Phúc đã chia sẻ một playlist cho bạn."}');
 GO
+
+---------------------------------------------------------
+-- 4. ADD ArtistRegistrations table + ApprovalStatus column
+---------------------------------------------------------
+-- Add ApprovalStatus to MediaItem (default Pending) if not exists
+IF COL_LENGTH('MediaItem', 'ApprovalStatus') IS NULL
+BEGIN
+    ALTER TABLE MediaItem ADD ApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'Pending';
+END
+
+-- Create ArtistRegistrations table
+IF OBJECT_ID('ArtistRegistrations', 'U') IS NULL
+BEGIN
+    CREATE TABLE ArtistRegistrations
+    (
+        Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+        UserId NVARCHAR(450) NOT NULL,
+        StageName NVARCHAR(255) NOT NULL,
+        Genres NVARCHAR(255) NULL,
+        IdCardUrl NVARCHAR(1000) NOT NULL,
+        Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+        SubmittedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+        ReviewedAt DATETIME2 NULL,
+        FOREIGN KEY (UserId) REFERENCES [User](Id) ON DELETE CASCADE
+    );
+END
+GO

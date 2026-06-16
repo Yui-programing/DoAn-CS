@@ -1,22 +1,26 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TuneVault.Application.Repositories;
 using System.Security.Claims;
 using TuneVault.Application.Features.Users.Profile;
 using TuneVault.API.Common;
+using TuneVault.API.Requests;
 
 namespace TuneVault.API.Controllers
-{   
+{
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IMediator _mediator;
-        
-        public UsersController(IMediator mediator)
+        private readonly ICloudinaryService _cloudinaryService;
+
+        public UsersController(IMediator mediator, ICloudinaryService cloudinaryService)
         {
             _mediator = mediator;
+            _cloudinaryService = cloudinaryService;
         }
 
         // 1. GET / Xem hồ sơ User
@@ -28,7 +32,7 @@ namespace TuneVault.API.Controllers
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdStr))
                 return Unauthorized("User ID không hợp lệ");
- 
+
             // Tạo query và gửi cho MediatR xử lý
             var query = new GetProfileQuery { UserId = userIdStr };
             var data = await _mediator.Send(query);
@@ -63,6 +67,35 @@ namespace TuneVault.API.Controllers
 
             // 4. Giữ nguyên hàm Response chuẩn của bạn
             return Ok(ApiResponse<bool>.SetSuccess(result, "Cập nhật thông tin thành công!"));
+        }
+
+        // POST: /api/users/artist-registration
+        [HttpPost("artist-registration")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> SubmitArtistRegistration([FromForm] SubmitArtistRegistrationRequest request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized(ApiResponse<bool>.SetFailure(new System.Collections.Generic.List<string> { "Token không hợp lệ." }, "Xác thực thất bại"));
+
+            if (request.IdCard == null || request.IdCard.Length == 0) return BadRequest(ApiResponse<bool>.SetFailure(new System.Collections.Generic.List<string> { "Vui lòng tải lên ảnh CMND/CCCD." }, "Thiếu file"));
+
+            // Upload idCard to Cloudinary
+            string url;
+            using (var stream = request.IdCard.OpenReadStream())
+            {
+                url = await _cloudinaryService.UploadImageAsync(stream, request.IdCard.FileName, "artist-registrations");
+            }
+
+            var cmd = new TuneVault.Application.Features.Artists.Commands.SubmitArtistRegistrationCommand
+            {
+                UserId = userId,
+                StageName = request.StageName,
+                Genres = request.Genres,
+                IdCardUrl = url
+            };
+
+            var id = await _mediator.Send(cmd);
+            return Ok(ApiResponse<Guid>.SetSuccess(id, "Gửi yêu cầu đăng ký artist thành công."));
         }
     }
 }
