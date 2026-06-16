@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MoreVertical, ListPlus, Share2 } from 'lucide-react';
+import { MoreVertical, ListPlus, Share2, Trash2 } from 'lucide-react';
 
 interface TrackDropdownMenuProps {
   onAddToPlaylist: () => void;
   onShare: () => void;
+  onRemoveFromPlaylist?: () => void;
 }
 
-export const TrackDropdownMenu: React.FC<TrackDropdownMenuProps> = ({ onAddToPlaylist, onShare }) => {
+export const TrackDropdownMenu: React.FC<TrackDropdownMenuProps> = ({ onAddToPlaylist, onShare, onRemoveFromPlaylist }) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -84,11 +85,24 @@ export const TrackDropdownMenu: React.FC<TrackDropdownMenuProps> = ({ onAddToPla
               setIsOpen(false);
               onShare();
             }}
-            className="w-full px-4 py-3 flex items-center gap-3 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-left"
+            className="w-full px-4 py-3 flex items-center gap-3 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors text-left border-b border-zinc-800"
           >
             <Share2 className="w-4 h-4" />
             <span className="font-semibold">Chia sẻ bài hát</span>
           </button>
+
+          {onRemoveFromPlaylist && (
+            <button 
+              onClick={() => {
+                setIsOpen(false);
+                onRemoveFromPlaylist();
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 text-sm text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-colors text-left"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="font-semibold">Xóa khỏi Playlist</span>
+            </button>
+          )}
         </div>
       )}
     </>

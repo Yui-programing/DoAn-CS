@@ -93,6 +93,22 @@ export const PlaylistDetail = () => {
     }
   };
 
+  const handleRemoveTrack = async (trackId: string) => {
+    if (!id || !window.confirm('Bạn có chắc chắn muốn xóa bài hát này khỏi playlist?')) return;
+    try {
+      const res = await playlistService.removeTrack(id, trackId);
+      if (res.success) {
+        setTracks(prev => prev.filter(t => t.id !== trackId));
+        window.dispatchEvent(new Event('playlistChanged'));
+      } else {
+        alert(res.message || 'Xóa thất bại.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Lỗi kết nối khi xóa.');
+    }
+  };
+
   const handleTrackClick = (track: any) => {
     const isVideo = track.filePath?.endsWith('.mp4');
 
@@ -270,10 +286,15 @@ export const PlaylistDetail = () => {
                     <td className="py-4 px-4 text-center align-middle">
                       {user && (
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <TrackDropdownMenu 
-                            onAddToPlaylist={() => setSelectedMediaId(track.id)}
-                            onShare={() => console.log('Share')}
-                          />
+                            <TrackDropdownMenu 
+                              onAddToPlaylist={() => setSelectedMediaId(track.id)}
+                              onShare={() => console.log('Share')}
+                              onRemoveFromPlaylist={
+                                user?.id === playlistInfo?.ownerId 
+                                  ? () => handleRemoveTrack(track.id) 
+                                  : undefined
+                              }
+                            />
                         </div>
                       )}
                     </td>

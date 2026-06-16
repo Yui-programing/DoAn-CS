@@ -34,6 +34,7 @@ namespace TuneVault.Application.Models
         public int TracksCount { get; set; }
         public int Type { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
     }
 
     public class PlaylistTrackDto

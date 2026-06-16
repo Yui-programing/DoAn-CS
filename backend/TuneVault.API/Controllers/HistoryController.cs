@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using TuneVault.API.Common;
 using TuneVault.Application.Features.History;
+using System.Collections.Generic;
 
 namespace TuneVault.API.Controllers;
 
@@ -22,14 +23,11 @@ public class HistoryController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> RecordPlayHistory([FromBody] RecordHistoryRequest request)
     {
-        // 1. Lấy UserId từ JWT Token đang đăng nhập
+        // 1. Lấy UserId từ JWT Token đang đăng nhập (Nếu có)
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ hoặc đã hết hạn."));
-        }
 
         // 2. Map sang MediatR Command
         var command = new RecordPlayHistoryCommand
@@ -46,6 +44,25 @@ public class HistoryController : ControllerBase
         }
 
         return Ok(ApiResponse<bool>.SetSuccess(true, "Ghi nhận lịch sử nghe nhạc thành công!"));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPlayHistory([FromQuery] int limit = 20)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ hoặc đã hết hạn."));
+        }
+
+        var query = new GetPlayHistoryQuery
+        {
+            UserId = userId,
+            Limit = limit
+        };
+
+        var result = await _mediator.Send(query);
+        return Ok(ApiResponse<IEnumerable<PlayHistoryResultDto>>.SetSuccess(result));
     }
 }
 

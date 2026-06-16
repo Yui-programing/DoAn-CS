@@ -26,19 +26,23 @@ public class RecordPlayHistoryCommandHandler : IRequestHandler<RecordPlayHistory
         var mediaItem = await _mediaItemRepository.GetByIdAsync(request.MediaItemId);
         if (mediaItem == null) return false;
 
-        // 2. Tạo bản ghi lịch sử mới
-        var playHistory = new PlayHistory
+        bool isSuccess = true;
+
+        // 2. Nếu có đăng nhập thì lưu vào bảng PlayHistory
+        if (!string.IsNullOrEmpty(request.UserId))
         {
-            Id = Guid.NewGuid(),
-            UserId = request.UserId,
-            MediaItemId = request.MediaItemId,
-            PlayedAt = DateTime.UtcNow
-        };
+            var playHistory = new PlayHistory
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                MediaItemId = request.MediaItemId,
+                PlayedAt = DateTime.UtcNow
+            };
 
-        // 3. Ghi nhận lịch sử nghe nhạc
-        bool isSuccess = await _playHistoryRepository.AddPlayHistoryAsync(playHistory);
+            isSuccess = await _playHistoryRepository.AddPlayHistoryAsync(playHistory);
+        }
 
-        // 4. Tự động tăng lượt nghe cho bài hát đó trong database
+        // 3. Tự động tăng lượt nghe cho bài hát đó trong database (Cho cả người chưa đăng nhập)
         if (isSuccess)
         {
             await _mediaItemRepository.IncrementPlayCountAsync(request.MediaItemId);

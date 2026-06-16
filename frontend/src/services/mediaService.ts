@@ -56,8 +56,10 @@ export const mediaService = {
         return response.data;
     },
 
-    getPlayHistory: async (): Promise<ApiResponse<PlayHistory[]>> => {
-        const response = await api.get<ApiResponse<PlayHistory[]>>('/history');
+    getPlayHistory: async (limit: number = 10): Promise<ApiResponse<PlayHistory[]>> => {
+        const response = await api.get<ApiResponse<PlayHistory[]>>('/history', {
+            params: { limit }
+        });
         return response.data;
     },
 

@@ -44,6 +44,7 @@ export interface Playlist {
     tracksCount: number;
     type: number;
     createdAt: string;
+    ownerId: string;
 }
 
 export interface PlaylistTrack {
