@@ -47,6 +47,8 @@ export interface Playlist {
   isPublic: boolean;
   tracksCount: number;
   createdAt: string;
+  type: number;
+  ownerId?: string;
 }
 
 export interface PlaylistTrack {
