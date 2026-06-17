@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     Play, 
@@ -514,10 +515,23 @@ export const VideoPlayer = () => {
         );
     }
 
-    return (
+    // Khi fullscreen: render vào document.body bằng Portal để tránh bị chặn bởi CSS parent
+    const playerContent = (
         <div 
             ref={containerRef}
-            className={`video-player-container bg-black flex flex-col overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'pseudo-fullscreen' : 'w-screen h-screen'}`}
+            className={`video-player-container bg-black flex flex-col overflow-hidden select-none ${showControls ? '' : 'cursor-none'}`}
+            style={isFullscreen ? {
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                zIndex: 9999,
+                margin: 0,
+            } : {
+                width: '100vw',
+                height: '100vh',
+            }}
         >
             {/* Khu vực video - chiếm toàn bộ không gian còn lại trên player bar */}
             <div className="relative flex-1 overflow-hidden">
@@ -850,6 +864,12 @@ export const VideoPlayer = () => {
             )}
         </div>
     );
+
+    // Khi fullscreen: dùng Portal render vào document.body để thoát khỏi mọi stacking context
+    if (isFullscreen) {
+        return createPortal(playerContent, document.body);
+    }
+    return playerContent;
 };
 
 export default VideoPlayer;
