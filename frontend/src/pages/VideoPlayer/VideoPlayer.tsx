@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -141,28 +141,56 @@ export const VideoPlayer = () => {
         setHasRecordedView(false); // Reset trạng thái ghi nhận view khi chuyển MV mới
     }, [id]);
 
+    const isFullscreenRef = useRef(isFullscreen);
+    const isPlayingRef = useRef(isPlaying);
+    const isControlsHoveredRef = useRef(isControlsHovered);
+    const showPlaylistModalRef = useRef(showPlaylistModal);
+
+    // Đồng bộ Refs ở mỗi lần render
+    isFullscreenRef.current = isFullscreen;
+    isPlayingRef.current = isPlaying;
+    isControlsHoveredRef.current = isControlsHovered;
+    showPlaylistModalRef.current = showPlaylistModal;
+
     // Chỉ ẩn thanh điều khiển khi đang ở chế độ fullscreen và video đang phát
-    const resetTimeout = () => {
+    const resetTimeout = useCallback(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
         setShowControls(true);
         // Chỉ đặt timer ẩn khi đang ở chế độ fullscreen
-        if (isFullscreen && isPlaying && !isControlsHovered && !showPlaylistModal) {
+        if (isFullscreenRef.current && isPlayingRef.current && !isControlsHoveredRef.current && !showPlaylistModalRef.current) {
             timeoutRef.current = window.setTimeout(() => {
                 setShowControls(false);
             }, 3000);
         }
-    };
+    }, []);
 
+    // Tự động cập nhật hiển thị controls khi các trạng thái thay đổi
     useEffect(() => {
         resetTimeout();
+    }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal, resetTimeout]);
+
+    // Lắng nghe di chuyển chuột trực tiếp trên container của trình phát video (kể cả khi fullscreen và Portal)
+    useEffect(() => {
+        const handleMouseMove = () => {
+            resetTimeout();
+        };
+
+        const target = containerRef.current;
+        if (target) {
+            target.addEventListener('mousemove', handleMouseMove);
+        }
+        
         return () => {
+            if (target) {
+                target.removeEventListener('mousemove', handleMouseMove);
+            }
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
         };
-    }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal]);
+    }, [resetTimeout]);
 
     // Tạm dừng nhạc nền toàn cục khi mở MV - dừng cả audio element thực sự
     useEffect(() => {
@@ -224,17 +252,7 @@ export const VideoPlayer = () => {
         }
     }, [isFullscreen]);
 
-    // Lắng nghe di chuyển chuột trên toàn bộ document để hiện/ẩn thanh điều khiển
-    useEffect(() => {
-        const handleGlobalMouseMove = () => {
-            resetTimeout();
-        };
 
-        document.addEventListener('mousemove', handleGlobalMouseMove);
-        return () => {
-            document.removeEventListener('mousemove', handleGlobalMouseMove);
-        };
-    }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal]);
 
     // Đồng bộ âm lượng với thẻ video
     useEffect(() => {
