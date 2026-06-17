@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { mediaService } from '../../services';
 import { 
@@ -52,15 +52,22 @@ const formatDuration = (seconds: number) => {
 
 export const Search = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const queryParam = new URLSearchParams(location.search).get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(queryParam);
   const [results, setResults] = useState<any[]>([]);
   const [trendingTracks, setTrendingTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   
   const { user } = useAuth();
+
+  // Đồng bộ searchQuery khi URL query thay đổi
+  useEffect(() => {
+    setSearchQuery(queryParam);
+  }, [queryParam]);
 
   // Lấy danh sách nhạc Trending khi mở trang lần đầu
   useEffect(() => {
@@ -77,33 +84,33 @@ export const Search = () => {
     fetchTrending();
   }, []);
 
-  // Debounce API call cho ô tìm kiếm
+  // Gọi API tìm kiếm chi tiết khi URL query thay đổi (khi nhấn Enter hoặc chọn từ khoá gợi ý)
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!queryParam.trim()) {
       setResults([]);
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-    const delayDebounce = setTimeout(async () => {
+    const fetchSearchResults = async () => {
+      setIsLoading(true);
       try {
-        const res = await mediaService.searchAll(searchQuery, 30);
+        const res = await mediaService.searchAll(queryParam, 30);
         if (res.success && res.data && res.data.items) {
           setResults(res.data.items);
         } else {
           setResults([]);
         }
       } catch (error) {
-        console.error('Lỗi tìm kiếm:', error);
+        console.error('Lỗi tìm kiếm chi tiết:', error);
         setResults([]);
       } finally {
         setIsLoading(false);
       }
-    }, 400);
+    };
 
-    return () => clearTimeout(delayDebounce);
-  }, [searchQuery]);
+    fetchSearchResults();
+  }, [queryParam]);
 
   // Phân loại kết quả tìm được
   const audioSongs = results.filter(item => item.type === 'Song' && item.mediaType === 0);
@@ -142,21 +149,6 @@ export const Search = () => {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* 1. Ô tìm kiếm xịn mịn */}
-      <div className="max-w-xl relative">
-        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 w-5 h-5" />
-        <input 
-          type="text" 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Bạn muốn nghe gì?" 
-          className="w-full pl-12 pr-12 py-3 bg-zinc-900 border border-zinc-800/80 rounded-full text-sm placeholder-zinc-500 text-slate-100 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all shadow-inner"
-        />
-        {isLoading && (
-          <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 animate-spin w-5 h-5" />
-        )}
-      </div>
-
       {/* 2. HIỂN THỊ KẾT QUẢ TÌM KIẾM */}
       {searchQuery.trim() !== '' ? (
         <div className="space-y-10">

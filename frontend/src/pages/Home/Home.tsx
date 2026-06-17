@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Import thêm Loader2 để làm icon xoay vòng lúc chờ mạng
-import { Play, Pause, Sparkles, Heart, Music, Loader2 } from 'lucide-react';
+import { Play, Pause, Sparkles, Heart, Music, Loader2, ListMusic } from 'lucide-react';
 // Import dịch vụ API để lấy dữ liệu thật
 import { playlistService, mediaService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
@@ -39,6 +39,7 @@ export const Home = () => {
   const [recentTracks, setRecentTracks] = useState<any[]>([]);
   const [suggestedTracks, setSuggestedTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'music' | 'video'>('all');
 
   // Phân tách nhạc gợi ý dựa vào loại media (0 = Audio, 1 = Video)
   const audioTracks = suggestedTracks.filter((track: any) => track.mediaType === 0);
@@ -187,107 +188,151 @@ export const Home = () => {
         <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-radial from-green-500/10 to-transparent blur-3xl" />
       </div>
 
-      {/* SECTION 1: Hiển thị danh sách Playlists THẬT */}
-      {isAuthenticated && (
+      {/* CHIPS BỘ LỌC (1) */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveFilter('all')}
+          className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+            activeFilter === 'all'
+              ? 'bg-white text-black shadow-md'
+              : 'bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800/60'
+          }`}
+        >
+          Tất cả
+        </button>
+        <button
+          onClick={() => setActiveFilter('music')}
+          className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+            activeFilter === 'music'
+              ? 'bg-white text-black shadow-md'
+              : 'bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800/60'
+          }`}
+        >
+          Nhạc
+        </button>
+        <button
+          onClick={() => setActiveFilter('video')}
+          className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+            activeFilter === 'video'
+              ? 'bg-white text-black shadow-md'
+              : 'bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border border-zinc-800/60'
+          }`}
+        >
+          Video
+        </button>
+      </div>
+
+      {/* SECTION 1: Playlists của user dạng lưới thẻ ngang 4x2 (2) */}
+      {isAuthenticated && (activeFilter === 'all' || activeFilter === 'music') && playlists.length > 0 && (
         <section className="space-y-4">
-          <h3 className="text-xl font-bold tracking-tight">Thư viện gợi ý (Dữ liệu thật)</h3>
-          {playlists.length === 0 ? (
-            <p className="text-zinc-500 text-sm">Chưa có playlist nào. Hãy tạo trên thư viện nhé!</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {playlists.map((playlist) => (
-                <div
-                  key={playlist.id}
-                  onClick={() => navigate(`/playlist/${playlist.id}`)}
-                  className="p-5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-zinc-900 border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-300 cursor-pointer group relative"
-                >
-                  <h4 className="font-bold text-base line-clamp-1 group-hover:text-green-400 transition-colors">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            {playlists.map((playlist) => (
+              <div
+                key={playlist.id}
+                onClick={() => navigate(`/playlist/${playlist.id}`)}
+                className="flex items-center gap-3 rounded-lg bg-[#2b2b2b]/40 hover:bg-[#2b2b2b]/95 border border-zinc-800/20 transition-all duration-300 cursor-pointer group relative overflow-hidden h-14 shadow-sm"
+              >
+                {/* Thumbnail bên trái */}
+                <div className="h-full aspect-square bg-gradient-to-br from-green-500/10 to-zinc-950 flex items-center justify-center shrink-0 overflow-hidden">
+                  {playlist.coverUrl ? (
+                    <img 
+                      src={mediaService.getImageUrl(playlist.coverUrl)} 
+                      alt={playlist.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                    />
+                  ) : (
+                    <ListMusic className="w-5 h-5 text-zinc-500 group-hover:text-green-400 transition-colors" />
+                  )}
+                </div>
+                {/* Thông tin ở giữa */}
+                <div className="flex-1 min-w-0 pr-12">
+                  <h4 className="font-bold text-xs text-slate-200 truncate group-hover:text-white transition-colors">
                     {playlist.title}
                   </h4>
-                  <p className="text-xs text-zinc-400 mt-1">{playlist.description || 'Không có mô tả'}</p>
                 </div>
-              ))}
+                {/* Nút Play tròn màu xanh nổi lên khi hover */}
+                <div className="absolute right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-black opacity-0 group-hover:opacity-100 transition-all duration-200 shadow hover:scale-105 shrink-0">
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* SECTION 2: Gợi ý bài hát hôm nay dưới dạng ô vuông to (3) */}
+      {(activeFilter === 'all' || activeFilter === 'music') && (
+        <section className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay (Dữ liệu thật)</h3>
+          </div>
+
+          {audioTracks.length === 0 ? (
+            <p className="text-zinc-500 text-sm">Chưa có bài hát nào trên hệ thống.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {audioTracks.map((track, index) => {
+                const isCurrent = currentTrack?.id === track.id;
+                return (
+                  <div
+                    key={track.id || index}
+                    onClick={() => handleTrackClick(track, audioTracks)}
+                    className={`group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3 ${
+                      isCurrent ? 'bg-zinc-850/50 border-green-500/20 shadow-md' : ''
+                    }`}
+                  >
+                    {/* Bìa vuông lớn */}
+                    <div className="aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors shadow-inner">
+                      {track.coverUrl ? (
+                        <img 
+                          src={mediaService.getImageUrl(track.coverUrl)} 
+                          alt="Cover" 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                          <Music className="w-8 h-8 text-zinc-650" />
+                        </div>
+                      )}
+                      {/* Nút play nổi khi hover */}
+                      <div className={`absolute inset-0 bg-black/40 flex items-end justify-end p-2 transition-opacity duration-300 ${
+                        isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTrackClick(track, audioTracks);
+                          }}
+                          className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 active:scale-95 transition-all transform translate-y-2 group-hover:translate-y-0 duration-300 cursor-pointer"
+                        >
+                          {isCurrent && isPlaying ? (
+                            <Pause className="w-5 h-5 fill-current" />
+                          ) : (
+                            <Play className="w-5 h-5 fill-current ml-0.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    {/* Thông tin bài hát */}
+                    <div className="min-w-0">
+                      <h4 className={`font-bold text-sm truncate transition-colors ${
+                        isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'
+                      }`} title={track.title}>
+                        {track.title}
+                      </h4>
+                      <p className="text-xs text-zinc-400 truncate mt-1">{track.artist}</p>
+                      <span className="text-[10px] text-zinc-500 font-semibold block mt-1.5">{formatViewCount(track.viewCount)}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
       )}
 
-      {/* SECTION 2: Gợi ý bài hát hôm nay */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay (Dữ liệu thật)</h3>
-        </div>
-
-        {audioTracks.length === 0 ? (
-          <p className="text-zinc-500 text-sm">Chưa có bài hát nào trên hệ thống.</p>
-        ) : (
-          <div className="bg-zinc-900/20 rounded-xl border border-zinc-900 overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent divide-y divide-zinc-900/50">
-            {audioTracks.map((track, index) => {
-              const isCurrent = currentTrack?.id === track.id;
-              return (
-                <div
-                  key={track.id || index}
-                  onClick={() => handleTrackClick(track, audioTracks)}
-                  className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors group cursor-pointer ${isCurrent ? 'bg-zinc-900/30' : ''}`}
-                >
-                  {/* CỘT 1: Thông tin bài hát (Số thứ tự, bìa, tên, ca sĩ) */}
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <span className={`text-sm font-bold w-4 text-right shrink-0 ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
-                      {isCurrent && isPlaying ? '•' : index + 1}
-                    </span>
-                    <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center border border-zinc-800 overflow-hidden relative group-hover:border-zinc-700 shrink-0">
-                      {track.coverUrl ? (
-                        <img src={mediaService.getImageUrl(track.coverUrl)} alt="Cover" className="w-full h-full object-cover" />
-                      ) : (
-                        <Music className="w-5 h-5 text-zinc-600" />
-                      )}
-                      <div className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity ${isCurrent && isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                        {isCurrent && isPlaying ? (
-                          <Pause className="w-4.5 h-4.5 text-green-400 fill-current" />
-                        ) : (
-                          <Play className="w-4.5 h-4.5 text-green-400 fill-current ml-0.5" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
-                        {track.title}
-                      </h4>
-                      <p className="text-xs text-zinc-400 truncate mt-0.5">{track.artist}</p>
-                    </div>
-                  </div>
-
-                  {/* CỘT 2: Lượt nghe thực tế */}
-                  <div className="w-48 text-right shrink-0 text-xs text-zinc-400 hidden md:block">
-                    <span className="font-medium">{formatViewCount(track.viewCount)}</span>
-                  </div>
-
-                  {/* CỘT 3: Thời lượng + Heart Action + 3-Dot Menu */}
-                  <div className="w-36 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
-                    {isAuthenticated && (
-                      <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
-                        <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
-                      </button>
-                    )}
-                    <span className={`font-semibold tracking-wider ${isCurrent ? 'text-green-400' : ''}`}>
-                      {track.duration}
-                    </span>
-                    {isAuthenticated && (
-                      <TrackDropdownMenu 
-                        onAddToPlaylist={() => setSelectedMediaId(track.id)}
-                        onShare={() => console.log('Share')}
-                      />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
       {/* SECTION MV: MV ca nhạc gợi ý */}
-      {videoTracks.length > 0 && (
+      {(activeFilter === 'all' || activeFilter === 'video') && videoTracks.length > 0 && (
         <section className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -331,7 +376,7 @@ export const Home = () => {
       )}
 
       {/* SECTION 3: Hiển thị Lịch sử bài hát THẬT */}
-      {isAuthenticated && (
+      {isAuthenticated && (activeFilter === 'all' || activeFilter === 'music') && (
         <section className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây (Dữ liệu thật)</h3>

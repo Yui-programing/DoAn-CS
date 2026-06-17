@@ -80,5 +80,12 @@ export const mediaService = {
             params: { keyword, pageSize }
         });
         return response.data;
+    },
+
+    searchQuick: async (keyword: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get<ApiResponse<any[]>>('/search/quick', {
+            params: { keyword }
+        });
+        return response.data;
     }
 };

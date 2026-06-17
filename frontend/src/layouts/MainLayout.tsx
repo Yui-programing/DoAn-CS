@@ -1,8 +1,8 @@
 import { useRef, useEffect, useState } from "react";
-import { NavLink, Outlet, Link } from "react-router-dom";
+import { NavLink, Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { usePlayer } from "../contexts/PlayerContext";
 import { useAuth } from "../contexts/AuthContext";
-import { mediaService } from "../services";
+import { mediaService, playlistService } from "../services";
 import {
   Home,
   Search,
@@ -23,8 +23,17 @@ import {
   Music,
   LogOut,
   ShieldCheck,
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  Folder,
+  Plus,
+  Check,
 } from "lucide-react";
 import { NotificationBell } from "../components/NotificationBell";
+import { RightPanel } from "../components/RightPanel";
+import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
+import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 
 // Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
 const formatTime = (seconds: number) => {
@@ -42,6 +51,7 @@ export const MainLayout = () => {
     currentTime,
     duration,
     volume,
+    playTrack,
     togglePlay,
     nextTrack,
     prevTrack,
@@ -50,9 +60,281 @@ export const MainLayout = () => {
     setCurrentTime,
     setDuration,
     setIsPlaying,
+    isShuffle,
+    setIsShuffle,
+    repeatMode,
+    setRepeatMode,
   } = usePlayer();
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchValue, setSearchValue] = useState("");
+
+  // Trạng thái gợi ý tìm kiếm
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [keywordSuggestions, setKeywordSuggestions] = useState<any[]>([]);
+  const [songSuggestions, setSongSuggestions] = useState<any[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Trạng thái hiển thị menu profile ở góc trên bên phải
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  useEffect(() => {
+    const handleCloseUserMenu = (e: MouseEvent) => {
+      if (showUserMenu && !(e.target as Element).closest('.user-profile-menu-container')) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleCloseUserMenu);
+    return () => document.removeEventListener('mousedown', handleCloseUserMenu);
+  }, [showUserMenu]);
+
+  // Trạng thái thu gọn sidebar bên trái
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+
+  const [sidebarPlaylists, setSidebarPlaylists] = useState<any[]>([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [addToPlaylistTrackId, setAddToPlaylistTrackId] = useState<string | null>(null);
+  const [playlistModalPlacement, setPlaylistModalPlacement] = useState<'player' | 'right-panel'>('player');
+  const [isTrackInPlaylist, setIsTrackInPlaylist] = useState(false);
+
+  // Lưu trạng thái thu gọn vào localStorage
+  const handleToggleSidebar = (collapsed: boolean) => {
+    setIsSidebarCollapsed(collapsed);
+    localStorage.setItem("sidebar_collapsed", collapsed ? "true" : "false");
+  };
+
+  // Lấy danh sách playlists cho sidebar
+  useEffect(() => {
+    const fetchSidebarPlaylists = () => {
+      if (isAuthenticated) {
+        playlistService.getMyPlaylists()
+          .then(res => {
+            if (res.success && res.data) {
+              setSidebarPlaylists(res.data);
+            }
+          })
+          .catch(err => {
+            console.error("Lỗi lấy danh sách phát ở sidebar:", err);
+          });
+      } else {
+        setSidebarPlaylists([]);
+      }
+    };
+
+    fetchSidebarPlaylists();
+
+    const handlePlaylistChanged = () => {
+      fetchSidebarPlaylists();
+    };
+
+    window.addEventListener('playlistChanged', handlePlaylistChanged);
+    return () => {
+      window.removeEventListener('playlistChanged', handlePlaylistChanged);
+    };
+  }, [isAuthenticated]);
+
+  // Kiểm tra bài hát hiện tại có nằm trong bất kỳ playlist nào không
+  useEffect(() => {
+    const checkTrackContainment = async () => {
+      if (!isAuthenticated || !currentTrack) {
+        setIsTrackInPlaylist(false);
+        return;
+      }
+      try {
+        const playlistsRes = await playlistService.getMyPlaylists();
+        if (playlistsRes.success) {
+          const list = playlistsRes.data;
+          let found = false;
+          // Kiểm tra từng playlist xem có chứa bài hát hiện tại không
+          for (const playlist of list) {
+            const tracksRes = await playlistService.getTracks(playlist.id);
+            if (tracksRes.success) {
+              const hasTrack = tracksRes.data.some((t: any) => t.mediaItemId === currentTrack.id);
+              if (hasTrack) {
+                found = true;
+                break;
+              }
+            }
+          }
+          setIsTrackInPlaylist(found);
+        }
+      } catch (err) {
+        console.error("Lỗi kiểm tra bài hát trong playlist:", err);
+      }
+    };
+
+    checkTrackContainment();
+
+    const handlePlaylistChanged = () => {
+      checkTrackContainment();
+    };
+
+    window.addEventListener('playlistChanged', handlePlaylistChanged);
+    return () => {
+      window.removeEventListener('playlistChanged', handlePlaylistChanged);
+    };
+  }, [currentTrack?.id, isAuthenticated]);
+
+  // Đồng bộ ô tìm kiếm ở header với URL q param khi ở trang Search
+  useEffect(() => {
+    if (location.pathname === "/search") {
+      const q = new URLSearchParams(location.search).get("q") || "";
+      setSearchValue(q);
+    } else {
+      setSearchValue("");
+    }
+  }, [location.pathname, location.search]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchValue(val);
+  };
+
+  const formatDuration = (seconds: number) => {
+    if (isNaN(seconds) || seconds <= 0) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  const handlePlaySong = (song: any, tracksPool: any[]) => {
+    const trackForPlayer = {
+      id: song.id,
+      title: song.name || song.title,
+      artist: song.artistName || 'Nghệ sĩ tự do',
+      filePath: mediaService.getStreamUrl(song.id),
+      coverUrl: song.coverUrl || undefined,
+      album: song.artistName || undefined,
+      duration: formatDuration(song.durationInSeconds || 180),
+    };
+
+    const queueTracks = tracksPool
+      .filter(item => item.type === 'Song')
+      .map(item => ({
+        id: item.id,
+        title: item.name || item.title,
+        artist: item.artistName || 'Nghệ sĩ tự do',
+        filePath: mediaService.getStreamUrl(item.id),
+        coverUrl: item.coverUrl || undefined,
+        album: item.artistName || undefined,
+        duration: formatDuration(item.durationInSeconds || 180),
+      }));
+
+    if (currentTrack?.id === song.id) {
+      togglePlay();
+    } else {
+      playTrack(trackForPlayer, queueTracks);
+    }
+  };
+
+  const highlightMatch = (text: string, query: string) => {
+    if (!query) return <span className="text-zinc-300">{text}</span>;
+    const index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) return <span className="text-zinc-300">{text}</span>;
+    const before = text.substring(0, index);
+    const match = text.substring(index, index + query.length);
+    const after = text.substring(index + query.length);
+    return (
+      <span className="text-zinc-400">
+        {before}
+        <strong className="text-white font-bold">{match}</strong>
+        {after}
+      </span>
+    );
+  };
+
+  // Gọi API lấy dữ liệu gợi ý
+  useEffect(() => {
+    if (!searchValue.trim()) {
+      setKeywordSuggestions([]);
+      setSongSuggestions([]);
+      setShowDropdown(false);
+      setActiveIndex(null);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        // 1. Gọi API search/quick lấy từ khóa
+        const quickRes = await mediaService.searchQuick(searchValue);
+        if (quickRes.success && quickRes.data) {
+          setKeywordSuggestions(quickRes.data.slice(0, 4));
+        } else {
+          setKeywordSuggestions([]);
+        }
+
+        // 2. Gọi API search/full giới hạn lấy danh sách chi tiết (bài hát + nghệ sĩ) hiển thị
+        const fullRes = await mediaService.searchAll(searchValue, 6);
+        if (fullRes.success && fullRes.data && fullRes.data.items) {
+          setSongSuggestions(fullRes.data.items);
+        } else {
+          setSongSuggestions([]);
+        }
+
+        setShowDropdown(true);
+      } catch (error) {
+        console.error("Lỗi lấy gợi ý tìm kiếm:", error);
+      }
+    }, 200);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchValue]);
+
+  // Điều hướng dropdown bằng phím
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown) return;
+
+    const totalSuggestions = keywordSuggestions.length;
+    const totalSongs = songSuggestions.length;
+    const totalItems = totalSuggestions + totalSongs;
+
+    if (totalItems === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex(prev => (prev === null || prev >= totalItems - 1) ? 0 : prev + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(prev => (prev === null || prev <= 0) ? totalItems - 1 : prev - 1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex !== null && activeIndex >= 0) {
+        if (activeIndex < totalSuggestions) {
+          const suggestion = keywordSuggestions[activeIndex];
+          const textVal = suggestion.text || suggestion.Text;
+          setSearchValue(textVal);
+          navigate(`/search?q=${encodeURIComponent(textVal)}`);
+          setShowDropdown(false);
+        } else {
+          const itemIdx = activeIndex - totalSuggestions;
+          const item = songSuggestions[itemIdx];
+          if (item.type === 'Song') {
+            handlePlaySong(item, songSuggestions);
+          } else if (item.type === 'Artist') {
+            navigate(`/artist/${item.id}`);
+          }
+          setShowDropdown(false);
+        }
+      } else {
+        if (searchValue.trim()) {
+          navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+          setShowDropdown(false);
+        }
+      }
+    } else if (e.key === "Escape") {
+      setShowDropdown(false);
+    }
+  };
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Trạng thái hiển thị Right Panel (chi tiết bài hát)
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(() => {
+    return localStorage.getItem("right_panel_open") !== "false";
+  });
 
   // Trạng thái kéo thả thanh tiến trình nhạc
   const [isDraggingTime, setIsDraggingTime] = useState(false);
@@ -75,9 +357,15 @@ export const MainLayout = () => {
     }
   }, [volume]);
 
-  // Trạng thái Trộn bài và Lặp bài
-  const [isShuffle, setIsShuffle] = useState(false);
-  const [isRepeat, setIsRepeat] = useState(false);
+  // Tự động mở Right Panel khi có bài hát mới được phát
+  useEffect(() => {
+    if (currentTrack && isAuthenticated) {
+      setIsRightPanelOpen(true);
+      localStorage.setItem("right_panel_open", "true");
+    }
+  }, [currentTrack?.id, isAuthenticated]);
+
+
 
   // Trạng thái kích hoạt hoạt ảnh của loa khi thay đổi âm lượng
   const [isVolumeChanging, setIsVolumeChanging] = useState(false);
@@ -130,6 +418,20 @@ export const MainLayout = () => {
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
+    }
+  };
+
+  // Xử lý khi bài hát kết thúc tự nhiên
+  const handleAudioEnded = () => {
+    if (repeatMode === 'one') {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch((err) => {
+          console.log("Lỗi tự động lặp bài:", err);
+        });
+      }
+    } else {
+      nextTrack();
     }
   };
 
@@ -230,211 +532,510 @@ export const MainLayout = () => {
           src={currentTrack.filePath}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onEnded={nextTrack}
+          onEnded={handleAudioEnded}
         />
       )}
 
-      {/* Khung chính: Sidebar + Main Content */}
-      <div className="flex-1 flex overflow-hidden p-2 gap-2">
-        {/* 1. SIDEBAR (Bên trái) */}
-        <aside className="w-64 bg-zinc-950 rounded-xl flex flex-col p-4 gap-6 shrink-0 border border-zinc-900">
-          {/* Logo */}
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
-              <Music className="w-6 h-6 text-black stroke-[2.5]" />
+      {/* 0. GLOBAL TOP HEADER */}
+      <header className="h-16 flex items-center justify-between px-6 bg-black shrink-0 z-20">
+        {/* Left: Navigation Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Ba dấu chấm mô phỏng window frame */}
+          <span className="text-zinc-550 font-bold text-base mr-2 select-none">•••</span>
+          
+          <button
+            onClick={() => navigate(-1)}
+            className="w-8 h-8 bg-zinc-900/80 hover:bg-zinc-850 hover:text-white rounded-full flex items-center justify-center text-zinc-400 cursor-pointer transition-all active:scale-90"
+            title="Quay lại"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => navigate(1)}
+            className="w-8 h-8 bg-zinc-900/80 hover:bg-zinc-850 hover:text-white rounded-full flex items-center justify-center text-zinc-400 cursor-pointer transition-all active:scale-90"
+            title="Tiếp theo"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Center: Home Button + Search Bar */}
+        <div className="flex items-center gap-2 flex-1 max-w-lg mx-4">
+          {/* Home Button */}
+          <button
+            onClick={() => navigate("/")}
+            className={`w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-95 shrink-0 shadow-md ${
+              location.pathname === "/" 
+                ? "bg-[#1f1f1f] text-white border border-zinc-800" 
+                : "bg-[#1f1f1f] hover:bg-[#2a2a2a] text-zinc-350 hover:text-white"
+            }`}
+            title="Trang chủ"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="w-7 h-7 text-white"
+            >
+              {location.pathname === "/" ? (
+                <path d="M12 3L4 9v11a1 1 0 0 0 1 1h5v-6a2 2 0 0 1 4 0v6h5a1 1 0 0 0 1-1V9L12 3z" fill="currentColor" />
+              ) : (
+                <path 
+                  d="M4 10.14V20a1 1 0 0 0 1 1h5v-6a2 2 0 0 1 4 0v6h5a1 1 0 0 0 1-1v-9.86a1 1 0 0 0-.447-.832l-7-4.666a1 1 0 0 0-1.106 0l-7 4.666A1 1 0 0 0 4 10.14Z" 
+                  stroke="currentColor" 
+                  strokeWidth="2.2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  fill="none" 
+                />
+              )}
+            </svg>
+          </button>
+
+          {/* Search Bar */}
+          <div className="relative flex-1 flex items-center bg-[#1f1f1f] hover:bg-[#242424] focus-within:bg-[#1f1f1f] focus-within:hover:bg-[#1f1f1f] border border-transparent focus-within:border-zinc-700/80 rounded-full transition-all group/search shadow-md">
+            <Search className="absolute left-4 text-zinc-400 w-5 h-5 pointer-events-none group-focus-within/search:text-white transition-colors" />
+            <input
+              type="text"
+              value={searchValue}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                if (searchValue.trim()) setShowDropdown(true);
+              }}
+              onBlur={() => {
+                setTimeout(() => setShowDropdown(false), 200);
+              }}
+              placeholder="Bạn muốn phát nội dung gì?"
+              className="w-full bg-transparent py-3 pl-12 pr-14 text-xs placeholder-zinc-500 text-slate-100 outline-none"
+            />
+            {/* Vertical separator & browse icon */}
+            <div className="absolute right-4 flex items-center gap-3 text-zinc-450 border-l border-zinc-800/60 pl-3 py-1" title="Duyệt tìm">
+              <Folder className="w-5 h-5 hover:text-slate-100 cursor-pointer transition-colors" />
             </div>
-            <div>
-              <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                TuneVault
-              </h1>
-              <span className="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">
-                Spotify Clone
-              </span>
-            </div>
+
+            {/* SUGGESTION DROPDOWN */}
+            {showDropdown && (keywordSuggestions.length > 0 || songSuggestions.length > 0) && (
+              <div 
+                className="absolute top-full left-0 right-0 mt-2 bg-[#282828] text-white rounded-lg shadow-2xl z-50 overflow-hidden border border-zinc-800/80 max-h-[420px] overflow-y-auto"
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                {/* Từ khóa gợi ý */}
+                {keywordSuggestions.length > 0 && (
+                  <div className="p-1">
+                    {keywordSuggestions.map((suggestion, index) => {
+                      const isSelected = activeIndex === index;
+                      const textVal = suggestion.text || suggestion.Text;
+                      return (
+                        <div
+                          key={`kw-${index}-${textVal}`}
+                          className={`px-3 py-2 rounded-md flex items-center gap-3 cursor-pointer transition-colors ${
+                            isSelected ? "bg-zinc-750 text-white" : "hover:bg-zinc-800/40 text-zinc-350"
+                          }`}
+                          onClick={() => {
+                            setSearchValue(textVal);
+                            navigate(`/search?q=${encodeURIComponent(textVal)}`);
+                            setShowDropdown(false);
+                          }}
+                          onMouseEnter={() => setActiveIndex(index)}
+                        >
+                          <Search className="w-4 h-4 text-zinc-450 shrink-0" />
+                          <span className="text-xs truncate">{highlightMatch(textVal, searchValue)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Phân tách giữa từ khóa gợi ý và bài hát gợi ý */}
+                {keywordSuggestions.length > 0 && songSuggestions.length > 0 && (
+                  <div className="h-px bg-zinc-800/80 my-0.5" />
+                )}
+
+                {/* Danh sách bài hát/nghệ sĩ gợi ý */}
+                {songSuggestions.length > 0 && (
+                  <div className="p-1">
+                    {songSuggestions.map((item, idx) => {
+                      const index = keywordSuggestions.length + idx;
+                      const isSelected = activeIndex === index;
+                      const isThisPlaying = currentTrack?.id === item.id && isPlaying;
+                      return (
+                        <div
+                          key={`song-${idx}-${item.id}`}
+                          className={`px-3 py-1.5 rounded-md flex items-center justify-between cursor-pointer transition-colors group ${
+                            isSelected ? "bg-zinc-750" : "hover:bg-zinc-800/40"
+                          }`}
+                          onClick={() => {
+                            if (item.type === 'Song') {
+                              handlePlaySong(item, songSuggestions);
+                            } else if (item.type === 'Artist') {
+                              navigate(`/artist/${item.id}`);
+                            }
+                            setShowDropdown(false);
+                          }}
+                          onMouseEnter={() => setActiveIndex(index)}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {/* Thumbnail: Tròn đối với ca sĩ, vuông đối với nhạc */}
+                            {item.coverUrl ? (
+                              <img
+                                src={mediaService.getImageUrl(item.coverUrl)}
+                                alt={item.name || item.title}
+                                className={`w-8 h-8 object-cover shrink-0 ${
+                                  item.type === 'Artist' ? 'rounded-full' : 'rounded'
+                                }`}
+                              />
+                            ) : (
+                              <div className={`w-8 h-8 bg-zinc-800 flex items-center justify-center shrink-0 ${
+                                item.type === 'Artist' ? 'rounded-full' : 'rounded'
+                              }`}>
+                                <Music className="w-4 h-4 text-zinc-500" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h5 className={`text-xs font-semibold truncate ${isThisPlaying ? "text-green-400" : "text-zinc-200"}`}>
+                                {item.name || item.title}
+                              </h5>
+                              <p className="text-[10px] text-zinc-400 truncate">
+                                {item.type === 'Artist' ? 'Nghệ sĩ' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Button bên phải */}
+                          <div>
+                            {item.type === 'Artist' ? (
+                              <button className="px-3 py-1 text-[10px] font-bold border border-zinc-600 group-hover:border-zinc-400 hover:scale-105 active:scale-95 rounded-full transition-all text-zinc-300 hover:text-white cursor-pointer select-none">
+                                Theo dõi
+                              </button>
+                            ) : isThisPlaying ? (
+                              <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-black shadow-sm">
+                                <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current">
+                                  <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                                </svg>
+                              </span>
+                            ) : (
+                              <button className="text-zinc-450 hover:text-white transition-colors cursor-pointer p-0.5">
+                                <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-current fill-none stroke-[2]">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="12" y1="8" x2="12" y2="16" />
+                                  <line x1="8" y1="12" x2="16" y2="12" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Navigation links */}
-          <nav className="flex flex-col gap-1.5 flex-1">
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-zinc-900 text-green-400 shadow-sm"
-                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
-                }`
-              }
-            >
-              <Home className="w-5 h-5" />
-              <span>Trang chủ</span>
-            </NavLink>
-
-            <NavLink
-              to="/search"
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-zinc-900 text-green-400 shadow-sm"
-                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
-                }`
-              }
-            >
-              <Search className="w-5 h-5" />
-              <span>Tìm kiếm</span>
-            </NavLink>
-
-            <NavLink
-              to="/library"
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-zinc-900 text-green-400 shadow-sm"
-                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
-                }`
-              }
-            >
-              <Library className="w-5 h-5" />
-              <span>Thư viện</span>
-            </NavLink>
-
-            <div className="h-px bg-zinc-900 my-2" />
-
-            <NavLink
-              to="/notifications"
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-zinc-900 text-green-400 shadow-sm"
-                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
-                }`
-              }
-            >
-              <Bell className="w-5 h-5" />
-              <span>Thông báo</span>
-            </NavLink>
-
+        {/* Right: Notifications + User Profile */}
+        <div className="flex items-center gap-3">
+          {isAuthenticated && (
             <NavLink
               to="/share"
               className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-zinc-900 text-green-400 shadow-sm"
-                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
+                `relative p-2 rounded-full hover:bg-zinc-800 transition-colors focus:outline-none ${
+                  isActive ? "text-white bg-[#1f1f1f]" : "text-zinc-400 hover:text-slate-100"
                 }`
               }
+              title="Hộp thư chia sẻ"
             >
               <Mail className="w-5 h-5" />
-              <span>Hộp thư chia sẻ</span>
             </NavLink>
+          )}
 
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  isActive
-                    ? "bg-zinc-900 text-green-400 shadow-sm"
-                    : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
-                }`
-              }
-            >
-              <User className="w-5 h-5" />
-              <span>Hồ sơ</span>
-            </NavLink>
+          {isAuthenticated && <NotificationBell />}
 
-            {user?.role === "Admin" && (
-              <NavLink
-                to="/admin"
-                className={({ isActive }) =>
-                  `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                    isActive
-                      ? "bg-zinc-900 text-green-400 shadow-sm"
-                      : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
-                  }`
-                }
-              >
-                <ShieldCheck className="w-5 h-5" />
-                <span>Quản trị</span>
-              </NavLink>
-            )}
-          </nav>
-
-          {/* Footer Sidebar / Nút đăng nhập/đăng xuất */}
-          <div className="mt-auto">
-            {isAuthenticated ? (
+          {isAuthenticated && user ? (
+            <div className="relative user-profile-menu-container">
               <button
-                onClick={logoutState}
-                className="w-full flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-red-400 hover:bg-red-950/20 hover:text-red-300 transition-all duration-200 text-left"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-green-400 border border-zinc-700 hover:scale-105 active:scale-95 transition-transform cursor-pointer focus:outline-none"
+                title={user.fullName || "Tài khoản"}
               >
-                <LogOut className="w-5 h-5" />
-                <span>Đăng xuất</span>
+                {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
               </button>
-            ) : (
-              <NavLink
-                to="/login"
-                className="flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm text-green-400 hover:bg-green-950/20 hover:text-green-300 transition-all duration-200"
+              
+              {showUserMenu && (
+                <div className="absolute right-0 mt-2 w-36 bg-[#282828] text-zinc-200 rounded-md shadow-2xl z-50 py-1 border border-zinc-800 text-xs overflow-hidden animate-fadeIn">
+                  <button
+                    onClick={() => {
+                      navigate('/profile');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer flex items-center gap-2 font-medium"
+                  >
+                    Hồ sơ
+                  </button>
+                  <div className="h-px bg-zinc-800 my-0.5" />
+                  <button
+                    onClick={() => {
+                      logoutState();
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-zinc-800 hover:text-red-400 transition-colors cursor-pointer flex items-center gap-2 font-medium"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Link
+                to="/register"
+                className="text-xs font-bold text-zinc-400 hover:text-slate-100 transition-colors"
               >
-                <LogOut className="w-5 h-5" />
-                <span>Đăng nhập</span>
-              </NavLink>
-            )}
+                Đăng ký
+              </Link>
+              <Link
+                to="/login"
+                className="px-5 py-2 bg-white text-black font-bold text-xs rounded-full hover:scale-105 transition-transform active:scale-95 shadow-md"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Khung chính: Sidebar + Main Content */}
+      <div className="flex-1 flex overflow-hidden p-2 gap-2 pt-0">
+        {/* 1. SIDEBAR (Bên trái) */}
+        <aside 
+          className={`${
+            isSidebarCollapsed ? "w-[72px]" : "w-64"
+          } bg-zinc-950 rounded-xl flex flex-col p-3.5 gap-4 shrink-0 border border-zinc-900 transition-all duration-300 ease-in-out overflow-hidden`}
+        >
+          {/* Logo */}
+          {isSidebarCollapsed ? (
+            <div className="flex justify-center w-full px-2" title="TuneVault">
+              <div 
+                className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20 cursor-pointer"
+                onClick={() => handleToggleSidebar(false)}
+              >
+                <Music className="w-6 h-6 text-black stroke-[2.5]" />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                <Music className="w-6 h-6 text-black stroke-[2.5]" />
+              </div>
+              <div className="animate-fadeIn">
+                <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
+                  TuneVault
+                </h1>
+                <span className="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">
+                  Spotify Clone
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Library Header */}
+          {isSidebarCollapsed ? (
+            <div className="flex flex-col items-center gap-4 w-full border-t border-zinc-900 pt-3.5">
+              <button 
+                onClick={() => navigate("/library")} 
+                className="w-10 h-10 rounded-full hover:bg-zinc-900 flex items-center justify-center text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" 
+                title="Thư viện"
+              >
+                <Library className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => handleToggleSidebar(false)} 
+                className="w-10 h-10 rounded-full hover:bg-zinc-900 flex items-center justify-center text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" 
+                title="Mở rộng"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between px-2 text-zinc-400 border-t border-zinc-900 pt-3.5">
+              <div 
+                className="flex items-center gap-3 hover:text-slate-100 transition-colors cursor-pointer" 
+                onClick={() => navigate("/library")}
+              >
+                <Library className="w-5 h-5" />
+                <span className="font-bold text-sm">Thư viện</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-7 h-7 rounded-full hover:bg-zinc-900 flex items-center justify-center hover:text-white transition-colors cursor-pointer" 
+                  title="Tạo playlist"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleToggleSidebar(true)} 
+                  className="w-7 h-7 rounded-full hover:bg-zinc-900 flex items-center justify-center hover:text-white transition-colors cursor-pointer" 
+                  title="Thu gọn"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Chips (Playlist, Album, Nghệ sĩ) */}
+          {!isSidebarCollapsed && (
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 select-none text-[10px] font-bold px-1 shrink-0">
+              <span className="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-full cursor-pointer transition-colors shrink-0">Playlist</span>
+              <span className="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-full cursor-pointer transition-colors shrink-0">Album</span>
+              <span className="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-full cursor-pointer transition-colors shrink-0">Nghệ sĩ</span>
+            </div>
+          )}
+
+          {/* Search/Sort */}
+          {!isSidebarCollapsed && (
+            <div className="flex items-center justify-between px-2 text-zinc-400 text-[10px] select-none shrink-0 font-semibold">
+              <button className="hover:text-slate-100 transition-colors cursor-pointer">
+                <Search className="w-3.5 h-3.5" />
+              </button>
+              <div className="flex items-center gap-1 hover:text-slate-100 transition-colors cursor-pointer">
+                <span>Gần đây</span>
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
+                  <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* Playlists List */}
+          <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-zinc-800/80 pr-0.5">
+            {/* Liked Songs item */}
+            <div
+              className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/20 transition-colors group"
+              title="Bài hát đã thích"
+            >
+              {/* Liked Songs Cover */}
+              <div className={`${isSidebarCollapsed ? 'w-11 h-11' : 'w-12 h-12'} bg-gradient-to-br from-[#450e74] to-[#c3a0df] rounded flex items-center justify-center shrink-0 shadow`}>
+                <Heart className={`${isSidebarCollapsed ? 'w-5 h-5' : 'w-6 h-6'} text-white fill-current`} />
+              </div>
+              
+              {!isSidebarCollapsed && (
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-slate-200 transition-colors truncate">
+                    Bài hát đã thích
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                    <span className="text-green-500 font-bold text-[8px] shrink-0">📌</span>
+                    <span className="truncate">Danh sách phát • {user?.fullName || 'Yui'}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Other User Playlists */}
+            {sidebarPlaylists.map((playlist) => {
+              const isActive = location.pathname === `/playlist/${playlist.id}`;
+              return (
+                <div
+                  key={playlist.id}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                  className={`flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/50 transition-colors cursor-pointer group ${
+                    isActive ? "bg-zinc-900" : ""
+                  }`}
+                  title={playlist.title}
+                >
+                  <div className={`${isSidebarCollapsed ? 'w-11 h-11' : 'w-12 h-12'} bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center rounded shrink-0 shadow overflow-hidden`}>
+                    {playlist.coverUrl ? (
+                      <img
+                        src={mediaService.getImageUrl(playlist.coverUrl)}
+                        alt={playlist.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg viewBox="0 0 24 24" className={`${isSidebarCollapsed ? 'w-5 h-5' : 'w-6 h-6'} text-zinc-500 group-hover:text-green-400 transition-colors`}>
+                        <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                      </svg>
+                    )}
+                  </div>
+                  
+                  {!isSidebarCollapsed && (
+                    <div className="min-w-0">
+                      <h4 className={`text-sm font-bold truncate group-hover:text-green-400 transition-colors ${
+                        isActive ? "text-green-400" : "text-slate-200"
+                      }`}>
+                        {playlist.title}
+                      </h4>
+                      <p className="text-xs text-zinc-400 mt-1 truncate">
+                        Danh sách phát • {user?.fullName || 'Yui'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+
+          {/* Admin link (if present) */}
+          {user?.role === "Admin" && (
+            <div className="border-t border-zinc-900 pt-2 shrink-0">
+              {isSidebarCollapsed ? (
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => navigate("/admin")}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-zinc-400 hover:text-slate-100 hover:bg-zinc-900 transition-all duration-200 cursor-pointer ${
+                      location.pathname === "/admin" ? "bg-zinc-900 text-green-400" : ""
+                    }`}
+                    title="Quản trị"
+                  >
+                    <ShieldCheck className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `flex items-center gap-4 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                      isActive
+                        ? "bg-zinc-900 text-green-400 shadow-sm"
+                        : "text-zinc-400 hover:text-slate-100 hover:bg-zinc-900/50"
+                    }`
+                  }
+                >
+                  <ShieldCheck className="w-5 h-5" />
+                  <span>Quản trị</span>
+                </NavLink>
+              )}
+            </div>
+          )}
         </aside>
 
         {/* 2. MAIN CONTENT (Ở giữa & phải) */}
         <main className="flex-1 bg-zinc-950 rounded-xl flex flex-col overflow-hidden border border-zinc-900 relative">
-          {/* Header trong suốt mờ ảo */}
-          <header className="h-16 flex items-center justify-between px-6 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900/50 shrink-0 z-10">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-zinc-400">
-                Trạng thái hệ thống:
-              </span>
-              <span className="flex items-center gap-1.5 bg-green-500/10 text-green-400 text-xs px-2.5 py-1 rounded-full font-bold border border-green-500/20">
-                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                Connected
-              </span>
-            </div>
-
-            {/* Avatar / Nút điều khiển đăng nhập đăng ký */}
-            {isAuthenticated && user ? (
-              <div className="flex items-center gap-4">
-                <NotificationBell />
-                <NavLink
-                  to="/profile"
-                  className="flex items-center gap-2 hover:bg-zinc-900 p-1.5 pr-3 rounded-full transition-all"
-                >
-                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-green-400 border border-zinc-700">
-                    {user.fullName
-                      ? user.fullName.charAt(0).toUpperCase()
-                      : "U"}
-                  </div>
-                  <span className="text-sm font-semibold text-zinc-300">
-                    {user.fullName || "Tài khoản"}
-                  </span>
-                </NavLink>
-              </div>
-            ) : (
-              <div className="flex items-center gap-6">
-                <Link
-                  to="/register"
-                  className="text-sm font-bold text-zinc-450 hover:text-slate-100 transition-colors"
-                >
-                  Đăng ký
-                </Link>
-                <Link
-                  to="/login"
-                  className="px-6 py-2.5 bg-white text-black font-bold text-sm rounded-full hover:scale-105 transition-transform active:scale-95 shadow-md"
-                >
-                  Đăng nhập
-                </Link>
-              </div>
-            )}
-          </header>
-
           {/* Nội dung động thay đổi theo route */}
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-zinc-800">
             <Outlet />
           </div>
         </main>
+
+        {/* 4. RIGHT PANEL (Bên phải) */}
+        {isAuthenticated && isRightPanelOpen && (
+          <aside className="w-80 bg-zinc-950 rounded-xl border border-zinc-900 flex flex-col shrink-0 overflow-hidden">
+            <RightPanel 
+              track={currentTrack} 
+              onClose={() => {
+                setIsRightPanelOpen(false);
+                localStorage.setItem("right_panel_open", "false");
+              }} 
+              isTrackInPlaylist={isTrackInPlaylist}
+              onAddToPlaylist={() => {
+                if (currentTrack) {
+                  setAddToPlaylistTrackId(currentTrack.id);
+                  setPlaylistModalPlacement('right-panel');
+                }
+              }}
+            />
+          </aside>
+        )}
       </div>
 
       {/* 3. PLAYER BAR (Dưới cùng) */}
@@ -467,9 +1068,32 @@ export const MainLayout = () => {
             </p>
           </div>
           {currentTrack && (
-            <button className="text-zinc-450 hover:text-green-400 transition-colors p-1 ml-2 cursor-pointer">
-              <Heart className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1 ml-2 shrink-0">
+              <button className="text-zinc-450 hover:text-green-400 transition-colors p-1 cursor-pointer" title="Thích">
+                <Heart className="w-5 h-5" />
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setAddToPlaylistTrackId(currentTrack.id);
+                  setPlaylistModalPlacement('player');
+                }}
+                className="text-zinc-450 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                title="Lưu vào danh sách phát"
+              >
+                {isTrackInPlaylist ? (
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-black">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                  </svg>
+                )}
+              </button>
+            </div>
           )}
         </div>
         {/* Ở giữa: Các nút điều khiển nhạc & Thanh tiến trình */}
@@ -512,13 +1136,29 @@ export const MainLayout = () => {
               <SkipForward className="w-5 h-5 fill-current" />
             </button>
             <button
-              onClick={() => setIsRepeat(!isRepeat)}
+              onClick={() => {
+                if (repeatMode === 'off') setRepeatMode('all');
+                else if (repeatMode === 'all') setRepeatMode('one');
+                else setRepeatMode('off');
+              }}
               className={`relative flex flex-col items-center transition-colors cursor-pointer group/repeat ${
-                isRepeat ? "text-green-500 hover:text-green-400" : "text-zinc-450 hover:text-slate-100"
+                repeatMode !== 'off' ? "text-green-500 hover:text-green-400" : "text-zinc-450 hover:text-slate-100"
               }`}
+              title={
+                repeatMode === 'off' 
+                  ? 'Bật lặp lại tất cả' 
+                  : repeatMode === 'all' 
+                    ? 'Bật lặp lại 1 bài' 
+                    : 'Tắt lặp lại'
+              }
             >
               <Repeat className="w-4 h-4" />
-              {isRepeat && (
+              {repeatMode === 'one' && (
+                <span className="absolute -top-1 -right-1.5 bg-green-500 text-black text-[7px] font-extrabold w-3 h-3 rounded-full flex items-center justify-center border border-black scale-90 select-none">
+                  1
+                </span>
+              )}
+              {repeatMode !== 'off' && (
                 <span className="absolute -bottom-1.5 w-1 h-1 bg-green-500 rounded-full"></span>
               )}
             </button>
@@ -570,6 +1210,26 @@ export const MainLayout = () => {
 
         {/* Phía bên phải: Âm lượng & Tiện ích */}
         <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-400 group/volume">
+          {/* Nút bật/tắt Right Panel */}
+          {isAuthenticated && (
+            <button
+              onClick={() => {
+                const nextState = !isRightPanelOpen;
+                setIsRightPanelOpen(nextState);
+                localStorage.setItem("right_panel_open", nextState ? "true" : "false");
+              }}
+              className={`p-1 hover:text-slate-100 transition-colors cursor-pointer mr-2 relative ${
+                isRightPanelOpen ? 'text-green-400' : 'text-zinc-400'
+              }`}
+              title={isRightPanelOpen ? "Đóng bảng chi tiết" : "Mở bảng chi tiết"}
+            >
+              <Info className="w-5 h-5" />
+              {isRightPanelOpen && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+              )}
+            </button>
+          )}
+
           <button
             onClick={toggleMute}
             className="hover:text-slate-100 cursor-pointer p-1 transition-colors"
@@ -620,6 +1280,22 @@ export const MainLayout = () => {
           </div>
         </div>
       </footer>
+
+      {/* MODAL TẠO PLAYLIST */}
+      <CreatePlaylistModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
+
+      {/* MODAL THÊM BÀI HÁT VÀO PLAYLIST */}
+      {addToPlaylistTrackId && (
+        <AddToPlaylistModal
+          isOpen={!!addToPlaylistTrackId}
+          onClose={() => setAddToPlaylistTrackId(null)}
+          mediaItemId={addToPlaylistTrackId}
+          placement={playlistModalPlacement}
+        />
+      )}
     </div>
   );
 };

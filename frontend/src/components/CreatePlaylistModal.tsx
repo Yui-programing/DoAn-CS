@@ -7,9 +7,10 @@ interface CreatePlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
   playlistToEdit?: Playlist | null; // Nếu có, modal sẽ chuyển sang chế độ Sửa
+  onSuccess?: (newPlaylistId: string) => void;
 }
 
-export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ isOpen, onClose, playlistToEdit }) => {
+export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ isOpen, onClose, playlistToEdit, onSuccess }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -70,11 +71,15 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ isOpen
       
       if (res.success) {
         setSuccess(playlistToEdit ? "Cập nhật thành công!" : "Tạo thành công!");
+        const newPlaylistId = res.data;
         
         // Đóng modal sau 1 giây
         setTimeout(() => {
           onClose();
           setSuccess(null);
+          if (onSuccess && newPlaylistId) {
+            onSuccess(newPlaylistId);
+          }
           // Báo cho toàn bộ app biết là có playlist mới để tự động fetch lại
           window.dispatchEvent(new Event('playlistChanged'));
         }, 1000);
