@@ -1,6 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Pause, Volume2, Maximize, ArrowLeft, Loader2, Heart, Plus } from 'lucide-react';
+import { 
+    Play, 
+    Pause, 
+    Volume2, 
+    VolumeX, 
+    Maximize, 
+    ArrowLeft, 
+    Loader2, 
+    Heart, 
+    Plus, 
+    Info, 
+    Repeat, 
+    Mic, 
+    ListMusic, 
+    SkipBack, 
+    SkipForward, 
+    Music 
+} from 'lucide-react';
 // Import dịch vụ API để gọi dữ liệu thật
 import { mediaService } from '../../services';
 import { useFavorite } from '../../contexts/FavoriteContext';
@@ -30,6 +47,7 @@ export const VideoPlayer = () => {
     const [videoInfo, setVideoInfo] = useState<{
         title: string;
         artist: string;
+        coverUrl: string | null;
         filePath: string;
     } | null>(null);
 
@@ -44,8 +62,8 @@ export const VideoPlayer = () => {
                 if (response.success && response.data) {
                     setVideoInfo({
                         title: response.data.title,
-                        artist: response.data.ownerId || 'Chưa rõ tác giả',
-
+                        artist: response.data.artistName || 'Nghệ sĩ tự do',
+                        coverUrl: response.data.coverUrl || null,
                         filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
                     });
                 }
@@ -178,94 +196,183 @@ export const VideoPlayer = () => {
                 </div>
             )}
 
-            {/* Nút quay lại */}
-            <div className={`absolute top-6 left-6 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-950/80 hover:bg-zinc-900 border border-zinc-800 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90"
-                >
-                    <ArrowLeft className="w-6 h-6" />
-                </button>
-            </div>
-
-            {/* Thanh điều khiển video dưới đáy (Liên kết với videoInfo) */}
+            {/* Thanh phía trên (Top Bar) */}
             {videoInfo && (
-                <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <div className="space-y-4 max-w-5xl mx-auto">
-                        <div className="mb-2 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-xl font-extrabold text-slate-100">{videoInfo.title}</h2>
-                                <p className="text-sm text-zinc-400 font-semibold">{videoInfo.artist}</p>
+                <div className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center justify-between transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className="flex items-center gap-4 min-w-0">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer"
+                            title="Quay lại"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <h1 className="text-base font-bold text-slate-100 tracking-wide truncate max-w-xl">
+                            {videoInfo.title}
+                        </h1>
+                    </div>
+                    
+                    {/* Hàng nút chức năng bên phải */}
+                    <div className="flex items-center gap-3">
+                        <button className="p-2 text-zinc-400 hover:text-white transition-colors cursor-pointer" title="Tùy chọn">
+                            <span className="text-xl font-bold tracking-wider">•••</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Thanh điều khiển video dưới đáy (Spotify style Player Bar) */}
+            {videoInfo && (
+                <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-25 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className="w-full flex items-center justify-between gap-6 px-4">
+                        
+                        {/* 1. Bên trái: Thông tin bài hát & Nút tương tác */}
+                        <div className="flex items-center gap-3 w-1/3 min-w-[200px]">
+                            {/* Thumbnail nhỏ */}
+                            <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 overflow-hidden shrink-0 shadow-inner">
+                                {videoInfo.coverUrl ? (
+                                    <img
+                                        src={mediaService.getImageUrl(videoInfo.coverUrl)}
+                                        alt={videoInfo.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <Music className="w-5 h-5 text-green-400" />
+                                )}
                             </div>
+                            {/* Tên bài hát & Nghệ sĩ */}
+                            <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-slate-100 truncate hover:underline cursor-pointer" title={videoInfo.title}>
+                                    {videoInfo.title}
+                                </h4>
+                                <p className="text-xs text-zinc-450 truncate hover:underline cursor-pointer font-medium">
+                                    {videoInfo.artist}
+                                </p>
+                            </div>
+                            
+                            {/* Nút Thả tim & Nút thêm playlist */}
                             {user && id && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5 ml-2 shrink-0">
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             toggleFavorite(id);
                                         }}
-                                        className={`transition-all p-2 hover:scale-110 active:scale-95 ${
-                                            isFavorite(id) ? "text-green-400" : "text-zinc-450 hover:text-green-400"
+                                        className={`transition-colors p-1 cursor-pointer hover:scale-105 active:scale-90 ${
+                                            isFavorite(id) 
+                                                ? "text-green-500 hover:text-green-400" 
+                                                : "text-zinc-450 hover:text-green-450"
                                         }`}
                                         title={isFavorite(id) ? "Bỏ thích" : "Thích"}
                                     >
-                                        <Heart className={`w-6 h-6 ${isFavorite(id) ? "fill-current" : ""}`} />
+                                        <Heart className={`w-5 h-5 ${isFavorite(id) ? "fill-current" : ""}`} />
                                     </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setShowPlaylistModal(true);
                                         }}
-                                        className="transition-all p-2 hover:scale-110 active:scale-95 text-zinc-450 hover:text-white"
+                                        className="transition-all p-1 hover:scale-105 active:scale-90 text-zinc-450 hover:text-white cursor-pointer"
                                         title="Thêm vào danh sách phát"
                                     >
-                                        <Plus className="w-6 h-6" />
+                                        <Plus className="w-5 h-5" />
                                     </button>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-zinc-400">{formatTime(currentTime)}</span>
-                            <input
-                                type="range"
-                                min={0}
-                                max={duration || 100}
-                                value={currentTime}
-                                onChange={handleProgressChange}
-                                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-green-500 outline-none transition-all hover:h-2"
-                            />
-                            <span className="text-xs font-bold text-zinc-400">{formatTime(duration)}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1">
+                        {/* 2. Ở giữa: Playback Control & Progress Bar */}
+                        <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
+                            {/* Hàng nút điều khiển */}
                             <div className="flex items-center gap-6">
+                                <button className="text-zinc-450 hover:text-slate-100 transition-colors cursor-pointer" title="Thông tin chi tiết">
+                                    <Info className="w-4 h-4" />
+                                </button>
+                                <button className="text-zinc-455 hover:text-slate-100 transition-colors cursor-pointer" title="Bài trước (chỉ xem)">
+                                    <SkipBack className="w-4.5 h-4.5 fill-current" />
+                                </button>
+
                                 <button
                                     onClick={togglePlay}
-                                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform active:scale-95 shadow-md"
+                                    className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-transform shadow-md cursor-pointer"
+                                    title={isPlaying ? "Tạm dừng" : "Phát"}
                                 >
-                                    {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                                    {isPlaying ? (
+                                        <Pause className="w-4 h-4 fill-current" />
+                                    ) : (
+                                        <Play className="w-4 h-4 fill-current ml-0.5" />
+                                    )}
                                 </button>
-                                <div className="flex items-center gap-2 group">
-                                    <Volume2 className="w-5 h-5 text-zinc-400 hover:text-slate-100 cursor-pointer" />
-                                    <input
-                                        type="range"
-                                        min={0}
-                                        max={1}
-                                        step={0.05}
-                                        value={volume}
-                                        onChange={handleVolumeChange}
-                                        className="w-20 h-1 rounded-full appearance-none bg-zinc-850 accent-green-500 outline-none"
-                                    />
-                                </div>
+
+                                <button className="text-zinc-455 hover:text-slate-100 transition-colors cursor-pointer" title="Bài kế tiếp (chỉ xem)">
+                                    <SkipForward className="w-4.5 h-4.5 fill-current" />
+                                </button>
+                                <button className="text-zinc-450 hover:text-slate-100 transition-colors cursor-pointer" title="Lặp lại (chỉ xem)">
+                                    <Repeat className="w-4 h-4" />
+                                </button>
                             </div>
+
+                            {/* Thanh tiến trình */}
+                            <div className="w-full flex items-center gap-2.5 text-[10px] text-zinc-550 font-bold">
+                                <span>{formatTime(currentTime)}</span>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={duration || 100}
+                                    value={currentTime}
+                                    onChange={handleProgressChange}
+                                    className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-green-500 outline-none transition-all hover:h-2"
+                                />
+                                <span>{formatTime(duration)}</span>
+                            </div>
+                        </div>
+
+                        {/* 3. Bên phải: Âm lượng & Fullscreen Utilities */}
+                        <div className="flex items-center justify-end gap-3.5 w-1/3 text-zinc-450">
+                            <button className="hover:text-slate-100 cursor-pointer p-1 transition-colors" title="Lời bài hát (chỉ xem)">
+                                <Mic className="w-4.5 h-4.5" />
+                            </button>
+                            <button className="hover:text-slate-100 cursor-pointer p-1 transition-colors" title="Danh sách chờ (chỉ xem)">
+                                <ListMusic className="w-4.5 h-4.5" />
+                            </button>
+                            
+                            <div className="flex items-center gap-2 group/volume">
+                                <button 
+                                    onClick={() => {
+                                        if (videoRef.current) {
+                                            const nextVolume = volume > 0 ? 0 : 0.8;
+                                            setVolume(nextVolume);
+                                            videoRef.current.volume = nextVolume;
+                                        }
+                                    }}
+                                    className="hover:text-slate-100 cursor-pointer p-1 transition-colors"
+                                >
+                                    {volume === 0 ? (
+                                        <VolumeX className="w-4.5 h-4.5 text-zinc-500" />
+                                    ) : (
+                                        <Volume2 className="w-4.5 h-4.5" />
+                                    )}
+                                </button>
+                                <input
+                                    type="range"
+                                    min={0}
+                                    max={1}
+                                    step={0.05}
+                                    value={volume}
+                                    onChange={handleVolumeChange}
+                                    className="w-20 h-1 rounded-full appearance-none bg-zinc-800 accent-green-500 outline-none"
+                                />
+                            </div>
+                            
                             <button
                                 onClick={toggleFullscreen}
-                                className="p-2 text-zinc-450 hover:text-green-400 transition-colors"
+                                className="p-1 hover:text-green-400 transition-colors cursor-pointer"
+                                title="Toàn màn hình"
                             >
-                                <Maximize className="w-6 h-6" />
+                                <Maximize className="w-5 h-5" />
                             </button>
                         </div>
+
                     </div>
                 </div>
             )}
