@@ -44,6 +44,7 @@ namespace TuneVault.Application.Models
         public string? ArtistName { get; set; }
         public string? CoverUrl { get; set; }
         public int DurationInSeconds { get; set; }
+        public int MediaType { get; set; }
         public DateTime AddedAt { get; set; } // Ngày bài hát này được đưa vào playlist
     }
 

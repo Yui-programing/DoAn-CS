@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { userService } from '../services/userService';
+import { authService } from '../services/authService';
 import type { UserProfile } from '../types';
 
 interface AuthContextType {
@@ -56,7 +57,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await checkAuth();
     };
 
-    const logoutState = () => {
+    const logoutState = async () => {
+        try {
+            // Phải gọi API xuống backend để nó xoá HttpOnly Cookie chứa token
+            await authService.logout();
+        } catch (error) {
+            console.error("Lỗi khi đăng xuất từ backend:", error);
+        }
         setIsAuthenticated(false);
         setUser(null);
         localStorage.removeItem('isAuthenticated');

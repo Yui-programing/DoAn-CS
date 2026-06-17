@@ -8,6 +8,7 @@ import { playlistService, mediaService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { useFavorite } from '../../contexts/FavoriteContext';
 
 // Helper format số lượt nghe rút gọn kiểu Spotify (1.2M, 850K, ...)
 const formatViewCount = (count: number) => {
@@ -33,6 +34,7 @@ export const Home = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+  const { isFavorite, toggleFavorite } = useFavorite();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
   const [playlists, setPlaylists] = useState<any[]>([]);
@@ -429,8 +431,14 @@ export const Home = () => {
 
                     {/* CỘT 3 */}
                     <div className="w-36 flex items-center justify-end gap-4 shrink-0 text-xs text-zinc-400">
-                      <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
-                        <Heart className={`w-4.5 h-4.5 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(track.id);
+                        }}
+                        className={`transition-all hover:scale-110 ${isFavorite(track.id) ? 'opacity-100 text-green-400' : 'opacity-0 group-hover:opacity-100 hover:text-green-400'}`}
+                      >
+                        <Heart className={`w-4.5 h-4.5 ${isFavorite(track.id) ? 'fill-current' : ''}`} />
                       </button>
                       <span className={`font-semibold tracking-wider ${isCurrent ? 'text-green-400' : ''}`}>
                         {track.duration}

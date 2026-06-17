@@ -12,6 +12,7 @@ import Register from "../pages/Register/Register";
 import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
 import { VideoPlayer } from "../pages/VideoPlayer/VideoPlayer";
 import AdminDashboard from "../pages/Admin/AdminDashboard";
+import Favorites from "../pages/Favorites/Favorites";
 
 // Import cánh cửa bảo vệ bạn vừa tạo
 import { ProtectedRoute } from "../components/ProtectedRoute";
@@ -38,6 +39,7 @@ export const AppRoutes = () => {
           <Route path="profile" element={<Profile />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="share" element={<ShareInbox />} />
+          <Route path="favorites" element={<Favorites />} />
         </Route>
 
         {/* Admin route */}

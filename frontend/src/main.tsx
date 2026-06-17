@@ -6,15 +6,18 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 import { NotificationProvider } from './contexts/NotificationContext.tsx'
+import { FavoriteProvider } from './contexts/FavoriteContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
-          <PlayerProvider>
-            <App />
-          </PlayerProvider>
+          <FavoriteProvider>
+            <PlayerProvider>
+              <App />
+            </PlayerProvider>
+          </FavoriteProvider>
         </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>

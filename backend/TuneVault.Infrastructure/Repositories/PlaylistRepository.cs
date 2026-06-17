@@ -208,6 +208,7 @@ public class PlaylistRepository : IPlaylistRepository
             m.ArtistName,
             m.CoverUrl,
             m.DurationInSeconds, 
+            m.MediaType,
             pt.AddedAt
         FROM PlaylistTrack pt
         INNER JOIN MediaItem m ON pt.MediaItemId = m.Id
