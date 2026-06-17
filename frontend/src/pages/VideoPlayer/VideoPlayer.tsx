@@ -13,7 +13,8 @@ import {
     Repeat, 
     SkipBack, 
     SkipForward, 
-    Music 
+    Music,
+    Shuffle
 } from 'lucide-react';
 // Import dịch vụ API để gọi dữ liệu thật
 import { mediaService } from '../../services';
@@ -31,6 +32,7 @@ export const VideoPlayer = () => {
     const { isFavorite, toggleFavorite } = useFavorite();
     const { setIsPlaying: setGlobalIsPlaying } = usePlayer();
 
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     const [isPlaying, setIsPlaying] = useState(false);
@@ -57,6 +59,14 @@ export const VideoPlayer = () => {
     const [hoverTime, setHoverTime] = useState<number | null>(null);
     const [hoverX, setHoverX] = useState<number>(0);
 
+    // Shuffle & Repeat state
+    const [isShuffle, setIsShuffle] = useState(false);
+    const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
+    const [videoQueue, setVideoQueue] = useState<any[]>([]);
+    const [currentQueueIndex, setCurrentQueueIndex] = useState<number>(-1);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isControlsHovered, setIsControlsHovered] = useState(false);
+
     // BƯỚC 1: Khai báo State để lưu thông tin video từ Backend
     const [videoInfo, setVideoInfo] = useState<{
         title: string;
@@ -65,7 +75,7 @@ export const VideoPlayer = () => {
         filePath: string;
     } | null>(null);
 
-    // BƯỚC 2: Gọi API lấy chi tiết video dựa trên ID ở URL
+    // BƯỚC 2: Gọi API lấy chi tiết video dựa trên ID ở URL và tải danh sách phát
     useEffect(() => {
         const fetchVideoDetails = async () => {
             if (!id) return;
@@ -81,6 +91,42 @@ export const VideoPlayer = () => {
                         filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
                     });
                 }
+
+                // Gọi API lấy danh sách bài hát/video (tối đa 50 bài) để làm hàng đợi video
+                const searchRes = await mediaService.searchSongs('%', 50);
+                if (searchRes.success && searchRes.data && searchRes.data.items) {
+                    // Lọc ra các video (mediaType === 1 hoặc file path kết thúc bằng .mp4, .mkv)
+                    const videos = searchRes.data.items.filter((item: any) => 
+                        item.mediaType === 1 || 
+                        item.filePath?.toLowerCase().endsWith('.mp4') || 
+                        item.filePath?.toLowerCase().endsWith('.mkv')
+                    ).map((item: any) => ({
+                        id: item.id,
+                        title: item.name,
+                        artist: item.artistName || 'Nghệ sĩ tự do',
+                        coverUrl: item.coverUrl,
+                        filePath: mediaService.getStreamUrl(item.id)
+                    }));
+
+                    setVideoQueue(videos);
+
+                    // Tìm vị trí của video hiện tại trong queue
+                    const idx = videos.findIndex((v: any) => v.id === id);
+                    if (idx !== -1) {
+                        setCurrentQueueIndex(idx);
+                    } else if (response.data) {
+                        // Nếu không tìm thấy, chèn video hiện tại vào đầu hàng đợi
+                        const currentVideoItem = {
+                            id: response.data.id,
+                            title: response.data.title,
+                            artist: response.data.artistName || 'Nghệ sĩ tự do',
+                            coverUrl: response.data.coverUrl || null,
+                            filePath: mediaService.getStreamUrl(response.data.id)
+                        };
+                        setVideoQueue([currentVideoItem, ...videos]);
+                        setCurrentQueueIndex(0);
+                    }
+                }
             } catch (error) {
                 console.error("Lỗi khi tải thông tin video:", error);
             } finally {
@@ -89,19 +135,22 @@ export const VideoPlayer = () => {
         };
 
         fetchVideoDetails();
+        setHasRecordedView(false); // Reset trạng thái ghi nhận view khi chuyển MV mới
     }, [id]);
 
-    // Tự động ẩn thanh điều khiển sau 3 giây
+    // Tự động ẩn thanh điều khiển và con trỏ chuột sau 3 giây
     useEffect(() => {
         let timeoutId: number;
         const handleMouseMove = () => {
             setShowControls(true);
             clearTimeout(timeoutId);
-            timeoutId = window.setTimeout(() => {
-                if (isPlaying) {
+            
+            // Chỉ ẩn điều khiển nếu video đang phát, chuột không hover trên thanh điều khiển và không mở playlist modal
+            if (isPlaying && !isControlsHovered && !showPlaylistModal) {
+                timeoutId = window.setTimeout(() => {
                     setShowControls(false);
-                }
-            }, 3000);
+                }, 3000);
+            }
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -109,7 +158,7 @@ export const VideoPlayer = () => {
             window.removeEventListener('mousemove', handleMouseMove);
             clearTimeout(timeoutId);
         };
-    }, [isPlaying]);
+    }, [isPlaying, isControlsHovered, showPlaylistModal]);
 
     // Tạm dừng nhạc nền toàn cục khi mở MV - dừng cả audio element thực sự
     useEffect(() => {
@@ -121,6 +170,19 @@ export const VideoPlayer = () => {
             audioElement.pause();
         }
     }, []); // Chỉ chạy một lần khi component mount
+
+    // Lắng nghe sự thay đổi chế độ Fullscreen của trình duyệt
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+            // Luôn hiển thị thanh điều khiển khi bật/tắt toàn màn hình để người dùng dễ thao tác
+            setShowControls(true);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        };
+    }, []);
 
     // Đồng bộ âm lượng với thẻ video
     useEffect(() => {
@@ -142,14 +204,105 @@ export const VideoPlayer = () => {
         if (!videoRef.current) return;
         if (isPlaying) {
             videoRef.current.pause();
-            setIsPlaying(false);
         } else {
             // Đảm bảo không bị mute và gán đúng volume trước khi phát
             videoRef.current.muted = false;
             videoRef.current.volume = volume > 0 ? volume : 0.8;
             videoRef.current.play().catch(err => console.log("Lỗi tự phát:", err));
-            setIsPlaying(true);
         }
+    };
+
+    // Hàm chuyển tới video tiếp theo
+    const playNextVideo = () => {
+        if (videoQueue.length === 0 || currentQueueIndex === -1) {
+            if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+                videoRef.current.play().catch(err => console.log("Lỗi phát lại:", err));
+            }
+            return;
+        }
+
+        if (repeatMode === 'one') {
+            if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+                videoRef.current.play().catch(err => console.log("Lỗi phát lại:", err));
+            }
+            return;
+        }
+
+        let nextIdx = currentQueueIndex;
+        if (isShuffle) {
+            if (videoQueue.length > 1) {
+                // Lấy ngẫu nhiên một video khác video hiện tại
+                do {
+                    nextIdx = Math.floor(Math.random() * videoQueue.length);
+                } while (nextIdx === currentQueueIndex);
+            } else {
+                nextIdx = 0;
+            }
+        } else {
+            nextIdx = currentQueueIndex + 1;
+            if (nextIdx >= videoQueue.length) {
+                if (repeatMode === 'all') {
+                    nextIdx = 0;
+                } else {
+                    // Tắt lặp lại và đã phát hết queue -> dừng phát
+                    if (videoRef.current) {
+                        videoRef.current.pause();
+                    }
+                    setIsPlaying(false);
+                    return;
+                }
+            }
+        }
+
+        const nextVideo = videoQueue[nextIdx];
+        navigate(`/video/${nextVideo.id}`);
+    };
+
+    // Hàm quay lại video phía trước
+    const playPrevVideo = () => {
+        if (videoRef.current && videoRef.current.currentTime > 3) {
+            // Nếu phát quá 3 giây, nhấn nút quay lại sẽ phát lại video hiện tại từ đầu
+            videoRef.current.currentTime = 0;
+            videoRef.current.play().catch(err => console.log("Lỗi phát lại:", err));
+            return;
+        }
+
+        if (videoQueue.length === 0 || currentQueueIndex === -1) {
+            if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+            }
+            return;
+        }
+
+        let prevIdx = currentQueueIndex;
+        if (isShuffle) {
+            if (videoQueue.length > 1) {
+                do {
+                    prevIdx = Math.floor(Math.random() * videoQueue.length);
+                } while (prevIdx === currentQueueIndex);
+            } else {
+                prevIdx = 0;
+            }
+        } else {
+            prevIdx = currentQueueIndex - 1;
+            if (prevIdx < 0) {
+                if (repeatMode === 'all') {
+                    prevIdx = videoQueue.length - 1;
+                } else {
+                    // Phát lại video hiện tại từ đầu
+                    if (videoRef.current) {
+                        videoRef.current.currentTime = 0;
+                        videoRef.current.play().catch(err => console.log("Lỗi phát lại:", err));
+                    }
+                    return;
+                }
+            }
+        }
+
+        const prevVideo = videoQueue[prevIdx];
+        navigate(`/video/${prevVideo.id}`);
     };
 
     const handleTimeUpdate = () => {
@@ -275,10 +428,15 @@ export const VideoPlayer = () => {
     };
 
     const toggleFullscreen = () => {
-        if (videoRef.current) {
-            if (videoRef.current.requestFullscreen) {
-                videoRef.current.requestFullscreen();
-            }
+        if (!containerRef.current) return;
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(err => {
+                console.error("Lỗi khi mở toàn màn hình trình duyệt:", err);
+            });
+        } else {
+            document.exitFullscreen().catch(err => {
+                console.error("Lỗi khi thoát toàn màn hình trình duyệt:", err);
+            });
         }
     };
 
@@ -302,7 +460,10 @@ export const VideoPlayer = () => {
     }
 
     return (
-        <div className="video-player-container w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden select-none">
+        <div 
+            ref={containerRef}
+            className={`video-player-container w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden select-none ${showControls ? '' : 'cursor-none'}`}
+        >
             {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
             {videoInfo && (
                 <video
@@ -313,6 +474,10 @@ export const VideoPlayer = () => {
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
                     onWaiting={() => setIsLoading(true)}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={playNextVideo}
+                    autoPlay={true}
                     onPlaying={() => {
                         setIsLoading(false);
                         if (!hasRecordedView && id) {
@@ -332,7 +497,11 @@ export const VideoPlayer = () => {
 
             {/* Thanh phía trên (Top Bar) - chỉ nút Back và tiêu đề */}
             {videoInfo && (
-                <div className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center gap-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div 
+                    onMouseEnter={() => setIsControlsHovered(true)}
+                    onMouseLeave={() => setIsControlsHovered(false)}
+                    className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center gap-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer shrink-0"
@@ -348,7 +517,11 @@ export const VideoPlayer = () => {
 
             {/* Thanh phía dưới (Bottom Player Bar) - Giống Spotify */}
             {videoInfo && (
-                <div className={`absolute bottom-0 left-0 right-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div 
+                    onMouseEnter={() => setIsControlsHovered(true)}
+                    onMouseLeave={() => setIsControlsHovered(false)}
+                    className={`absolute bottom-0 left-0 right-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
                     {/* 1. Bên trái: Thông tin bài hát & Nút tương tác */}
                     <div className="flex items-center gap-4 w-1/3 min-w-[240px]">
                         {/* Thumbnail nhỏ */}
@@ -414,27 +587,75 @@ export const VideoPlayer = () => {
                     <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
                         {/* Hàng nút điều khiển */}
                         <div className="flex items-center gap-6">
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Bài trước">
+                            {/* Nút Shuffle giống MainLayout */}
+                            <button
+                                onClick={() => setIsShuffle(!isShuffle)}
+                                className={`relative flex flex-col items-center justify-center transition-colors cursor-pointer group/shuffle p-1 ${
+                                    isShuffle ? "text-green-500 hover:text-green-400" : "text-zinc-400 hover:text-slate-100"
+                                }`}
+                                title={isShuffle ? "Tắt phát ngẫu nhiên" : "Bật phát ngẫu nhiên"}
+                            >
+                                <Shuffle className="w-4 h-4" />
+                                {isShuffle && (
+                                    <span className="absolute -bottom-1.5 w-1 h-1 bg-green-500 rounded-full"></span>
+                                )}
+                            </button>
+
+                            <button 
+                                onClick={playPrevVideo}
+                                className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer p-1" 
+                                title="Bài trước"
+                            >
                                 <SkipBack className="w-5 h-5 fill-current" />
                             </button>
 
                             <button
                                 onClick={togglePlay}
-                                className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-transform shadow-md cursor-pointer"
+                                className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-transform shadow-md cursor-pointer shrink-0"
                                 title={isPlaying ? "Tạm dừng" : "Phát"}
-                              >
+                            >
                                 {isPlaying ? (
-                                  <Pause className="w-4 h-4 fill-current" />
+                                    <Pause className="w-4 h-4 fill-current" />
                                 ) : (
-                                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                                    <Play className="w-4 h-4 fill-current ml-0.5" />
                                 )}
                             </button>
 
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Bài kế tiếp">
+                            <button 
+                                onClick={playNextVideo}
+                                className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer p-1" 
+                                title="Bài kế tiếp"
+                            >
                                 <SkipForward className="w-5 h-5 fill-current" />
                             </button>
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Lặp lại">
+
+                            {/* Nút Repeat giống MainLayout */}
+                            <button
+                                onClick={() => {
+                                    if (repeatMode === 'off') setRepeatMode('all');
+                                    else if (repeatMode === 'all') setRepeatMode('one');
+                                    else setRepeatMode('off');
+                                }}
+                                className={`relative flex flex-col items-center justify-center transition-colors cursor-pointer group/repeat p-1 ${
+                                    repeatMode !== 'off' ? "text-green-500 hover:text-green-400" : "text-zinc-400 hover:text-slate-100"
+                                }`}
+                                title={
+                                    repeatMode === 'off' 
+                                        ? 'Bật lặp lại tất cả' 
+                                        : repeatMode === 'all' 
+                                            ? 'Bật lặp lại 1 bài' 
+                                            : 'Tắt lặp lại'
+                                }
+                            >
                                 <Repeat className="w-4 h-4" />
+                                {repeatMode === 'one' && (
+                                    <span className="absolute -top-1 -right-1 bg-green-500 text-black text-[7px] font-extrabold w-3 h-3 rounded-full flex items-center justify-center border border-black scale-90 select-none">
+                                        1
+                                    </span>
+                                )}
+                                {repeatMode !== 'off' && (
+                                    <span className="absolute -bottom-1.5 w-1 h-1 bg-green-500 rounded-full"></span>
+                                )}
                             </button>
                         </div>
 
@@ -532,8 +753,8 @@ export const VideoPlayer = () => {
                         
                         <button
                             onClick={toggleFullscreen}
-                            className="p-1 text-zinc-400 hover:text-green-400 transition-colors cursor-pointer"
-                            title="Toàn màn hình"
+                            className={`p-1 transition-colors cursor-pointer ${isFullscreen ? 'text-green-400 hover:text-green-300' : 'text-zinc-400 hover:text-slate-100'}`}
+                            title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
                         >
                             <Maximize className="w-5 h-5" />
                         </button>
