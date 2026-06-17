@@ -224,6 +224,18 @@ export const VideoPlayer = () => {
         }
     }, [isFullscreen]);
 
+    // Lắng nghe di chuyển chuột trên toàn bộ document để hiện/ẩn thanh điều khiển
+    useEffect(() => {
+        const handleGlobalMouseMove = () => {
+            resetTimeout();
+        };
+
+        document.addEventListener('mousemove', handleGlobalMouseMove);
+        return () => {
+            document.removeEventListener('mousemove', handleGlobalMouseMove);
+        };
+    }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal]);
+
     // Đồng bộ âm lượng với thẻ video
     useEffect(() => {
         if (videoRef.current) {
@@ -495,7 +507,6 @@ export const VideoPlayer = () => {
     const playerContent = (
         <div 
             ref={containerRef}
-            onMouseMove={resetTimeout}
             className={`video-player-container bg-black overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'relative' : 'flex flex-col'}`}
             style={isFullscreen ? {
                 position: 'fixed',
