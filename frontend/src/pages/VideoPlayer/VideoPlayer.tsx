@@ -171,26 +171,7 @@ export const VideoPlayer = () => {
         resetTimeout();
     }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal, resetTimeout]);
 
-    // Lắng nghe di chuyển chuột trực tiếp trên container của trình phát video (kể cả khi fullscreen và Portal)
-    useEffect(() => {
-        const handleMouseMove = () => {
-            resetTimeout();
-        };
 
-        const target = containerRef.current;
-        if (target) {
-            target.addEventListener('mousemove', handleMouseMove);
-        }
-        
-        return () => {
-            if (target) {
-                target.removeEventListener('mousemove', handleMouseMove);
-            }
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, [resetTimeout]);
 
     // Tạm dừng nhạc nền toàn cục khi mở MV - dừng cả audio element thực sự
     useEffect(() => {
@@ -525,6 +506,7 @@ export const VideoPlayer = () => {
     const playerContent = (
         <div 
             ref={containerRef}
+            onMouseMove={resetTimeout}
             className={`video-player-container bg-black overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'relative' : 'flex flex-col'}`}
             style={isFullscreen ? {
                 position: 'fixed',
