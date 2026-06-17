@@ -138,14 +138,13 @@ export const VideoPlayer = () => {
         setHasRecordedView(false); // Reset trạng thái ghi nhận view khi chuyển MV mới
     }, [id]);
 
-    // Tự động ẩn thanh điều khiển và con trỏ chuột sau 3 giây
+    // Hiện thanh điều khiển khi di chuyển chuột và ẩn đi sau 3 giây
     useEffect(() => {
         let timeoutId: number;
-        const handleMouseMove = () => {
+        
+        const resetTimeout = () => {
             setShowControls(true);
             clearTimeout(timeoutId);
-            
-            // Chỉ ẩn điều khiển nếu video đang phát, chuột không hover trên thanh điều khiển và không mở playlist modal
             if (isPlaying && !isControlsHovered && !showPlaylistModal) {
                 timeoutId = window.setTimeout(() => {
                     setShowControls(false);
@@ -153,9 +152,18 @@ export const VideoPlayer = () => {
             }
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
+        // Kích hoạt ẩn tự động ban đầu khi video bắt đầu phát
+        if (isPlaying && !isControlsHovered && !showPlaylistModal) {
+            timeoutId = window.setTimeout(() => {
+                setShowControls(false);
+            }, 3000);
+        } else {
+            setShowControls(true);
+        }
+
+        window.addEventListener('mousemove', resetTimeout);
         return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mousemove', resetTimeout);
             clearTimeout(timeoutId);
         };
     }, [isPlaying, isControlsHovered, showPlaylistModal]);
@@ -183,6 +191,20 @@ export const VideoPlayer = () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
         };
     }, []);
+
+    // Lắng nghe phím Escape để thoát chế độ fullscreen giả lập
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isFullscreen && !document.fullscreenElement) {
+                setIsFullscreen(false);
+                setShowControls(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isFullscreen]);
 
     // Đồng bộ âm lượng với thẻ video
     useEffect(() => {
@@ -429,14 +451,38 @@ export const VideoPlayer = () => {
 
     const toggleFullscreen = () => {
         if (!containerRef.current) return;
-        if (!document.fullscreenElement) {
-            containerRef.current.requestFullscreen().catch(err => {
-                console.error("Lỗi khi mở toàn màn hình trình duyệt:", err);
-            });
+        
+        if (!document.fullscreenElement && !isFullscreen) {
+            // Cố gắng vào fullscreen thật
+            containerRef.current.requestFullscreen()
+                .then(() => {
+                    setIsFullscreen(true);
+                    setShowControls(true);
+                })
+                .catch(err => {
+                    console.warn("Trình duyệt chặn fullscreen thật, chuyển sang fullscreen giả lập:", err);
+                    // Fallback sang fullscreen giả lập bằng class CSS
+                    setIsFullscreen(true);
+                    setShowControls(true);
+                });
         } else {
-            document.exitFullscreen().catch(err => {
-                console.error("Lỗi khi thoát toàn màn hình trình duyệt:", err);
-            });
+            // Thoát fullscreen
+            if (document.fullscreenElement) {
+                document.exitFullscreen()
+                    .then(() => {
+                        setIsFullscreen(false);
+                        setShowControls(true);
+                    })
+                    .catch(err => {
+                        console.error("Lỗi khi thoát fullscreen thật:", err);
+                        setIsFullscreen(false);
+                        setShowControls(true);
+                    });
+            } else {
+                // Thoát fullscreen giả lập
+                setIsFullscreen(false);
+                setShowControls(true);
+            }
         }
     };
 
@@ -462,7 +508,7 @@ export const VideoPlayer = () => {
     return (
         <div 
             ref={containerRef}
-            className={`video-player-container w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden select-none ${showControls ? '' : 'cursor-none'}`}
+            className={`video-player-container w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'pseudo-fullscreen' : ''}`}
         >
             {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
             {videoInfo && (
