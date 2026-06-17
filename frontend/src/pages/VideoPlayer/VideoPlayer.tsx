@@ -3,17 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     Play, 
     Pause, 
+    Volume1,
     Volume2, 
     VolumeX, 
     Maximize, 
     ArrowLeft, 
     Loader2, 
     Heart, 
-    Plus, 
     Info, 
     Repeat, 
-    Mic, 
-    ListMusic, 
     SkipBack, 
     SkipForward, 
     Music 
@@ -22,6 +20,7 @@ import {
 import { mediaService } from '../../services';
 import { useFavorite } from '../../contexts/FavoriteContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePlayer } from '../../contexts/PlayerContext';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 import './VideoPlayer.css';
 
@@ -30,6 +29,7 @@ export const VideoPlayer = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { isFavorite, toggleFavorite } = useFavorite();
+    const { isPlaying: isGlobalPlaying, setIsPlaying: setGlobalIsPlaying } = usePlayer();
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -97,12 +97,30 @@ export const VideoPlayer = () => {
         };
     }, [isPlaying]);
 
+    // Tạm dừng nhạc nền toàn cục khi mở MV
+    useEffect(() => {
+        if (isGlobalPlaying) {
+            setGlobalIsPlaying(false);
+        }
+    }, [isGlobalPlaying, setGlobalIsPlaying]);
+
+    // Đồng bộ âm lượng với thẻ video
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.volume = volume;
+            videoRef.current.muted = volume === 0;
+        }
+    }, [volume, videoInfo]);
+
     const togglePlay = () => {
         if (!videoRef.current) return;
         if (isPlaying) {
             videoRef.current.pause();
             setIsPlaying(false);
         } else {
+            // Đảm bảo không bị mute và gán đúng volume trước khi phát
+            videoRef.current.muted = volume === 0;
+            videoRef.current.volume = volume;
             videoRef.current.play().catch(err => console.log("Lỗi tự phát:", err));
             setIsPlaying(true);
         }
@@ -221,23 +239,23 @@ export const VideoPlayer = () => {
                 </div>
             )}
 
-            {/* Thanh điều khiển video dưới đáy (Spotify style Player Bar) */}
             {videoInfo && (
                 <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-25 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     <div className="w-full flex items-center justify-between gap-6 px-4">
-                        
                         {/* 1. Bên trái: Thông tin bài hát & Nút tương tác */}
-                        <div className="flex items-center gap-3 w-1/3 min-w-[200px]">
+                        <div className="flex items-center gap-4 w-1/3 min-w-[240px]">
                             {/* Thumbnail nhỏ */}
-                            <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 overflow-hidden shrink-0 shadow-inner">
+                            <div className="w-14 h-14 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 overflow-hidden shrink-0 shadow-inner">
                                 {videoInfo.coverUrl ? (
                                     <img
                                         src={mediaService.getImageUrl(videoInfo.coverUrl)}
                                         alt={videoInfo.title}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover animate-fadeIn"
                                     />
                                 ) : (
-                                    <Music className="w-5 h-5 text-green-400" />
+                                    <div className="w-full h-full bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center">
+                                        <Music className="w-6 h-6 text-green-400" />
+                                    </div>
                                 )}
                             </div>
                             {/* Tên bài hát & Nghệ sĩ */}
@@ -245,23 +263,23 @@ export const VideoPlayer = () => {
                                 <h4 className="text-sm font-bold text-slate-100 truncate hover:underline cursor-pointer" title={videoInfo.title}>
                                     {videoInfo.title}
                                 </h4>
-                                <p className="text-xs text-zinc-450 truncate hover:underline cursor-pointer font-medium">
+                                <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer font-medium mt-0.5">
                                     {videoInfo.artist}
                                 </p>
                             </div>
                             
                             {/* Nút Thả tim & Nút thêm playlist */}
                             {user && id && (
-                                <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                                <div className="flex items-center gap-1 ml-2 shrink-0">
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             toggleFavorite(id);
                                         }}
-                                        className={`transition-colors p-1 cursor-pointer hover:scale-105 active:scale-90 ${
+                                        className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
                                             isFavorite(id) 
-                                                ? "text-green-500 hover:text-green-400" 
-                                                : "text-zinc-450 hover:text-green-450"
+                                                ? "text-green-400" 
+                                                : "text-zinc-450 hover:text-green-400"
                                         }`}
                                         title={isFavorite(id) ? "Bỏ thích" : "Thích"}
                                     >
@@ -272,10 +290,14 @@ export const VideoPlayer = () => {
                                             e.stopPropagation();
                                             setShowPlaylistModal(true);
                                         }}
-                                        className="transition-all p-1 hover:scale-105 active:scale-90 text-zinc-450 hover:text-white cursor-pointer"
+                                        className="text-zinc-450 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
                                         title="Thêm vào danh sách phát"
                                     >
-                                        <Plus className="w-5 h-5" />
+                                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <line x1="12" y1="8" x2="12" y2="16" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
+                                        </svg>
                                     </button>
                                 </div>
                             )}
@@ -328,14 +350,7 @@ export const VideoPlayer = () => {
                         </div>
 
                         {/* 3. Bên phải: Âm lượng & Fullscreen Utilities */}
-                        <div className="flex items-center justify-end gap-3.5 w-1/3 text-zinc-450">
-                            <button className="hover:text-slate-100 cursor-pointer p-1 transition-colors" title="Lời bài hát (chỉ xem)">
-                                <Mic className="w-4.5 h-4.5" />
-                            </button>
-                            <button className="hover:text-slate-100 cursor-pointer p-1 transition-colors" title="Danh sách chờ (chỉ xem)">
-                                <ListMusic className="w-4.5 h-4.5" />
-                            </button>
-                            
+                        <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-450">
                             <div className="flex items-center gap-2 group/volume">
                                 <button 
                                     onClick={() => {
@@ -343,14 +358,17 @@ export const VideoPlayer = () => {
                                             const nextVolume = volume > 0 ? 0 : 0.8;
                                             setVolume(nextVolume);
                                             videoRef.current.volume = nextVolume;
+                                            videoRef.current.muted = nextVolume === 0;
                                         }
                                     }}
                                     className="hover:text-slate-100 cursor-pointer p-1 transition-colors"
                                 >
                                     {volume === 0 ? (
-                                        <VolumeX className="w-4.5 h-4.5 text-zinc-500" />
+                                        <VolumeX className="w-5 h-5 text-zinc-500" />
+                                    ) : volume < 0.5 ? (
+                                        <Volume1 className="w-5 h-5" />
                                     ) : (
-                                        <Volume2 className="w-4.5 h-4.5" />
+                                        <Volume2 className="w-5 h-5" />
                                     )}
                                 </button>
                                 <input
