@@ -22,6 +22,7 @@ import { useFavorite } from '../../contexts/FavoriteContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { formatTime } from '../../utils';
 import './VideoPlayer.css';
 
 export const VideoPlayer = () => {
@@ -163,12 +164,7 @@ export const VideoPlayer = () => {
         }
     };
 
-    const formatTime = (timeInSeconds: number) => {
-        if (isNaN(timeInSeconds)) return '0:00';
-        const mins = Math.floor(timeInSeconds / 60);
-        const secs = Math.floor(timeInSeconds % 60);
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    };
+
 
     // BƯỚC 4: Hiển thị nếu lỗi không tìm thấy Video
     if (!videoInfo && !isLoading) {
@@ -396,14 +392,11 @@ export const VideoPlayer = () => {
             )}
             {/* MODAL THÊM VÀO PLAYLIST */}
             {showPlaylistModal && id && (
-                <div onClick={(e) => e.stopPropagation()}>
-                    <AddToPlaylistModal
-                        isOpen={showPlaylistModal}
-                        onClose={() => setShowPlaylistModal(false)}
-                        mediaItemId={id}
-                        placement="center"
-                    />
-                </div>
+                <AddToPlaylistModal
+                    isOpen={showPlaylistModal}
+                    onClose={() => setShowPlaylistModal(false)}
+                    mediaItemId={id}
+                />
             )}
         </div>
     );
