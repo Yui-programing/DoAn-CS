@@ -138,21 +138,28 @@ export const VideoPlayer = () => {
         setHasRecordedView(false); // Reset trạng thái ghi nhận view khi chuyển MV mới
     }, [id]);
 
-    // Hiện thanh điều khiển khi di chuyển chuột và ẩn đi sau 3 giây
+    // Chỉ ẩn thanh điều khiển khi đang ở chế độ fullscreen và video đang phát
     useEffect(() => {
         let timeoutId: number;
         
         const resetTimeout = () => {
             setShowControls(true);
             clearTimeout(timeoutId);
-            if (isPlaying && !isControlsHovered && !showPlaylistModal) {
+            // Chỉ đặt timer ẩn khi đang ở chế độ fullscreen
+            if (isFullscreen && isPlaying && !isControlsHovered && !showPlaylistModal) {
                 timeoutId = window.setTimeout(() => {
                     setShowControls(false);
                 }, 3000);
             }
         };
 
-        // Kích hoạt ẩn tự động ban đầu khi video bắt đầu phát
+        // Khi không ở fullscreen, luôn hiện controls
+        if (!isFullscreen) {
+            setShowControls(true);
+            return;
+        }
+
+        // Khi ở fullscreen và đang phát, kích hoạt timer ẩn
         if (isPlaying && !isControlsHovered && !showPlaylistModal) {
             timeoutId = window.setTimeout(() => {
                 setShowControls(false);
@@ -166,7 +173,7 @@ export const VideoPlayer = () => {
             window.removeEventListener('mousemove', resetTimeout);
             clearTimeout(timeoutId);
         };
-    }, [isPlaying, isControlsHovered, showPlaylistModal]);
+    }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal]);
 
     // Tạm dừng nhạc nền toàn cục khi mở MV - dừng cả audio element thực sự
     useEffect(() => {
@@ -508,65 +515,86 @@ export const VideoPlayer = () => {
     return (
         <div 
             ref={containerRef}
-            className={`video-player-container w-screen h-screen bg-black flex items-center justify-center relative overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'pseudo-fullscreen' : ''}`}
+            className={`video-player-container bg-black flex flex-col overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'pseudo-fullscreen' : 'w-screen h-screen'}`}
         >
-            {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
-            {videoInfo && (
-                <video
-                    ref={videoRef}
-                    src={videoInfo.filePath}
-                    className="w-full h-full object-contain cursor-pointer"
-                    onClick={togglePlay}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onWaiting={() => setIsLoading(true)}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onEnded={playNextVideo}
-                    autoPlay={true}
-                    onPlaying={() => {
-                        setIsLoading(false);
-                        if (!hasRecordedView && id) {
-                            mediaService.recordPlayHistory(id).catch(err => console.error("Không thể ghi nhận lượt nghe video:", err));
-                            setHasRecordedView(true);
-                        }
-                    }}
-                />
-            )}
+            {/* Khu vực video - chiếm toàn bộ không gian còn lại trên player bar */}
+            <div className="relative flex-1 overflow-hidden">
+                {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
+                {videoInfo && (
+                    <video
+                        ref={videoRef}
+                        src={videoInfo.filePath}
+                        className="w-full h-full object-contain cursor-pointer"
+                        onClick={togglePlay}
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleLoadedMetadata}
+                        onWaiting={() => setIsLoading(true)}
+                        onPlay={() => setIsPlaying(true)}
+                        onPause={() => setIsPlaying(false)}
+                        onEnded={playNextVideo}
+                        autoPlay={true}
+                        onPlaying={() => {
+                            setIsLoading(false);
+                            if (!hasRecordedView && id) {
+                                mediaService.recordPlayHistory(id).catch(err => console.error("Không thể ghi nhận lượt nghe video:", err));
+                                setHasRecordedView(true);
+                            }
+                        }}
+                    />
+                )}
 
-            {/* Vòng quay chờ tải Video (Loading) */}
-            {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20">
-                    <Loader2 className="w-12 h-12 text-green-500 animate-spin" />
-                </div>
-            )}
+                {/* Vòng quay chờ tải Video (Loading) */}
+                {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20">
+                        <Loader2 className="w-12 h-12 text-green-500 animate-spin" />
+                    </div>
+                )}
 
-            {/* Thanh phía trên (Top Bar) - chỉ nút Back và tiêu đề */}
-            {videoInfo && (
-                <div 
-                    onMouseEnter={() => setIsControlsHovered(true)}
-                    onMouseLeave={() => setIsControlsHovered(false)}
-                    className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center gap-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                >
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer shrink-0"
-                        title="Quay lại"
+                {/* Thanh phía trên (Top Bar) - chỉ hiện khi fullscreen */}
+                {videoInfo && isFullscreen && (
+                    <div 
+                        onMouseEnter={() => setIsControlsHovered(true)}
+                        onMouseLeave={() => setIsControlsHovered(false)}
+                        className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center gap-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                     >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <h1 className="text-base font-bold text-slate-100 tracking-wide truncate">
-                        {videoInfo.title}
-                    </h1>
-                </div>
-            )}
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer shrink-0"
+                            title="Quay lại"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <h1 className="text-base font-bold text-slate-100 tracking-wide truncate">
+                            {videoInfo.title}
+                        </h1>
+                    </div>
+                )}
+
+                {/* Thanh phía trên (Top Bar) - chỉ hiện khi KHÔNG fullscreen */}
+                {videoInfo && !isFullscreen && (
+                    <div 
+                        className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-30 flex items-center gap-4"
+                    >
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer shrink-0"
+                            title="Quay lại"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <h1 className="text-base font-bold text-slate-100 tracking-wide truncate">
+                            {videoInfo?.title}
+                        </h1>
+                    </div>
+                )}
+            </div>
 
             {/* Thanh phía dưới (Bottom Player Bar) - Giống Spotify */}
             {videoInfo && (
                 <div 
                     onMouseEnter={() => setIsControlsHovered(true)}
                     onMouseLeave={() => setIsControlsHovered(false)}
-                    className={`absolute bottom-0 left-0 right-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    className={`shrink-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 >
                     {/* 1. Bên trái: Thông tin bài hát & Nút tương tác */}
                     <div className="flex items-center gap-4 w-1/3 min-w-[240px]">
