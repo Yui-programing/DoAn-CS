@@ -23,6 +23,7 @@ export const UploadMediaModal = ({
   const [description, setDescription] = useState("");
   const [mediaType, setMediaType] = useState<0 | 1>(0); // 0 = Audio, 1 = Video
   const [isPrivate, setIsPrivate] = useState(false);
+  const [durationInSeconds, setDurationInSeconds] = useState<number>(0);
 
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -50,6 +51,18 @@ export const UploadMediaModal = ({
   const handleMediaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setMediaFile(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const mediaElement = document.createElement(file.type.startsWith('video') ? 'video' : 'audio');
+      mediaElement.preload = 'metadata';
+      mediaElement.onloadedmetadata = () => {
+        setDurationInSeconds(Math.round(mediaElement.duration));
+        URL.revokeObjectURL(url);
+      };
+      mediaElement.src = url;
+    } else {
+      setDurationInSeconds(0);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,6 +87,7 @@ export const UploadMediaModal = ({
       formData.append("Description", description.trim());
       formData.append("MediaType", mediaType.toString());
       formData.append("IsPrivate", isPrivate.toString());
+      formData.append("Duration", durationInSeconds.toString());
       formData.append("MediaFile", mediaFile);
       if (coverImage) {
         formData.append("CoverImage", coverImage);

@@ -9,26 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 import { useFavorite } from '../../contexts/FavoriteContext';
-
-// Helper format số lượt nghe rút gọn kiểu Spotify (1.2M, 850K, ...)
-const formatViewCount = (count: number) => {
-  if (count === undefined || count === null) return '0 lượt nghe';
-  if (count >= 1000000) {
-    return `${(count / 1000000).toFixed(1)}M lượt nghe`;
-  }
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(0)}K lượt nghe`;
-  }
-  return `${count} lượt nghe`;
-};
-
-// Helper format thời lượng giây thành phút:giây (ví dụ: 210s -> 3:30)
-const formatDuration = (seconds: number) => {
-  if (!seconds) return '0:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
+import { formatDuration, formatViewCount } from '../../utils';
 
 export const Home = () => {
   const navigate = useNavigate();
