@@ -212,25 +212,29 @@ export const VideoPlayer = () => {
             // F11: Bật/tắt fullscreen giống nút trong UI
             if (e.key === 'F11') {
                 e.preventDefault(); // Ngăn trình duyệt xử lý F11 mặc định
-                if (isFullscreen) {
-                    setIsFullscreen(false);
-                    setShowControls(true);
-                    if (document.fullscreenElement) {
-                        document.exitFullscreen().catch(() => {});
-                    }
-                } else {
-                    setIsFullscreen(true);
-                    setShowControls(true);
-                    if (containerRef.current && document.fullscreenEnabled) {
-                        containerRef.current.requestFullscreen().catch(() => {});
-                    }
-                }
+                setIsFullscreen(prev => !prev);
+                setShowControls(true);
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
+    }, [isFullscreen]);
+
+    // Đồng bộ hóa trạng thái isFullscreen với Fullscreen API thực tế của trình duyệt sau khi DOM được mount/unmount qua Portal
+    useEffect(() => {
+        if (isFullscreen) {
+            if (containerRef.current && document.fullscreenEnabled && !document.fullscreenElement) {
+                containerRef.current.requestFullscreen().catch((err) => {
+                    console.log("Không thể vào real fullscreen, dùng pseudo-fullscreen:", err);
+                });
+            }
+        } else {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
     }, [isFullscreen]);
 
     // Đồng bộ âm lượng với thẻ video
@@ -477,24 +481,8 @@ export const VideoPlayer = () => {
     };
 
     const toggleFullscreen = () => {
-        if (isFullscreen) {
-            // Thoát fullscreen - xóa pseudo-fullscreen ngay lập tức
-            setIsFullscreen(false);
-            setShowControls(true);
-            if (document.fullscreenElement) {
-                document.exitFullscreen().catch(() => {});
-            }
-        } else {
-            // Bật fullscreen - set pseudo-fullscreen NGAY không chờ Promise
-            setIsFullscreen(true);
-            setShowControls(true);
-            // Thử bật real fullscreen như bonus (nếu trình duyệt cho phép)
-            if (containerRef.current && document.fullscreenEnabled) {
-                containerRef.current.requestFullscreen().catch(() => {
-                    // Bị chặn - pseudo-fullscreen đã active rồi
-                });
-            }
-        }
+        setIsFullscreen(prev => !prev);
+        setShowControls(true);
     };
 
     // Tính toán % tiến trình hiển thị
@@ -537,14 +525,31 @@ export const VideoPlayer = () => {
             {/* Khu vực video:
                 - Bình thường: flex-1 (chiếm không gian trên player bar)
                 - Fullscreen: absolute inset-0 (chiếm toàn bộ kể cả phín sau player bar) */}
-            <div className={`relative overflow-hidden flex items-center justify-center bg-black ${isFullscreen ? 'absolute inset-0' : 'flex-1'}`}>
+            <div 
+                className={`relative overflow-hidden w-full h-full flex items-center justify-center bg-black ${isFullscreen ? 'absolute inset-0' : 'flex-1'}`}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#000',
+                }}
+            >
                 {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
                 {videoInfo && (
                     <video
                         ref={videoRef}
                         src={videoInfo.filePath}
-                        className="w-full h-full cursor-pointer block"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                        className="cursor-pointer block"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            objectPosition: 'center',
+                            margin: 'auto',
+                            display: 'block',
+                        }}
                         onClick={togglePlay}
                         onTimeUpdate={handleTimeUpdate}
                         onLoadedMetadata={handleLoadedMetadata}
@@ -653,7 +658,7 @@ export const VideoPlayer = () => {
                                     className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
                                         isFavorite(id) 
                                             ? "text-green-400" 
-                                            : "text-zinc-450 hover:text-green-400"
+                                            : "text-zinc-400 hover:text-green-400"
                                     }`}
                                     title={isFavorite(id) ? "Bỏ thích" : "Thích"}
                                 >
@@ -664,7 +669,7 @@ export const VideoPlayer = () => {
                                         e.stopPropagation();
                                         setShowPlaylistModal(true);
                                     }}
-                                    className="text-zinc-450 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                                    className="text-zinc-400 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
                                     title="Thêm vào danh sách phát"
                                 >
                                     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
@@ -764,7 +769,7 @@ export const VideoPlayer = () => {
                                 className="flex-1 h-3 flex items-center relative group cursor-pointer"
                             >
                                 {/* Track nền */}
-                                <div className="w-full h-1 bg-zinc-800 rounded-full">
+                                <div className="w-full h-1 bg-zinc-600 rounded-full">
                                     {/* Track đã phát - màu trắng khi bình thường, xanh khi hover/drag */}
                                     <div
                                         className={`h-full rounded-full transition-colors ${
@@ -819,7 +824,7 @@ export const VideoPlayer = () => {
                             className="w-24 h-3 flex items-center relative cursor-pointer"
                         >
                             {/* Track nền âm lượng */}
-                            <div className="w-full h-1 bg-zinc-800 rounded-full">
+                            <div className="w-full h-1 bg-zinc-600 rounded-full">
                                 {/* Track đã điền - màu trắng khi bình thường, xanh khi hover/drag */}
                                 <div
                                     className={`h-full rounded-full ${
@@ -846,9 +851,14 @@ export const VideoPlayer = () => {
                         </div>
                         
                         <button
-                            onClick={toggleFullscreen}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                toggleFullscreen();
+                            }}
                             className={`p-1 transition-colors cursor-pointer ${isFullscreen ? 'text-green-400 hover:text-green-300' : 'text-zinc-400 hover:text-slate-100'}`}
                             title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
+                            type="button"
                         >
                             {isFullscreen ? (
                                 <Minimize className="w-5 h-5" />
