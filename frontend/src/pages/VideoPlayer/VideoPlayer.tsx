@@ -519,7 +519,7 @@ export const VideoPlayer = () => {
     const playerContent = (
         <div 
             ref={containerRef}
-            className={`video-player-container bg-black flex flex-col overflow-hidden select-none ${showControls ? '' : 'cursor-none'}`}
+            className={`video-player-container bg-black overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'relative' : 'flex flex-col'}`}
             style={isFullscreen ? {
                 position: 'fixed',
                 top: 0,
@@ -533,8 +533,10 @@ export const VideoPlayer = () => {
                 height: '100vh',
             }}
         >
-            {/* Khu vực video - chiếm toàn bộ không gian còn lại trên player bar */}
-            <div className="relative flex-1 overflow-hidden">
+            {/* Khu vực video:
+                - Bình thường: flex-1 (chiếm không gian trên player bar)
+                - Fullscreen: absolute inset-0 (chiếm toàn bộ kể cả phín sau player bar) */}
+            <div className={`relative overflow-hidden ${isFullscreen ? 'absolute inset-0' : 'flex-1'}`}>
                 {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
                 {videoInfo && (
                     <video
@@ -610,7 +612,7 @@ export const VideoPlayer = () => {
                 <div 
                     onMouseEnter={() => setIsControlsHovered(true)}
                     onMouseLeave={() => setIsControlsHovered(false)}
-                    className={`shrink-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    className={`h-24 bg-black/80 border-t border-zinc-800 px-6 flex items-center justify-between z-40 transition-opacity duration-300 backdrop-blur-sm ${isFullscreen ? 'absolute bottom-0 left-0 right-0' : 'shrink-0'} ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 >
                     {/* 1. Bên trái: Thông tin bài hát & Nút tương tác */}
                     <div className="flex items-center gap-4 w-1/3 min-w-[240px]">
