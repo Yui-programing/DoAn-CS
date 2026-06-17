@@ -44,6 +44,7 @@ export const VideoPlayer = () => {
 
     // Lưu âm lượng trước khi tắt tiếng để khôi phục
     const prevVolumeRef = useRef<number>(0.8);
+    const timeoutRef = useRef<number | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
     const [showControls, setShowControls] = useState(true);
@@ -141,39 +142,25 @@ export const VideoPlayer = () => {
     }, [id]);
 
     // Chỉ ẩn thanh điều khiển khi đang ở chế độ fullscreen và video đang phát
-    useEffect(() => {
-        let timeoutId: number;
-        
-        const resetTimeout = () => {
-            setShowControls(true);
-            clearTimeout(timeoutId);
-            // Chỉ đặt timer ẩn khi đang ở chế độ fullscreen
-            if (isFullscreen && isPlaying && !isControlsHovered && !showPlaylistModal) {
-                timeoutId = window.setTimeout(() => {
-                    setShowControls(false);
-                }, 3000);
-            }
-        };
-
-        // Khi không ở fullscreen, luôn hiện controls
-        if (!isFullscreen) {
-            setShowControls(true);
-            return;
+    const resetTimeout = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
-
-        // Khi ở fullscreen và đang phát, kích hoạt timer ẩn
-        if (isPlaying && !isControlsHovered && !showPlaylistModal) {
-            timeoutId = window.setTimeout(() => {
+        setShowControls(true);
+        // Chỉ đặt timer ẩn khi đang ở chế độ fullscreen
+        if (isFullscreen && isPlaying && !isControlsHovered && !showPlaylistModal) {
+            timeoutRef.current = window.setTimeout(() => {
                 setShowControls(false);
             }, 3000);
-        } else {
-            setShowControls(true);
         }
+    };
 
-        window.addEventListener('mousemove', resetTimeout);
+    useEffect(() => {
+        resetTimeout();
         return () => {
-            window.removeEventListener('mousemove', resetTimeout);
-            clearTimeout(timeoutId);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
         };
     }, [isFullscreen, isPlaying, isControlsHovered, showPlaylistModal]);
 
@@ -508,6 +495,7 @@ export const VideoPlayer = () => {
     const playerContent = (
         <div 
             ref={containerRef}
+            onMouseMove={resetTimeout}
             className={`video-player-container bg-black overflow-hidden select-none ${showControls ? '' : 'cursor-none'} ${isFullscreen ? 'relative' : 'flex flex-col'}`}
             style={isFullscreen ? {
                 position: 'fixed',
