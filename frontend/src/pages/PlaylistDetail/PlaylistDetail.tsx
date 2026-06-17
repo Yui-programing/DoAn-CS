@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';
 import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { useFavorite } from '../../contexts/FavoriteContext';
 
 // Helper format thời lượng giây thành phút:giây (ví dụ: 210s -> 3:30)
 const formatDuration = (seconds: number) => {
@@ -23,6 +24,7 @@ export const PlaylistDetail = () => {
   const navigate = useNavigate();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorite();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
   const [playlistInfo, setPlaylistInfo] = useState<any>(null); // Chứa Tên, Mô tả
@@ -55,6 +57,7 @@ export const PlaylistDetail = () => {
             coverUrl: pt.coverUrl,
             duration: formatDuration(pt.durationInSeconds), // Gọi helper bên dưới hoặc tự viết
             durationInSeconds: pt.durationInSeconds,
+            mediaType: pt.mediaType,
             filePath: mediaService.getStreamUrl(pt.mediaItemId) // Sử dụng mediaService
           }));
           setTracks(mappedTracks);
@@ -110,7 +113,8 @@ export const PlaylistDetail = () => {
   };
 
   const handleTrackClick = (track: any) => {
-    const isVideo = track.filePath?.endsWith('.mp4');
+    // 1 là Video
+    const isVideo = track.mediaType === 1;
 
     if (isVideo) {
       navigate(`/video/${track.id}`);
@@ -273,8 +277,14 @@ export const PlaylistDetail = () => {
                     </td>
                     <td className="py-4 px-4 text-center align-middle">
                       {user && (
-                        <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-colors mt-1">
-                          <Heart className={`w-4.5 h-4.5 text-zinc-400 hover:text-green-400 ${isCurrent ? 'text-green-400 fill-current' : ''}`} />
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(track.id);
+                          }}
+                          className={`transition-all hover:scale-110 mt-1 ${isFavorite(track.id) ? 'opacity-100 text-green-400' : 'opacity-0 group-hover:opacity-100 hover:text-green-400 text-zinc-400'}`}
+                        >
+                          <Heart className={`w-4.5 h-4.5 ${isFavorite(track.id) ? 'fill-current text-green-400' : ''}`} />
                         </button>
                       )}
                     </td>

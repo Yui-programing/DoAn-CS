@@ -31,6 +31,7 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IPlayHistoryRepository, PlayHistoryRepository>();
             services.AddScoped<ISharedRepository, SharedMediaRepository>();
             services.AddScoped<ISearchRepository, SearchRepository>();
+            services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.IEmailService, EmailService>();

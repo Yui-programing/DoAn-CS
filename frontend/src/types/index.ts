@@ -55,6 +55,7 @@ export interface PlaylistTrack {
   mediaItemId: string;
   title: string;
   durationInSeconds: number;
+  mediaType?: MediaType;
   addedAt: string;
 }
 
@@ -87,8 +88,13 @@ export interface Favorite {
   id: string;
   userId: string;
   mediaItemId: string;
-  mediaItem?: MediaItem;
   createdAt: string;
+  // Thông tin phụ trả về từ FavoriteDto
+  mediaTitle?: string;
+  coverUrl?: string;
+  artistName?: string;
+  durationInSeconds?: number;
+  mediaType?: MediaType;
 }
 
 export interface PlayHistory {

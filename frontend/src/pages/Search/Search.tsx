@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { useFavorite } from '../../contexts/FavoriteContext';
 
 const categories = [
   { title: 'Nhạc Pop', color: 'from-pink-500 to-rose-600', query: 'Pop' },
@@ -63,6 +64,7 @@ export const Search = () => {
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorite();
 
   // Đồng bộ searchQuery khi URL query thay đổi
   useEffect(() => {
@@ -232,8 +234,14 @@ export const Search = () => {
                               </span>
                             )}
                             {user && (
-                              <button className="opacity-0 group-hover:opacity-100 hover:text-green-400 transition-all">
-                                <Heart className={`w-4 h-4 ${isThisPlaying ? 'text-green-400 fill-current' : ''}`} />
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleFavorite(song.id);
+                                }}
+                                className={`transition-all hover:scale-110 ${isFavorite(song.id) ? 'opacity-100 text-green-400' : 'opacity-0 group-hover:opacity-100 hover:text-green-400 text-zinc-400'}`}
+                              >
+                                <Heart className={`w-4 h-4 ${isFavorite(song.id) ? 'fill-current text-green-400' : ''}`} />
                               </button>
                             )}
                             <span className={`font-semibold tracking-wider ${isThisPlaying ? 'text-green-400' : ''}`}>

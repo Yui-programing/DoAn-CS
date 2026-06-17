@@ -1,13 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Pause, Volume2, Maximize, ArrowLeft, Loader2 } from 'lucide-react';
+import { Play, Pause, Volume2, Maximize, ArrowLeft, Loader2, Heart, Plus } from 'lucide-react';
 // Import dịch vụ API để gọi dữ liệu thật
 import { mediaService } from '../../services';
+import { useFavorite } from '../../contexts/FavoriteContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 import './VideoPlayer.css';
 
 export const VideoPlayer = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const { isFavorite, toggleFavorite } = useFavorite();
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -19,6 +24,7 @@ export const VideoPlayer = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [showControls, setShowControls] = useState(true);
     const [hasRecordedView, setHasRecordedView] = useState(false);
+    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
     // BƯỚC 1: Khai báo State để lưu thông tin video từ Backend
     const [videoInfo, setVideoInfo] = useState<{
@@ -186,9 +192,37 @@ export const VideoPlayer = () => {
             {videoInfo && (
                 <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     <div className="space-y-4 max-w-5xl mx-auto">
-                        <div className="mb-2">
-                            <h2 className="text-xl font-extrabold text-slate-100">{videoInfo.title}</h2>
-                            <p className="text-sm text-zinc-400 font-semibold">{videoInfo.artist}</p>
+                        <div className="mb-2 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-extrabold text-slate-100">{videoInfo.title}</h2>
+                                <p className="text-sm text-zinc-400 font-semibold">{videoInfo.artist}</p>
+                            </div>
+                            {user && id && (
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleFavorite(id);
+                                        }}
+                                        className={`transition-all p-2 hover:scale-110 active:scale-95 ${
+                                            isFavorite(id) ? "text-green-400" : "text-zinc-450 hover:text-green-400"
+                                        }`}
+                                        title={isFavorite(id) ? "Bỏ thích" : "Thích"}
+                                    >
+                                        <Heart className={`w-6 h-6 ${isFavorite(id) ? "fill-current" : ""}`} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowPlaylistModal(true);
+                                        }}
+                                        className="transition-all p-2 hover:scale-110 active:scale-95 text-zinc-450 hover:text-white"
+                                        title="Thêm vào danh sách phát"
+                                    >
+                                        <Plus className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -233,6 +267,17 @@ export const VideoPlayer = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+            {/* MODAL THÊM VÀO PLAYLIST */}
+            {showPlaylistModal && id && (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <AddToPlaylistModal
+                        isOpen={showPlaylistModal}
+                        onClose={() => setShowPlaylistModal(false)}
+                        mediaItemId={id}
+                        placement="center"
+                    />
                 </div>
             )}
         </div>

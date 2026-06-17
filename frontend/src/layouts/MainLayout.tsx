@@ -34,6 +34,7 @@ import { NotificationBell } from "../components/NotificationBell";
 import { RightPanel } from "../components/RightPanel";
 import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
+import { useFavorite } from "../contexts/FavoriteContext";
 
 // Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
 const formatTime = (seconds: number) => {
@@ -45,6 +46,7 @@ const formatTime = (seconds: number) => {
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorite();
   const {
     currentTrack,
     isPlaying,
@@ -808,7 +810,7 @@ export const MainLayout = () => {
         {/* 1. SIDEBAR (Bên trái) */}
         <aside 
           className={`${
-            isSidebarCollapsed ? "w-[72px]" : "w-64"
+            isSidebarCollapsed ? "w-[72px]" : "w-80"
           } bg-zinc-950 rounded-xl flex flex-col p-3.5 gap-4 shrink-0 border border-zinc-900 transition-all duration-300 ease-in-out overflow-hidden`}
         >
           {/* Logo */}
@@ -911,7 +913,10 @@ export const MainLayout = () => {
           <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-zinc-800/80 pr-0.5">
             {/* Liked Songs item */}
             <div
-              className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/20 transition-colors group"
+              onClick={() => navigate('/favorites')}
+              className={`flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/50 transition-colors cursor-pointer group ${
+                location.pathname === '/favorites' ? "bg-zinc-900" : ""
+              }`}
               title="Bài hát đã thích"
             >
               {/* Liked Songs Cover */}
@@ -921,7 +926,9 @@ export const MainLayout = () => {
               
               {!isSidebarCollapsed && (
                 <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-slate-200 transition-colors truncate">
+                  <h4 className={`text-sm font-bold truncate transition-colors ${
+                    location.pathname === '/favorites' ? "text-green-400" : "text-slate-200 group-hover:text-green-400"
+                  }`}>
                     Bài hát đã thích
                   </h4>
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
@@ -1069,8 +1076,14 @@ export const MainLayout = () => {
           </div>
           {currentTrack && (
             <div className="flex items-center gap-1 ml-2 shrink-0">
-              <button className="text-zinc-450 hover:text-green-400 transition-colors p-1 cursor-pointer" title="Thích">
-                <Heart className="w-5 h-5" />
+              <button 
+                onClick={() => toggleFavorite(currentTrack.id)}
+                className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
+                  isFavorite(currentTrack.id) ? "text-green-400" : "text-zinc-450 hover:text-green-400"
+                }`} 
+                title={isFavorite(currentTrack.id) ? "Bỏ thích" : "Thích"}
+              >
+                <Heart className={`w-5 h-5 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`} />
               </button>
               
               <button 
