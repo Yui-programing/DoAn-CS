@@ -199,12 +199,30 @@ export const VideoPlayer = () => {
         };
     }, []);
 
-    // Lắng nghe phím Escape để thoát chế độ fullscreen giả lập
+    // Lắng nghe phím: F11 để bật/tắt fullscreen, Escape để thoát pseudo-fullscreen
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Escape: thoát pseudo-fullscreen (khi real fullscreen không được bật)
             if (e.key === 'Escape' && isFullscreen && !document.fullscreenElement) {
                 setIsFullscreen(false);
                 setShowControls(true);
+            }
+            // F11: Bật/tắt fullscreen giống nút trong UI
+            if (e.key === 'F11') {
+                e.preventDefault(); // Ngăn trình duyệt xử lý F11 mặc định
+                if (isFullscreen) {
+                    setIsFullscreen(false);
+                    setShowControls(true);
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen().catch(() => {});
+                    }
+                } else {
+                    setIsFullscreen(true);
+                    setShowControls(true);
+                    if (containerRef.current && document.fullscreenEnabled) {
+                        containerRef.current.requestFullscreen().catch(() => {});
+                    }
+                }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -457,38 +475,22 @@ export const VideoPlayer = () => {
     };
 
     const toggleFullscreen = () => {
-        if (!containerRef.current) return;
-        
-        if (!document.fullscreenElement && !isFullscreen) {
-            // Cố gắng vào fullscreen thật
-            containerRef.current.requestFullscreen()
-                .then(() => {
-                    setIsFullscreen(true);
-                    setShowControls(true);
-                })
-                .catch(err => {
-                    console.warn("Trình duyệt chặn fullscreen thật, chuyển sang fullscreen giả lập:", err);
-                    // Fallback sang fullscreen giả lập bằng class CSS
-                    setIsFullscreen(true);
-                    setShowControls(true);
-                });
-        } else {
-            // Thoát fullscreen
+        if (isFullscreen) {
+            // Thoát fullscreen - xóa pseudo-fullscreen ngay lập tức
+            setIsFullscreen(false);
+            setShowControls(true);
             if (document.fullscreenElement) {
-                document.exitFullscreen()
-                    .then(() => {
-                        setIsFullscreen(false);
-                        setShowControls(true);
-                    })
-                    .catch(err => {
-                        console.error("Lỗi khi thoát fullscreen thật:", err);
-                        setIsFullscreen(false);
-                        setShowControls(true);
-                    });
-            } else {
-                // Thoát fullscreen giả lập
-                setIsFullscreen(false);
-                setShowControls(true);
+                document.exitFullscreen().catch(() => {});
+            }
+        } else {
+            // Bật fullscreen - set pseudo-fullscreen NGAY không chờ Promise
+            setIsFullscreen(true);
+            setShowControls(true);
+            // Thử bật real fullscreen như bonus (nếu trình duyệt cho phép)
+            if (containerRef.current && document.fullscreenEnabled) {
+                containerRef.current.requestFullscreen().catch(() => {
+                    // Bị chặn - pseudo-fullscreen đã active rồi
+                });
             }
         }
     };
