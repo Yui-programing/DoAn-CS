@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Music, Eye, Clock, Check } from 'lucide-react';
 import { mediaService } from '../services';
+import { formatDuration, formatViewCount } from '../utils';
 
 interface RightPanelProps {
   track: any;
@@ -8,26 +9,6 @@ interface RightPanelProps {
   isTrackInPlaylist?: boolean;
   onAddToPlaylist?: () => void;
 }
-
-// Helper format số lượt nghe rút gọn kiểu Spotify
-const formatViewCount = (count: number) => {
-  if (count === undefined || count === null) return '0 lượt nghe';
-  if (count >= 1000000) {
-    return `${(count / 1000000).toFixed(1)}M lượt nghe`;
-  }
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(0)}K lượt nghe`;
-  }
-  return `${count} lượt nghe`;
-};
-
-// Helper format thời lượng giây thành phút:giây (ví dụ: 210s -> 3:30)
-const formatDuration = (seconds: number) => {
-  if (!seconds) return '0:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
 
 export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist }: RightPanelProps) => {
   const [details, setDetails] = useState<any>(null);

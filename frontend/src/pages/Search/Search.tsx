@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { formatDuration, formatViewCount } from '../../utils';
 import { useFavorite } from '../../contexts/FavoriteContext';
 
 const categories = [
@@ -30,26 +31,6 @@ const categories = [
   { title: 'K-Pop', color: 'from-fuchsia-500 to-pink-600', query: 'K-Pop' },
   { title: 'Podcast', color: 'from-violet-600 to-purple-800', query: 'Podcast' },
 ];
-
-// Helper format số lượt nghe rút gọn kiểu Spotify
-const formatViewCount = (count: number) => {
-  if (count === undefined || count === null) return '0 lượt nghe';
-  if (count >= 1000000) {
-    return `${(count / 1000000).toFixed(1)}M lượt nghe`;
-  }
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(0)}K lượt nghe`;
-  }
-  return `${count} lượt nghe`;
-};
-
-// Helper format thời lượng
-const formatDuration = (seconds: number) => {
-  if (!seconds) return '0:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
 
 export const Search = () => {
   const navigate = useNavigate();

@@ -35,14 +35,9 @@ import { RightPanel } from "../components/RightPanel";
 import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 import { useFavorite } from "../contexts/FavoriteContext";
+import { formatTime, formatDuration } from "../utils";
 
-// Hàm định dạng số giây thành phút:giây (ví dụ: 195 -> 3:15)
-const formatTime = (seconds: number) => {
-  if (isNaN(seconds)) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-};
+
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
@@ -195,12 +190,7 @@ export const MainLayout = () => {
     setSearchValue(val);
   };
 
-  const formatDuration = (seconds: number) => {
-    if (isNaN(seconds) || seconds <= 0) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-  };
+
 
   const handlePlaySong = (song: any, tracksPool: any[]) => {
     const trackForPlayer = {
@@ -314,7 +304,11 @@ export const MainLayout = () => {
           const itemIdx = activeIndex - totalSuggestions;
           const item = songSuggestions[itemIdx];
           if (item.type === 'Song') {
-            handlePlaySong(item, songSuggestions);
+            if (item.mediaType === 1) {
+              navigate(`/video/${item.id}`);
+            } else {
+              handlePlaySong(item, songSuggestions);
+            }
           } else if (item.type === 'Artist') {
             navigate(`/artist/${item.id}`);
           }
@@ -667,7 +661,11 @@ export const MainLayout = () => {
                           }`}
                           onClick={() => {
                             if (item.type === 'Song') {
-                              handlePlaySong(item, songSuggestions);
+                              if (item.mediaType === 1) {
+                                navigate(`/video/${item.id}`);
+                              } else {
+                                handlePlaySong(item, songSuggestions);
+                              }
                             } else if (item.type === 'Artist') {
                               navigate(`/artist/${item.id}`);
                             }
