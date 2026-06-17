@@ -10,7 +10,6 @@ import {
     ArrowLeft, 
     Loader2, 
     Heart, 
-    Info, 
     Repeat, 
     SkipBack, 
     SkipForward, 
@@ -30,7 +29,7 @@ export const VideoPlayer = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { isFavorite, toggleFavorite } = useFavorite();
-    const { isPlaying: isGlobalPlaying, setIsPlaying: setGlobalIsPlaying } = usePlayer();
+    const { setIsPlaying: setGlobalIsPlaying } = usePlayer();
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -39,10 +38,24 @@ export const VideoPlayer = () => {
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(0.8);
 
+    // Lưu âm lượng trước khi tắt tiếng để khôi phục
+    const prevVolumeRef = useRef<number>(0.8);
+
     const [isLoading, setIsLoading] = useState(true);
     const [showControls, setShowControls] = useState(true);
     const [hasRecordedView, setHasRecordedView] = useState(false);
     const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+
+    // Trạng thái kéo thả thanh tiến trình
+    const [isDraggingTime, setIsDraggingTime] = useState(false);
+    const [dragTime, setDragTime] = useState(0);
+
+    // Trạng thái kéo thả thanh âm lượng
+    const [isDraggingVolume, setIsDraggingVolume] = useState(false);
+
+    // Trạng thái tooltip khi hover thanh tiến trình
+    const [hoverTime, setHoverTime] = useState<number | null>(null);
+    const [hoverX, setHoverX] = useState<number>(0);
 
     // BƯỚC 1: Khai báo State để lưu thông tin video từ Backend
     const [videoInfo, setVideoInfo] = useState<{
@@ -98,20 +111,32 @@ export const VideoPlayer = () => {
         };
     }, [isPlaying]);
 
-    // Tạm dừng nhạc nền toàn cục khi mở MV
+    // Tạm dừng nhạc nền toàn cục khi mở MV - dừng cả audio element thực sự
     useEffect(() => {
-        if (isGlobalPlaying) {
-            setGlobalIsPlaying(false);
+        // Dừng trạng thái toàn cục
+        setGlobalIsPlaying(false);
+        // Dừng cả audio element thực sự để tránh phát đồng thời
+        const audioElement = document.getElementById('global-audio-element') as HTMLAudioElement | null;
+        if (audioElement) {
+            audioElement.pause();
         }
-    }, [isGlobalPlaying, setGlobalIsPlaying]);
+    }, []); // Chỉ chạy một lần khi component mount
 
     // Đồng bộ âm lượng với thẻ video
     useEffect(() => {
         if (videoRef.current) {
             videoRef.current.volume = volume;
-            videoRef.current.muted = volume === 0;
+            // Đảm bảo video không bị mute khi volume > 0
+            videoRef.current.muted = false;
         }
-    }, [volume, videoInfo]);
+    }, [volume]);
+
+    // Lưu âm lượng trước khi tắt tiếng
+    useEffect(() => {
+        if (volume > 0) {
+            prevVolumeRef.current = volume;
+        }
+    }, [volume]);
 
     const togglePlay = () => {
         if (!videoRef.current) return;
@@ -120,15 +145,15 @@ export const VideoPlayer = () => {
             setIsPlaying(false);
         } else {
             // Đảm bảo không bị mute và gán đúng volume trước khi phát
-            videoRef.current.muted = volume === 0;
-            videoRef.current.volume = volume;
+            videoRef.current.muted = false;
+            videoRef.current.volume = volume > 0 ? volume : 0.8;
             videoRef.current.play().catch(err => console.log("Lỗi tự phát:", err));
             setIsPlaying(true);
         }
     };
 
     const handleTimeUpdate = () => {
-        if (videoRef.current) {
+        if (videoRef.current && !isDraggingTime) {
             setCurrentTime(videoRef.current.currentTime);
         }
     };
@@ -136,23 +161,116 @@ export const VideoPlayer = () => {
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
             setDuration(videoRef.current.duration);
-            setIsLoading(false); // Khi video đã có sẵn sẵng để phát, tắt Loading
+            // Đặt âm lượng ngay khi video sẵn sàng
+            videoRef.current.volume = volume;
+            videoRef.current.muted = false;
+            setIsLoading(false); // Khi video đã có sẵn để phát, tắt Loading
         }
     };
 
-    const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newTime = parseFloat(e.target.value);
-        setCurrentTime(newTime);
-        if (videoRef.current) {
-            videoRef.current.currentTime = newTime;
-        }
+    // Xử lý kéo thả để tua video
+    const handleProgressMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!videoRef.current || duration === 0) return;
+
+        const progressBar = e.currentTarget;
+
+        const updateProgress = (clientX: number) => {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = clientX - rect.left;
+            const width = rect.width;
+            const percentage = Math.min(Math.max(clickX / width, 0), 1);
+            const newTime = percentage * duration;
+            setDragTime(newTime);
+        };
+
+        setIsDraggingTime(true);
+        updateProgress(e.clientX);
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            updateProgress(moveEvent.clientX);
+        };
+
+        const handleMouseUp = (upEvent: MouseEvent) => {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = upEvent.clientX - rect.left;
+            const width = rect.width;
+            const percentage = Math.min(Math.max(clickX / width, 0), 1);
+            const finalTime = percentage * duration;
+
+            // Tua video đến vị trí mới
+            if (videoRef.current) {
+                videoRef.current.currentTime = finalTime;
+            }
+            setCurrentTime(finalTime);
+            setIsDraggingTime(false);
+
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
     };
 
-    const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newVolume = parseFloat(e.target.value);
-        setVolume(newVolume);
-        if (videoRef.current) {
-            videoRef.current.volume = newVolume;
+    // Hiển thị tooltip thời gian khi hover
+    const handleProgressBarMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (duration === 0) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        const percentage = Math.min(Math.max(clickX / width, 0), 1);
+        setHoverTime(percentage * duration);
+        setHoverX(percentage * 100);
+    };
+
+    const handleProgressBarMouseLeave = () => {
+        setHoverTime(null);
+    };
+
+    // Xử lý kéo thả thanh âm lượng
+    const handleVolumeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        const volumeBar = e.currentTarget;
+
+        const updateVolume = (clientX: number) => {
+            const rect = volumeBar.getBoundingClientRect();
+            const clickX = clientX - rect.left;
+            const width = rect.width;
+            const newVolume = Math.min(Math.max(clickX / width, 0), 1);
+            setVolume(newVolume);
+            if (videoRef.current) {
+                videoRef.current.volume = newVolume;
+                videoRef.current.muted = false;
+            }
+        };
+
+        setIsDraggingVolume(true);
+        updateVolume(e.clientX);
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+            updateVolume(moveEvent.clientX);
+        };
+
+        const handleMouseUp = () => {
+            setIsDraggingVolume(false);
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        };
+
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+    };
+
+    // Bật/tắt tiếng
+    const toggleMute = () => {
+        if (!videoRef.current) return;
+        if (volume > 0) {
+            setVolume(0);
+            videoRef.current.volume = 0;
+        } else {
+            const restored = prevVolumeRef.current > 0 ? prevVolumeRef.current : 0.8;
+            setVolume(restored);
+            videoRef.current.volume = restored;
+            videoRef.current.muted = false;
         }
     };
 
@@ -164,7 +282,9 @@ export const VideoPlayer = () => {
         }
     };
 
-
+    // Tính toán % tiến trình hiển thị
+    const displayTime = isDraggingTime ? dragTime : currentTime;
+    const progressPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
 
     // BƯỚC 4: Hiển thị nếu lỗi không tìm thấy Video
     if (!videoInfo && !isLoading) {
@@ -210,37 +330,25 @@ export const VideoPlayer = () => {
                 </div>
             )}
 
-            {/* Thanh phía trên (Top Bar) */}
+            {/* Thanh phía trên (Top Bar) - chỉ nút Back và tiêu đề */}
             {videoInfo && (
-                <div className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center justify-between transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <div className="flex items-center gap-4 min-w-0">
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer"
-                            title="Quay lại"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                        </button>
-                        <h1 className="text-base font-bold text-slate-100 tracking-wide truncate max-w-xl">
-                            {videoInfo.title}
-                        </h1>
-                    </div>
-                    
-                    {/* Hàng nút chức năng bên phải */}
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={() => setShowPlaylistModal(true)}
-                            className="p-2 text-zinc-400 hover:text-white transition-colors cursor-pointer" 
-                            title="Tùy chọn"
-                        >
-                            <span className="text-xl font-bold tracking-wider">•••</span>
-                        </button>
-                    </div>
+                <div className={`absolute top-0 left-0 right-0 p-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent z-30 flex items-center gap-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-950/40 hover:bg-zinc-900/80 text-slate-100 hover:text-green-400 shadow-lg transition-all active:scale-90 cursor-pointer shrink-0"
+                        title="Quay lại"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <h1 className="text-base font-bold text-slate-100 tracking-wide truncate">
+                        {videoInfo.title}
+                    </h1>
                 </div>
             )}
 
+            {/* Thanh phía dưới (Bottom Player Bar) - Giống Spotify */}
             {videoInfo && (
-                <div className={`absolute bottom-0 left-0 right-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-25 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div className={`absolute bottom-0 left-0 right-0 h-24 bg-black border-t border-zinc-900 px-6 flex items-center justify-between z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     {/* 1. Bên trái: Thông tin bài hát & Nút tương tác */}
                     <div className="flex items-center gap-4 w-1/3 min-w-[240px]">
                         {/* Thumbnail nhỏ */}
@@ -267,7 +375,7 @@ export const VideoPlayer = () => {
                             </p>
                         </div>
                         
-                        {/* Nút Thả tim & Nút thêm playlist */}
+                        {/* Nút Thả tim & Nút thêm playlist - màu giống MainLayout */}
                         {user && id && (
                             <div className="flex items-center gap-1 ml-2 shrink-0">
                                 <button 
@@ -278,7 +386,7 @@ export const VideoPlayer = () => {
                                     className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
                                         isFavorite(id) 
                                             ? "text-green-400" 
-                                            : "text-zinc-400 hover:text-green-400"
+                                            : "text-zinc-450 hover:text-green-400"
                                     }`}
                                     title={isFavorite(id) ? "Bỏ thích" : "Thích"}
                                 >
@@ -289,7 +397,7 @@ export const VideoPlayer = () => {
                                         e.stopPropagation();
                                         setShowPlaylistModal(true);
                                     }}
-                                    className="text-zinc-400 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                                    className="text-zinc-450 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
                                     title="Thêm vào danh sách phát"
                                 >
                                     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
@@ -306,10 +414,7 @@ export const VideoPlayer = () => {
                     <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
                         {/* Hàng nút điều khiển */}
                         <div className="flex items-center gap-6">
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Thông tin chi tiết">
-                                <Info className="w-4 h-4" />
-                            </button>
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Bài trước (chỉ xem)">
+                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Bài trước">
                                 <SkipBack className="w-5 h-5 fill-current" />
                             </button>
 
@@ -325,59 +430,103 @@ export const VideoPlayer = () => {
                                 )}
                             </button>
 
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Bài kế tiếp (chỉ xem)">
+                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Bài kế tiếp">
                                 <SkipForward className="w-5 h-5 fill-current" />
                             </button>
-                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Lặp lại (chỉ xem)">
+                            <button className="text-zinc-400 hover:text-slate-100 transition-colors cursor-pointer" title="Lặp lại">
                                 <Repeat className="w-4 h-4" />
                             </button>
                         </div>
 
-                        {/* Thanh tiến trình */}
+                        {/* Thanh tiến trình - giống MainLayout dùng div custom */}
                         <div className="w-full flex items-center gap-2.5 text-[10px] text-zinc-500 font-bold">
-                            <span>{formatTime(currentTime)}</span>
-                            <input
-                                type="range"
-                                min={0}
-                                max={duration || 100}
-                                value={currentTime}
-                                onChange={handleProgressChange}
-                                className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-zinc-800 accent-green-500 outline-none transition-all hover:h-2"
-                            />
+                            <span>{formatTime(displayTime)}</span>
+                            {/* Vùng kéo thả thanh tiến trình */}
+                            <div
+                                onMouseDown={handleProgressMouseDown}
+                                onMouseMove={handleProgressBarMouseMove}
+                                onMouseLeave={handleProgressBarMouseLeave}
+                                className="flex-1 h-3 flex items-center relative group cursor-pointer"
+                            >
+                                {/* Track nền */}
+                                <div className="w-full h-1 bg-zinc-800 rounded-full">
+                                    {/* Track đã phát - màu trắng khi bình thường, xanh khi hover/drag */}
+                                    <div
+                                        className={`h-full rounded-full transition-colors ${
+                                            isDraggingTime ? "bg-green-500" : "bg-slate-100 group-hover:bg-green-500"
+                                        }`}
+                                        style={{ width: `${progressPercent}%` }}
+                                    />
+                                </div>
+                                {/* Nút kéo (Thumb) */}
+                                <div
+                                    className={`absolute w-3 h-3 bg-slate-100 rounded-full shadow transition-opacity ${
+                                        isDraggingTime ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                    }`}
+                                    style={{
+                                        left: `${progressPercent}%`,
+                                        transform: "translate(-50%, -50%)",
+                                        top: "50%",
+                                    }}
+                                />
+                                {/* Tooltip thời gian hover */}
+                                {hoverTime !== null && (
+                                    <div
+                                        className="absolute -top-8 -translate-x-1/2 bg-zinc-900 text-slate-100 text-[10px] px-2 py-1 rounded font-bold shadow-lg pointer-events-none border border-zinc-800"
+                                        style={{ left: `${hoverX}%` }}
+                                    >
+                                        {formatTime(hoverTime)}
+                                    </div>
+                                )}
+                            </div>
                             <span>{formatTime(duration)}</span>
                         </div>
                     </div>
 
-                    {/* 3. Bên phải: Âm lượng & Fullscreen Utilities */}
-                    <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-400">
-                        <div className="flex items-center gap-2 group/volume">
-                            <button 
-                                onClick={() => {
-                                    if (videoRef.current) {
-                                        const nextVolume = volume > 0 ? 0 : 0.8;
-                                        setVolume(nextVolume);
-                                        videoRef.current.volume = nextVolume;
-                                        videoRef.current.muted = nextVolume === 0;
-                                    }
+                    {/* 3. Bên phải: Âm lượng & Fullscreen */}
+                    <div className="flex items-center justify-end gap-3 w-1/3 text-zinc-400 group/volume">
+                        {/* Nút tắt/bật tiếng */}
+                        <button 
+                            onClick={toggleMute}
+                            className="hover:text-slate-100 cursor-pointer p-1 transition-colors"
+                        >
+                            {volume === 0 ? (
+                                <VolumeX className="w-5 h-5 text-zinc-500" />
+                            ) : volume < 0.5 ? (
+                                <Volume1 className="w-5 h-5" />
+                            ) : (
+                                <Volume2 className="w-5 h-5" />
+                            )}
+                        </button>
+                        {/* Thanh âm lượng - dùng div custom giống MainLayout */}
+                        <div
+                            onMouseDown={handleVolumeMouseDown}
+                            className="w-24 h-3 flex items-center relative cursor-pointer"
+                        >
+                            {/* Track nền âm lượng */}
+                            <div className="w-full h-1 bg-zinc-800 rounded-full">
+                                {/* Track đã điền - màu trắng khi bình thường, xanh khi hover/drag */}
+                                <div
+                                    className={`h-full rounded-full ${
+                                        isDraggingVolume ? "" : "transition-[width,background-color] duration-300 ease-out"
+                                    } ${
+                                        isDraggingVolume ? "bg-green-500" : "bg-slate-100 group-hover/volume:bg-green-500"
+                                    }`}
+                                    style={{ width: `${volume * 100}%` }}
+                                />
+                            </div>
+                            {/* Nút kéo âm lượng (Thumb) */}
+                            <div
+                                className={`absolute w-3 h-3 bg-slate-100 rounded-full shadow ${
+                                    isDraggingVolume ? "" : "transition-[left,opacity] duration-300 ease-out"
+                                } ${
+                                    isDraggingVolume ? "opacity-100" : "opacity-0 group-hover/volume:opacity-100"
+                                }`}
+                                style={{
+                                    left: `${volume * 100}%`,
+                                    transform: "translate(-50%, -50%)",
+                                    top: "50%",
                                 }}
-                                className="hover:text-slate-100 cursor-pointer p-1 transition-colors"
-                            >
-                                {volume === 0 ? (
-                                    <VolumeX className="w-5 h-5 text-zinc-500" />
-                                ) : volume < 0.5 ? (
-                                    <Volume1 className="w-5 h-5" />
-                                ) : (
-                                    <Volume2 className="w-5 h-5" />
-                                )}
-                            </button>
-                            <input
-                                type="range"
-                                min={0}
-                                max={1}
-                                step={0.05}
-                                value={volume}
-                                onChange={handleVolumeChange}
-                                className="w-20 h-1 rounded-full appearance-none bg-zinc-800 accent-green-500 outline-none"
                             />
                         </div>
                         
