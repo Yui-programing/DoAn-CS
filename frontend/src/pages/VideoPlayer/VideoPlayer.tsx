@@ -8,6 +8,7 @@ import {
     Volume2, 
     VolumeX, 
     Maximize, 
+    Minimize,
     ArrowLeft, 
     Loader2, 
     Heart, 
@@ -536,13 +537,14 @@ export const VideoPlayer = () => {
             {/* Khu vực video:
                 - Bình thường: flex-1 (chiếm không gian trên player bar)
                 - Fullscreen: absolute inset-0 (chiếm toàn bộ kể cả phín sau player bar) */}
-            <div className={`relative overflow-hidden ${isFullscreen ? 'absolute inset-0' : 'flex-1'}`}>
+            <div className={`relative overflow-hidden flex items-center justify-center bg-black ${isFullscreen ? 'absolute inset-0' : 'flex-1'}`}>
                 {/* BƯỚC 3: Video chính kết nối với filePath từ API */}
                 {videoInfo && (
                     <video
                         ref={videoRef}
                         src={videoInfo.filePath}
-                        className="w-full h-full object-contain cursor-pointer"
+                        className="w-full h-full cursor-pointer block"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         onClick={togglePlay}
                         onTimeUpdate={handleTimeUpdate}
                         onLoadedMetadata={handleLoadedMetadata}
@@ -848,7 +850,11 @@ export const VideoPlayer = () => {
                             className={`p-1 transition-colors cursor-pointer ${isFullscreen ? 'text-green-400 hover:text-green-300' : 'text-zinc-400 hover:text-slate-100'}`}
                             title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
                         >
-                            <Maximize className="w-5 h-5" />
+                            {isFullscreen ? (
+                                <Minimize className="w-5 h-5" />
+                            ) : (
+                                <Maximize className="w-5 h-5" />
+                            )}
                         </button>
                     </div>
                 </div>
