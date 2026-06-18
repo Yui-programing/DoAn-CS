@@ -24,7 +24,9 @@ export const NotificationBell = () => {
             >
                 <Bell className="w-5 h-5" fill={isActive ? "currentColor" : "none"} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-zinc-950"></span>
+                    <span className="absolute top-0 right-0 flex items-center justify-center min-w-[16px] h-[16px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-zinc-950">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                 )}
             </button>
         </div>
