@@ -197,7 +197,7 @@ export const VideoPlayer = () => {
         };
     }, []);
 
-    // Lắng nghe phím: F11/F để bật/tắt fullscreen, Escape để thoát pseudo-fullscreen, Space/Enter để phát/tạm dừng
+    // Lắng nghe phím: F11/F để bật/tắt fullscreen, Escape để thoát pseudo-fullscreen, Space/Enter để phát/tạm dừng, ArrowLeft/Right để tua
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const activeEl = document.activeElement;
@@ -224,12 +224,30 @@ export const VideoPlayer = () => {
                 e.preventDefault();
                 togglePlay();
             }
+            // ArrowLeft: Tua lùi 5 giây
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (videoRef.current) {
+                    const newTime = Math.max(0, videoRef.current.currentTime - 5);
+                    videoRef.current.currentTime = newTime;
+                    setCurrentTime(newTime);
+                }
+            }
+            // ArrowRight: Tua tiến 5 giây
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (videoRef.current) {
+                    const newTime = Math.min(duration, videoRef.current.currentTime + 5);
+                    videoRef.current.currentTime = newTime;
+                    setCurrentTime(newTime);
+                }
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isFullscreen, isPlaying, volume]);
+    }, [isFullscreen, isPlaying, volume, duration]);
 
     // Đồng bộ hóa trạng thái isFullscreen với Fullscreen API thực tế của trình duyệt sau khi DOM được mount/unmount qua Portal
     useEffect(() => {
