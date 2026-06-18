@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     Play, 
@@ -197,26 +197,39 @@ export const VideoPlayer = () => {
         };
     }, []);
 
-    // Lắng nghe phím: F11 để bật/tắt fullscreen, Escape để thoát pseudo-fullscreen
+    // Lắng nghe phím: F11/F để bật/tắt fullscreen, Escape để thoát pseudo-fullscreen, Space/Enter để phát/tạm dừng
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            const activeEl = document.activeElement;
+            const isInput = activeEl && (
+                activeEl.tagName === 'INPUT' || 
+                activeEl.tagName === 'TEXTAREA' || 
+                activeEl.getAttribute('contenteditable') === 'true'
+            );
+            if (isInput) return;
+
             // Escape: thoát pseudo-fullscreen (khi real fullscreen không được bật)
             if (e.key === 'Escape' && isFullscreen && !document.fullscreenElement) {
                 setIsFullscreen(false);
                 setShowControls(true);
             }
-            // F11: Bật/tắt fullscreen giống nút trong UI
-            if (e.key === 'F11') {
-                e.preventDefault(); // Ngăn trình duyệt xử lý F11 mặc định
+            // F11 hoặc F: Bật/tắt fullscreen giống nút trong UI
+            if (e.key === 'F11' || e.key === 'f' || e.key === 'F') {
+                e.preventDefault(); // Ngăn trình duyệt xử lý mặc định
                 setIsFullscreen(prev => !prev);
                 setShowControls(true);
+            }
+            // Space hoặc Enter: Phát/Tạm dừng video
+            if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+                e.preventDefault();
+                togglePlay();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isFullscreen]);
+    }, [isFullscreen, isPlaying, volume]);
 
     // Đồng bộ hóa trạng thái isFullscreen với Fullscreen API thực tế của trình duyệt sau khi DOM được mount/unmount qua Portal
     useEffect(() => {
@@ -882,10 +895,6 @@ export const VideoPlayer = () => {
         </div>
     );
 
-    // Khi fullscreen: dùng Portal render vào document.body để thoát khỏi mọi stacking context
-    if (isFullscreen) {
-        return createPortal(playerContent, document.body);
-    }
     return playerContent;
 };
 
