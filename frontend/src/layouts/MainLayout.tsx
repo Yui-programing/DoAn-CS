@@ -185,7 +185,7 @@ export const MainLayout = () => {
     }
   }, [location.pathname, location.search]);
 
-  // Lắng nghe phím Space, Enter để Phát/Tạm dừng nhạc bên ngoài và ArrowLeft, ArrowRight để tua nhạc
+  // Lắng nghe phím Space, Enter để Phát/Tạm dừng nhạc bên ngoài và Ctrl + ArrowLeft, Ctrl + ArrowRight để tua nhạc
   useEffect(() => {
     // Ngăn chặn phím tắt nhạc bên ngoài hoạt động khi đang ở trang VideoPlayer để tránh xung đột
     if (location.pathname.startsWith("/video/")) {
@@ -193,6 +193,9 @@ export const MainLayout = () => {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // In log debug ngay lập tức khi nhận sự kiện keydown để kiểm tra phím bấm
+      console.log("[MainLayout Keydown Event] Key:", e.key, "Ctrl:", e.ctrlKey);
+
       const activeEl = document.activeElement;
       const isInput = activeEl && (
         activeEl.tagName === 'INPUT' ||
@@ -202,37 +205,41 @@ export const MainLayout = () => {
       if (isInput) return;
 
       const audioElement = audioRef.current || (document.getElementById('global-audio-element') as HTMLAudioElement | null);
-      if (!audioElement) return;
+      if (!audioElement) {
+        console.log("[MainLayout Hotkey] No audio element found to perform shortcut action.");
+        return;
+      }
 
       // Space hoặc Enter: Phát/Tạm dừng nhạc
       if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
         e.preventDefault(); // Ngăn trình duyệt cuộn trang khi bấm Space
         togglePlay();
       }
-      // ArrowLeft: Tua lùi 5 giây
-      if (e.key === 'ArrowLeft') {
+      // Ctrl + ArrowLeft: Tua lùi 5 giây
+      if (e.ctrlKey && e.key === 'ArrowLeft') {
         e.preventDefault();
         const cur = audioElement.currentTime;
         const newTime = Math.max(0, cur - 5);
-        console.log("[MainLayout Hotkey] ArrowLeft pressed. Current:", cur, "New:", newTime);
+        console.log("[MainLayout Hotkey] Ctrl+ArrowLeft triggered. Current:", cur, "New:", newTime);
         seek(newTime);
       }
-      // ArrowRight: Tua tiến 5 giây
-      if (e.key === 'ArrowRight') {
+      // Ctrl + ArrowRight: Tua tiến 5 giây
+      if (e.ctrlKey && e.key === 'ArrowRight') {
         e.preventDefault();
         const cur = audioElement.currentTime;
         const dur = audioElement.duration;
         // Nếu duration không hợp lệ (NaN, Infinity, 0), cho phép tua tiến trực tiếp
         const maxTime = (dur && isFinite(dur) && dur > 0) ? dur : cur + 1000;
         const newTime = Math.min(maxTime, cur + 5);
-        console.log("[MainLayout Hotkey] ArrowRight pressed. Current:", cur, "Duration:", dur, "New:", newTime);
+        console.log("[MainLayout Hotkey] Ctrl+ArrowRight triggered. Current:", cur, "Duration:", dur, "New:", newTime);
         seek(newTime);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    // Sử dụng capture: true để bắt sự kiện từ ngoài vào trong, tránh bị chặn bởi các component con
+    window.addEventListener("keydown", handleKeyDown, true);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, true);
     };
   }, [togglePlay, seek, location.pathname]);
 
