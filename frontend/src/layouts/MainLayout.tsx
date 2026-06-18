@@ -201,21 +201,32 @@ export const MainLayout = () => {
       );
       if (isInput) return;
 
-      // Space hoặc Enter: Phát/Tạm dừng nhạc
+      const audioElement = audioRef.current || (document.getElementById('global-audio-element') as HTMLAudioElement | null);
+      if (!audioElement) return;
+
+      // Space hoặc Enter: Phát/Tạm dừng nhạc (bỏ qua nếu đang focus vào nút bấm vì trình duyệt sẽ tự kích hoạt click)
       if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+        if (activeEl && activeEl.tagName === 'BUTTON') {
+          return;
+        }
         e.preventDefault(); // Ngăn trình duyệt cuộn trang khi bấm Space
         togglePlay();
       }
       // ArrowLeft: Tua lùi 5 giây
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        const newTime = Math.max(0, currentTime - 5);
+        const cur = audioElement.currentTime;
+        const newTime = Math.max(0, cur - 5);
         seek(newTime);
       }
       // ArrowRight: Tua tiến 5 giây
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        const newTime = Math.min(duration, currentTime + 5);
+        const cur = audioElement.currentTime;
+        const dur = audioElement.duration;
+        // Nếu duration không hợp lệ (NaN, Infinity, 0), cho phép tua tiến trực tiếp
+        const maxTime = (dur && isFinite(dur) && dur > 0) ? dur : cur + 1000;
+        const newTime = Math.min(maxTime, cur + 5);
         seek(newTime);
       }
     };
@@ -224,7 +235,7 @@ export const MainLayout = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [togglePlay, seek, currentTime, duration, location.pathname]);
+  }, [togglePlay, seek, location.pathname]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
