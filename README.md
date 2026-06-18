@@ -71,11 +71,32 @@ backend/
 
 ### 🏗️ Kiến trúc tầng (Layered Architecture)
 
-| Tầng | Thư mục | Chức năng |
-|------|---------|----------|
 | **API Layer** | `TuneVault.API` | HTTP endpoints, middleware, request handling |
 | **Application Layer** | `TuneVault.Application` | Business logic, use cases, DTOs |
 | **Domain Layer** | `TuneVault.Domain` | Core entities, business rules, enums |
 | **Infrastructure Layer** | `TuneVault.Infrastructure` | Database, repositories, external services |
+
+---
+
+## 🎹 Các Tính năng Đặc trưng & Phím tắt (Hotkeys)
+
+### 🎨 Giao diện & Trải nghiệm người dùng (UX)
+* **Favicon & Logo đồng bộ**: Sử dụng logo TuneVault chính thức (nốt nhạc kép màu đen trên nền gradient xanh emerald bo góc) làm favicon cho toàn bộ trang web.
+* **Tiêu đề trang động (Dynamic Title Tag)**: Tiêu đề trình duyệt tự động thay đổi theo trang hiện tại (ví dụ: `TuneVault - Trang chủ`, `TuneVault - Tìm kiếm`) và tự động hiển thị tên bài hát/video thực tế khi bạn mở chi tiết danh sách phát hoặc xem video.
+
+### ⌨️ Phím tắt Điều khiển nhanh (Hotkeys)
+
+Để tối ưu hóa trải nghiệm nghe nhạc và xem MV, TuneVault hỗ trợ hệ thống phím tắt điều khiển nhanh cực kỳ tiện lợi:
+
+#### 1. Đối với Trình phát nhạc bên ngoài (Main Layout)
+* **Phím `Space` (Khoảng trắng) hoặc `Enter`**: Phát / Tạm dừng nhạc (Tự động bỏ qua nếu bạn đang nhập văn bản hoặc đang focus vào các nút điều khiển để tránh bị trùng lặp sự kiện).
+* **Phím `Mũi tên Trái` (`ArrowLeft`)**: Tua lùi bài nhạc về trước 5 giây.
+* **Phím `Mũi tên Phải` (`ArrowRight`)**: Tua nhanh bài nhạc lên trước 5 giây.
+
+#### 2. Đối với Trình phát video (Video Player)
+* **Phím `Space` (Khoảng trắng) hoặc `Enter`**: Phát / Tạm dừng video.
+* **Phím `F` hoặc `f`**: Bật / Tắt chế độ xem toàn màn hình (Fullscreen).
+* **Phím `Mũi tên Trái` (`ArrowLeft`)**: Tua lùi video về trước 5 giây.
+* **Phím `Mũi tên Phải` (`ArrowRight`)**: Tua nhanh video lên trước 5 giây.
 
 

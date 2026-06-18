@@ -1,73 +1,58 @@
-# React + TypeScript + Vite
+# TuneVault - Giao diện người dùng (React Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Thư mục này chứa toàn bộ mã nguồn giao diện người dùng của ứng dụng **TuneVault** (Spotify Clone), được xây dựng bằng các công nghệ hiện đại nhằm tối ưu trải nghiệm nghe nhạc và xem MV trực tuyến.
 
-Currently, two official plugins are available:
+## 🛠️ Công nghệ sử dụng (Tech Stack)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* **React 19 & TypeScript**: Framework mạnh mẽ giúp xây dựng UI động, kiểu an toàn và tối ưu hóa render.
+* **Vite**: Bộ công cụ xây dựng (build tool) thế hệ mới siêu nhanh.
+* **Tailwind CSS v4 & Vanilla CSS**: Cung cấp giao diện tối giản, linh hoạt, responsive tốt và hỗ trợ dark mode/glassmorphism cực kỳ đẹp mắt.
+* **React Router v7**: Điều hướng trang mượt mà không cần tải lại trang.
+* **SignalR Client (.NET)**: Nhận thông báo thời gian thực từ server.
+* **Lucide Icons**: Bộ icon hiện đại, đồng bộ phong cách tối giản.
 
-## React Compiler
+## 📁 Cấu trúc thư mục chính
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Cấu trúc thư mục được thiết kế rõ ràng theo mô hình module:
 
-## Expanding the ESLint configuration
+* `src/assets/`: Chứa các tài nguyên tĩnh như hình ảnh, SVG logo, fonts...
+* `src/components/`: Các component dùng chung cho toàn bộ dự án (Button, Modal, Table danh sách bài hát...).
+* `src/contexts/`: Quản lý trạng thái toàn cục (Global State) qua React Context:
+  * `AuthContext`: Quản lý đăng nhập, đăng ký, thông tin người dùng.
+  * `PlayerContext`: Quản lý trình phát nhạc toàn cục (bài hát hiện tại, hàng đợi phát, chế độ shuffle/repeat, âm lượng, tiến trình phát).
+  * `FavoriteContext`: Trạng thái yêu thích/thả tim các bài hát.
+  * `NotificationContext`: Lắng nghe và hiển thị thông báo thời gian thực qua SignalR.
+* `src/layouts/`: Các khung giao diện dùng chung.
+  * `MainLayout`: Giao diện chính chứa Sidebar, Header và thanh điều khiển nhạc bên dưới.
+* `src/pages/`: Các trang nghiệp vụ chính (Home, Search, Library, VideoPlayer, Login, Register, Profile, Admin...).
+* `src/services/`: Quản lý các cuộc gọi API qua Axios client được cấu hình sẵn.
+* `src/routes/`: Cấu hình định tuyến Route của dự án.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+> [!NOTE]
+> Bạn có thể đọc chi tiết giải thích cấu trúc từng thư mục con tại file [GiaiThich.md](file:///d:/VSCode/Spotify/DoAn-CS/frontend/src/GiaiThich.md).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🚀 Thiết lập & Khởi chạy ở Local (Không qua Docker)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Nếu bạn muốn chỉnh sửa code frontend nhanh chóng với cơ chế Hot Reload nhanh nhất mà không cần chạy qua Docker container, hãy thực hiện theo các bước sau:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**1. Di chuyển vào thư mục frontend:**
+```bash
+cd frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**2. Cài đặt các thư viện phụ thuộc (node_modules):**
+```bash
+npm install
 ```
+
+**3. Khởi chạy Development Server:**
+```bash
+npm run dev
+```
+Trình duyệt sẽ tự động mở hoặc bạn có thể truy cập thủ công vào địa chỉ: `http://localhost:5173`.
+
+## ⚙️ Cấu hình API Endpoint
+
+Địa chỉ kết nối đến Backend API được cấu hình thông qua các biến môi trường trong file cấu hình build Docker hoặc cấu hình Vite.
+* `VITE_API_BASE_URL`: API Server (Ví dụ: `http://localhost:5000/api`)
+* `VITE_SIGNALR_HUB_URL`: SignalR Hub (Ví dụ: `http://localhost:5000/hubs/notification`)
