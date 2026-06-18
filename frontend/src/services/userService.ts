@@ -16,6 +16,18 @@ export const userService = {
     );
     return response.data;
   },
+  uploadAvatar: async (file: File): Promise<ApiResponse<string>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post<ApiResponse<string>>(
+      "/users/avatar",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
+    return response.data;
+  },
   submitArtistRegistration: async (
     formData: FormData,
   ): Promise<ApiResponse<string>> => {

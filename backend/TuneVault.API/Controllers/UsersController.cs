@@ -83,7 +83,7 @@ namespace TuneVault.API.Controllers
             string url;
             using (var stream = request.IdCard.OpenReadStream())
             {
-                url = await _cloudinaryService.UploadImageAsync(stream, request.IdCard.FileName, "artist-registrations");
+                url = await _cloudinaryService.UploadImageAsync(stream, request.IdCard.FileName, "TuneVault/artist-registrations");
             }
 
             var cmd = new TuneVault.Application.Features.Artists.Commands.SubmitArtistRegistrationCommand
@@ -96,6 +96,22 @@ namespace TuneVault.API.Controllers
 
             var id = await _mediator.Send(cmd);
             return Ok(ApiResponse<Guid>.SetSuccess(id, "Gửi yêu cầu đăng ký artist thành công."));
+        }
+
+        // POST: /api/users/avatar
+        [HttpPost("avatar")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            if (file == null || file.Length == 0) return BadRequest(ApiResponse<bool>.SetFailure(new System.Collections.Generic.List<string> { "Vui lòng tải lên ảnh đại diện." }, "Thiếu file"));
+
+            string url;
+            using (var stream = file.OpenReadStream())
+            {
+                url = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "TuneVault/Avatars");
+            }
+
+            return Ok(ApiResponse<string>.SetSuccess(url, "Tải ảnh lên thành công."));
         }
     }
 }
