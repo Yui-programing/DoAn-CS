@@ -212,13 +212,20 @@ export const MainLayout = () => {
       // ArrowLeft: Tua lùi 5 giây
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        const newTime = Math.max(0, audioElement.currentTime - 5);
+        const cur = audioElement.currentTime;
+        const newTime = Math.max(0, cur - 5);
+        console.log("[MainLayout Hotkey] ArrowLeft pressed. Current:", cur, "New:", newTime);
         seek(newTime);
       }
       // ArrowRight: Tua tiến 5 giây
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        const newTime = Math.min(audioElement.duration || 0, audioElement.currentTime + 5);
+        const cur = audioElement.currentTime;
+        const dur = audioElement.duration;
+        // Nếu duration không hợp lệ (NaN, Infinity, 0), cho phép tua tiến trực tiếp
+        const maxTime = (dur && isFinite(dur) && dur > 0) ? dur : cur + 1000;
+        const newTime = Math.min(maxTime, cur + 5);
+        console.log("[MainLayout Hotkey] ArrowRight pressed. Current:", cur, "Duration:", dur, "New:", newTime);
         seek(newTime);
       }
     };
