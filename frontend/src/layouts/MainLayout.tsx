@@ -185,7 +185,7 @@ export const MainLayout = () => {
     }
   }, [location.pathname, location.search]);
 
-  // Lắng nghe phím Space và Enter để Phát/Tạm dừng nhạc bên ngoài
+  // Lắng nghe phím Space, Enter để Phát/Tạm dừng nhạc bên ngoài và ArrowLeft, ArrowRight để tua nhạc
   useEffect(() => {
     // Ngăn chặn phím tắt nhạc bên ngoài hoạt động khi đang ở trang VideoPlayer để tránh xung đột
     if (location.pathname.startsWith("/video/")) {
@@ -206,13 +206,25 @@ export const MainLayout = () => {
         e.preventDefault(); // Ngăn trình duyệt cuộn trang khi bấm Space
         togglePlay();
       }
+      // ArrowLeft: Tua lùi 5 giây
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const newTime = Math.max(0, currentTime - 5);
+        seek(newTime);
+      }
+      // ArrowRight: Tua tiến 5 giây
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const newTime = Math.min(duration, currentTime + 5);
+        seek(newTime);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [togglePlay, location.pathname]);
+  }, [togglePlay, seek, currentTime, duration, location.pathname]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
