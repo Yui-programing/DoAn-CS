@@ -35,6 +35,7 @@ export interface MediaItem {
   ownerId: string;
   albumId?: string;
   artistId?: string;
+  artistName?: string;
   isPrivate: boolean;
   viewCount: number;
   approvalStatus?: string;
