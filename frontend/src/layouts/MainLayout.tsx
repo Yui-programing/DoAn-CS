@@ -193,9 +193,6 @@ export const MainLayout = () => {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // In log debug ngay lập tức khi nhận sự kiện keydown để kiểm tra phím bấm
-      console.log("[MainLayout Keydown Event] Key:", e.key);
-
       const activeEl = document.activeElement;
       const isInput = activeEl && (
         activeEl.tagName === 'INPUT' ||
@@ -205,13 +202,13 @@ export const MainLayout = () => {
       if (isInput) return;
 
       const audioElement = audioRef.current || (document.getElementById('global-audio-element') as HTMLAudioElement | null);
-      if (!audioElement) {
-        console.log("[MainLayout Hotkey] No audio element found to perform shortcut action.");
-        return;
-      }
+      if (!audioElement) return;
 
-      // Space hoặc Enter: Phát/Tạm dừng nhạc
+      // Space hoặc Enter: Phát/Tạm dừng nhạc (bỏ qua nếu đang focus vào nút bấm vì trình duyệt sẽ tự kích hoạt click)
       if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+        if (activeEl && activeEl.tagName === 'BUTTON') {
+          return;
+        }
         e.preventDefault(); // Ngăn trình duyệt cuộn trang khi bấm Space
         togglePlay();
       }
@@ -220,7 +217,6 @@ export const MainLayout = () => {
         e.preventDefault();
         const cur = audioElement.currentTime;
         const newTime = Math.max(0, cur - 5);
-        console.log("[MainLayout Hotkey] ArrowLeft triggered. Current:", cur, "New:", newTime);
         seek(newTime);
       }
       // ArrowRight: Tua tiến 5 giây
@@ -231,7 +227,6 @@ export const MainLayout = () => {
         // Nếu duration không hợp lệ (NaN, Infinity, 0), cho phép tua tiến trực tiếp
         const maxTime = (dur && isFinite(dur) && dur > 0) ? dur : cur + 1000;
         const newTime = Math.min(maxTime, cur + 5);
-        console.log("[MainLayout Hotkey] ArrowRight triggered. Current:", cur, "Duration:", dur, "New:", newTime);
         seek(newTime);
       }
     };
