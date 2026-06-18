@@ -185,6 +185,35 @@ export const MainLayout = () => {
     }
   }, [location.pathname, location.search]);
 
+  // Lắng nghe phím Space và Enter để Phát/Tạm dừng nhạc bên ngoài
+  useEffect(() => {
+    // Ngăn chặn phím tắt nhạc bên ngoài hoạt động khi đang ở trang VideoPlayer để tránh xung đột
+    if (location.pathname.startsWith("/video/")) {
+      return;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.getAttribute('contenteditable') === 'true'
+      );
+      if (isInput) return;
+
+      // Space hoặc Enter: Phát/Tạm dừng nhạc
+      if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+        e.preventDefault(); // Ngăn trình duyệt cuộn trang khi bấm Space
+        togglePlay();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [togglePlay, location.pathname]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchValue(val);
