@@ -201,6 +201,9 @@ export const MainLayout = () => {
       );
       if (isInput) return;
 
+      const audioElement = audioRef.current || (document.getElementById('global-audio-element') as HTMLAudioElement | null);
+      if (!audioElement) return;
+
       // Space hoặc Enter: Phát/Tạm dừng nhạc
       if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
         e.preventDefault(); // Ngăn trình duyệt cuộn trang khi bấm Space
@@ -209,13 +212,13 @@ export const MainLayout = () => {
       // ArrowLeft: Tua lùi 5 giây
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        const newTime = Math.max(0, currentTime - 5);
+        const newTime = Math.max(0, audioElement.currentTime - 5);
         seek(newTime);
       }
       // ArrowRight: Tua tiến 5 giây
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        const newTime = Math.min(duration, currentTime + 5);
+        const newTime = Math.min(audioElement.duration || 0, audioElement.currentTime + 5);
         seek(newTime);
       }
     };
@@ -224,7 +227,7 @@ export const MainLayout = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [togglePlay, seek, currentTime, duration, location.pathname]);
+  }, [togglePlay, seek, location.pathname]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
