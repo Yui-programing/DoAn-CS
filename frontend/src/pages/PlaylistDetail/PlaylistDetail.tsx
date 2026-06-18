@@ -35,7 +35,10 @@ export const PlaylistDetail = () => {
         const playlistsRes = await playlistService.getMyPlaylists();
         if (playlistsRes.success) {
           const found = playlistsRes.data.find((p: any) => p.id === id);
-          if (found) setPlaylistInfo(found);
+          if (found) {
+            setPlaylistInfo(found);
+            document.title = `TuneVault - Danh sách phát: ${found.title}`;
+          }
         }
 
         // 2. Lấy danh sách các bài hát trong Playlist này

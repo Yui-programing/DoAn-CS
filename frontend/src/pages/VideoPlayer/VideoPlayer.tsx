@@ -93,6 +93,7 @@ export const VideoPlayer = () => {
                         coverUrl: response.data.coverUrl || null,
                         filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
                     });
+                    document.title = `TuneVault - Xem Video: ${response.data.title}`;
                 }
 
                 // Gọi API lấy danh sách bài hát/video (tối đa 50 bài) để làm hàng đợi video
