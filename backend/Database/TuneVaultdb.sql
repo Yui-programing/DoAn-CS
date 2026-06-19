@@ -15,7 +15,6 @@ IF OBJECT_ID('ArtistRegistrations', 'U') IS NOT NULL DROP TABLE ArtistRegistrati
 IF OBJECT_ID('MediaItem', 'U') IS NOT NULL DROP TABLE MediaItem;
 IF OBJECT_ID('Album', 'U') IS NOT NULL DROP TABLE Album;
 IF OBJECT_ID('Artist', 'U') IS NOT NULL DROP TABLE Artist;
-
 IF OBJECT_ID('UserProfile', 'U') IS NOT NULL DROP TABLE UserProfile;
 IF OBJECT_ID('User', 'U') IS NOT NULL DROP TABLE [User];
 GO
@@ -38,7 +37,7 @@ CREATE TABLE OtpVerification
 -- Bảng chứa thông tin Đăng nhập & Phân quyền
 CREATE TABLE [User]
 (
-    Id NVARCHAR(450) PRIMARY KEY,
+    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     Email NVARCHAR(256) NOT NULL UNIQUE,
     PasswordHash NVARCHAR(MAX) NOT NULL,
     [Role] NVARCHAR(50) NOT NULL DEFAULT 'User',
@@ -49,7 +48,7 @@ CREATE TABLE [User]
 
 CREATE TABLE UserProfile
 (
-    Id NVARCHAR(450) PRIMARY KEY,
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
     FullName NVARCHAR(255) NOT NULL,
     AvatarUrl NVARCHAR(1000) NULL,
     Bio NVARCHAR(MAX) NULL,
@@ -93,7 +92,7 @@ CREATE TABLE MediaItem
     CoverUrl NVARCHAR(1000) NULL,
     DurationInSeconds INT NOT NULL DEFAULT 0,
     MediaType INT NOT NULL DEFAULT 0,
-    OwnerId NVARCHAR(450) NOT NULL,
+    OwnerId UNIQUEIDENTIFIER NOT NULL,
     AlbumId UNIQUEIDENTIFIER NULL,
     ArtistId UNIQUEIDENTIFIER NULL,
     AlbumName NVARCHAR(255) NULL,
@@ -114,7 +113,7 @@ CREATE TABLE Playlist
     [Type] INT NOT NULL DEFAULT 0,
     IsPublic BIT NOT NULL DEFAULT 1,
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-    OwnerId NVARCHAR(450) NOT NULL,
+    OwnerId UNIQUEIDENTIFIER NOT NULL,
     TracksCount INT NOT NULL DEFAULT 0,
     TotalDuration INT NOT NULL DEFAULT 0,
     FOREIGN KEY (OwnerId) REFERENCES UserProfile(Id) ON DELETE CASCADE
@@ -143,7 +142,7 @@ CREATE TABLE MediaTag
 CREATE TABLE Favorite
 (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    UserId NVARCHAR(450) NOT NULL,
+    UserId UNIQUEIDENTIFIER NOT NULL,
     MediaItemId UNIQUEIDENTIFIER NOT NULL,
     AddedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
@@ -153,7 +152,7 @@ CREATE TABLE Favorite
 CREATE TABLE PlayHistory
 (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    UserId NVARCHAR(450) NOT NULL,
+    UserId UNIQUEIDENTIFIER NOT NULL,
     MediaItemId UNIQUEIDENTIFIER NOT NULL,
     PlayedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (UserId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
@@ -163,8 +162,8 @@ CREATE TABLE PlayHistory
 CREATE TABLE Follow
 (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    FollowerId NVARCHAR(450) NOT NULL,
-    FollowingUserId NVARCHAR(450) NULL,
+    FollowerId UNIQUEIDENTIFIER NOT NULL,
+    FollowingUserId UNIQUEIDENTIFIER NULL,
     FollowedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     FOREIGN KEY (FollowerId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
     FOREIGN KEY (FollowingUserId) REFERENCES UserProfile(Id) ON DELETE NO ACTION
@@ -173,8 +172,8 @@ CREATE TABLE Follow
 CREATE TABLE MediaShare
 (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    SenderId NVARCHAR(450) NOT NULL,
-    ReceiverId NVARCHAR(450) NOT NULL,
+    SenderId UNIQUEIDENTIFIER NOT NULL,
+    ReceiverId UNIQUEIDENTIFIER NOT NULL,
     MediaItemId UNIQUEIDENTIFIER NULL,
     PlaylistId UNIQUEIDENTIFIER NULL,
     [Message] NVARCHAR(MAX) NULL,
@@ -189,7 +188,7 @@ CREATE TABLE MediaShare
 CREATE TABLE Notification
 (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    UserId NVARCHAR(450) NOT NULL,
+    UserId UNIQUEIDENTIFIER NOT NULL,
     [Type] INT NOT NULL,
     PayloadJson NVARCHAR(MAX) NOT NULL,
     IsRead BIT NOT NULL DEFAULT 0,
@@ -201,7 +200,7 @@ CREATE TABLE Notification
 CREATE TABLE ArtistRegistrations
 (
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
-    UserId NVARCHAR(450) NOT NULL,
+    UserId UNIQUEIDENTIFIER NOT NULL,
     StageName NVARCHAR(255) NOT NULL,
     Genres NVARCHAR(255) NULL,
     IdCardUrl NVARCHAR(1000) NOT NULL,
@@ -215,23 +214,28 @@ GO
 ---------------------------------------------------------
 -- 3. INSERT SEED DATA (Dữ liệu mẫu)
 ---------------------------------------------------------
+DECLARE @U1 UNIQUEIDENTIFIER = '11111111-1111-1111-1111-111111111111',
+        @U2 UNIQUEIDENTIFIER = '22222222-2222-2222-2222-222222222222',
+        @U3 UNIQUEIDENTIFIER = '33333333-3333-3333-3333-333333333333',
+        @U4 UNIQUEIDENTIFIER = '44444444-4444-4444-4444-444444444444';
+
 -- Insert tài khoản Đăng nhập vào bảng [User] (Mật khẩu: 123456)
 INSERT INTO [User]
     (Id, Email, PasswordHash, [Role])
 VALUES
-    ('U1', 'hoangphuc@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
-    ('U2', 'khachhang2@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
-    ('U3', 'admin@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Admin'),
-    ('U4', 'artist@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
+    (@U1, 'hoangphuc@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
+    (@U2, 'khachhang2@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
+    (@U3, 'admin@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Admin'),
+    (@U4, 'artist@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
 
 -- Insert UserProfile
 INSERT INTO UserProfile
     (Id, FullName, AvatarUrl, Bio)
 VALUES
-    ('U1', N'Lê Phạm Hoàng Phúc', 'https://avatar.com/phuc.jpg', N'Sinh viên ĐH Sài Gòn. Thường đi uống cafe thư giãn lúc rảnh.'),
-    ('U2', N'Khách hàng 2', 'https://avatar.com/kh2.jpg', N'Đang sống và làm việc tại TP.HCM.'),
-    ('U3', N'TuneVault Administrator', 'https://avatar.com/admin.jpg', N'Quản trị viên hệ thống TuneVault.'),
-    ('U4', N'Sơn Tùng M-TP', 'https://avatar.com/mtp.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.');
+    (@U1, N'Lê Phạm Hoàng Phúc', 'https://avatar.com/phuc.jpg', N'Sinh viên ĐH Sài Gòn. Thường đi uống cafe thư giãn lúc rảnh.'),
+    (@U2, N'Khách hàng 2', 'https://avatar.com/kh2.jpg', N'Đang sống và làm việc tại TP.HCM.'),
+    (@U3, N'TuneVault Administrator', 'https://avatar.com/admin.jpg', N'Quản trị viên hệ thống TuneVault.'),
+    (@U4, N'Sơn Tùng M-TP', 'https://avatar.com/mtp.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.');
 
 -- Insert Tags
 INSERT INTO Tag
@@ -279,16 +283,16 @@ DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05',
 INSERT INTO MediaItem
     (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumId, ArtistId, AlbumName, ArtistName, IsPrivate, ApprovalStatus, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, 'U1', @Album1Id, @Artist1Id, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 1200000),
-    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, 'U1', @Album1Id, @Artist1Id, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 850000),
-    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, 'U1', NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 620000),
-    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, 'U1', NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 430000),
-    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, 'U2', NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 280000),
-    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, 'U2', NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 280000),
-    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, 'U1', NULL, @Artist3Id, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 150000),
-    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, 'U1', NULL, NULL, NULL, NULL, 0, 'Approved', 150000),
-    (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, 'U1', NULL, NULL, NULL, N'Justatee x Phương Ly', 0, 'Approved', 950000),
-    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, 'U1', NULL, @Artist3Id, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 950000);
+    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, @U1, @Album1Id, @Artist1Id, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 1200000),
+    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, @U1, @Album1Id, @Artist1Id, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 850000),
+    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, @U1, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 620000),
+    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, @U1, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 430000),
+    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, @U2, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 280000),
+    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, @U2, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 280000),
+    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, @U1, NULL, @Artist3Id, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 150000),
+    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, @U1, NULL, NULL, NULL, NULL, 0, 'Approved', 150000),
+    (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, @U1, NULL, NULL, NULL, N'Justatee x Phương Ly', 0, 'Approved', 950000),
+    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, @U1, NULL, @Artist3Id, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 950000);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag
@@ -310,8 +314,8 @@ DECLARE @P2 UNIQUEIDENTIFIER = NEWID();
 INSERT INTO Playlist
     (Id, Title, OwnerId, TracksCount, TotalDuration)
 VALUES
-    (@P1, N'Giai điệu thư giãn cuối tuần', 'U1', 3, 663),
-    (@P2, N'Playlist chiến Valorant', 'U1', 3, 600);
+    (@P1, N'Giai điệu thư giãn cuối tuần', @U1, 3, 663),
+    (@P2, N'Playlist chiến Valorant', @U1, 3, 600);
 
 -- Insert PlaylistTrack
 INSERT INTO PlaylistTrack
@@ -328,11 +332,11 @@ VALUES
 INSERT INTO MediaShare
     (SenderId, ReceiverId, PlaylistId, Message)
 VALUES
-    ('U1', 'U2', @P1, N'Nhạc này nghe lúc rảnh hay lắm nè!');
+    (@U1, @U2, @P1, N'Nhạc này nghe lúc rảnh hay lắm nè!');
 
 -- Insert Notification (Thông báo cho U2)
 INSERT INTO Notification
     (UserId, Type, PayloadJson)
 VALUES
-    ('U2', 0, N'{"SenderId": "U1", "Message": "Lê Phạm Hoàng Phúc đã chia sẻ một playlist cho bạn."}');
+    (@U2, 0, N'{"SenderId": "U1", "Message": "Lê Phạm Hoàng Phúc đã chia sẻ một playlist cho bạn."}');
 GO

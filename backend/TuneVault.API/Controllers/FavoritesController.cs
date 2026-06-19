@@ -30,13 +30,18 @@ namespace TuneVault.API.Controllers
             _mediator = mediator;
         }
 
-        private string? GetUserIdFromJwt() => User.FindFirstValue(ClaimTypes.NameIdentifier);
+                private Guid GetUserIdFromJwt()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userIdStr, out var userId)) return userId;
+            return Guid.Empty;
+        }
 
         [HttpPost]
         public async Task<IActionResult> AddFavorite([FromBody] AddFavoriteRequest request)
         {
             var userId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var command = new AddFavoriteCommand
@@ -54,7 +59,7 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> RemoveFavorite(Guid mediaId)
         {
             var userId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var command = new RemoveFavoriteCommand
@@ -72,7 +77,7 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> GetFavorites()
         {
             var userId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var query = new GetFavoritesQuery
@@ -86,3 +91,4 @@ namespace TuneVault.API.Controllers
         }
     }
 }
+

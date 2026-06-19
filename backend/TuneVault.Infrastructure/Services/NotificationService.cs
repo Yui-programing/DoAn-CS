@@ -15,19 +15,20 @@ namespace TuneVault.Infrastructure.Services
             _hubContext = hubContext;
         }
 
-        public async Task SendNotificationToUserAsync(string userId, Notification notification)
+        public async Task SendNotificationToUserAsync(Guid userId, Notification notification)
         {
-            await _hubContext.Clients.User(userId).SendAsync("ReceiveNotification", notification);
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", notification);
         }
 
-        public async Task NotifyUserReadAsync(string userId, System.Guid notificationId)
+        public async Task NotifyUserReadAsync(Guid userId, System.Guid notificationId)
         {
-            await _hubContext.Clients.User(userId).SendAsync("NotificationRead", notificationId);
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("NotificationRead", notificationId);
         }
 
-        public async Task NotifyUserMarkedAllReadAsync(string userId, int count)
+        public async Task NotifyUserMarkedAllReadAsync(Guid userId, int count)
         {
-            await _hubContext.Clients.User(userId).SendAsync("NotificationsMarkedRead", count);
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("NotificationsMarkedRead", count);
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,6 +9,8 @@ namespace TuneVault.Application.Features.Playlists.Commands.ViewPlaylist
 {
     public class ViewPlaylistQuery : IRequest<IEnumerable<MyPlaylistDto>>
     {
-        public string OwnerId { get; set; } = null!;
+        public Guid OwnerId { get; set; }
     }
 }
+
+

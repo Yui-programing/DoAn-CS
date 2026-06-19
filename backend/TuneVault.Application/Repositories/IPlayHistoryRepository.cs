@@ -9,5 +9,6 @@ public interface IPlayHistoryRepository
 {
     // Chỉ giữ lại hàm lưu lịch sử khi người dùng bấm Play
     Task<bool> AddPlayHistoryAsync(PlayHistory playHistory);
-    Task<IEnumerable<PlayHistoryResultDto>> GetPlayHistoryAsync(string userId, int limit);
+    Task<IEnumerable<PlayHistoryResultDto>> GetPlayHistoryAsync(Guid userId, int limit);
 }
+

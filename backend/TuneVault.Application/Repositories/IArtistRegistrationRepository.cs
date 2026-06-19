@@ -11,6 +11,7 @@ namespace TuneVault.Application.Repositories
         Task<IEnumerable<ArtistRegistration>> GetPendingAsync();
         Task<ArtistRegistration?> GetByIdAsync(Guid id);
         Task<bool> UpdateStatusAsync(Guid id, string status, DateTime? reviewedAt = null);
-        Task<IEnumerable<ArtistRegistration>> GetByUserIdAsync(string userId);
+        Task<IEnumerable<ArtistRegistration>> GetByUserIdAsync(Guid userId);
     }
 }
+

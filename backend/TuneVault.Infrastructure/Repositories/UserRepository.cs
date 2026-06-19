@@ -22,7 +22,7 @@ namespace TuneVault.Infrastructure.Repositories
             return await _dbConnection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
         }
         //  Hàm kiểm tra xem id đã tồn tại dưới DB chưa
-        public async Task<UserProfile?> GetProfileByUserIdAsync(string id)
+        public async Task<UserProfile?> GetProfileByUserIdAsync(Guid id)
         {
             const string sql = "SELECT * FROM [UserProfile] WHERE Id = @Id";
             return await _dbConnection.QueryFirstOrDefaultAsync<UserProfile>(sql, new { Id = id });
@@ -46,7 +46,7 @@ namespace TuneVault.Infrastructure.Repositories
 
 
 
-        public async Task<bool> UpdatePasswordAsync(string userId, string passwordHash)
+        public async Task<bool> UpdatePasswordAsync(Guid userId, string passwordHash)
         {
             const string sql = "UPDATE [User] SET PasswordHash = @PasswordHash WHERE Id = @Id";
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { PasswordHash = passwordHash, Id = userId });
@@ -60,8 +60,7 @@ namespace TuneVault.Infrastructure.Repositories
                        p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio
                 FROM [User] u
                 LEFT JOIN UserProfile p ON u.Id = p.Id";
-
-            var userDictionary = new Dictionary<string, User>();
+            var userDictionary = new Dictionary<Guid, User>();
 
             await _dbConnection.QueryAsync<User, UserProfile, User>(
                 sql,
@@ -81,7 +80,7 @@ namespace TuneVault.Infrastructure.Repositories
             return userDictionary.Values;
         }
 
-        public async Task<User?> GetUserWithProfileByIdAsync(string userId)
+        public async Task<User?> GetUserWithProfileByIdAsync(Guid userId)
         {
             const string sql = @"
                 SELECT u.Id, u.Email, u.PasswordHash, u.[Role], u.CreatedAt, u.IsActive,
@@ -89,8 +88,7 @@ namespace TuneVault.Infrastructure.Repositories
                 FROM [User] u
                 LEFT JOIN UserProfile p ON u.Id = p.Id
                 WHERE u.Id = @Id";
-
-            var userDictionary = new Dictionary<string, User>();
+            var userDictionary = new Dictionary<Guid, User>();
 
             var result = await _dbConnection.QueryAsync<User, UserProfile, User>(
                 sql,
@@ -111,14 +109,14 @@ namespace TuneVault.Infrastructure.Repositories
             return userDictionary.Values.FirstOrDefault();
         }
 
-        public async Task<bool> UpdateUserRoleAsync(string userId, string role)
+        public async Task<bool> UpdateUserRoleAsync(Guid userId, string role)
         {
             const string sql = "UPDATE [User] SET [Role] = @Role WHERE Id = @Id";
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { Role = role, Id = userId });
             return rowsAffected > 0;
         }
 
-        public async Task<bool> SetUserActiveStateAsync(string userId, bool isActive)
+        public async Task<bool> SetUserActiveStateAsync(Guid userId, bool isActive)
         {
             const string sql = "UPDATE [User] SET IsActive = @IsActive WHERE Id = @Id";
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, new { IsActive = isActive, Id = userId });

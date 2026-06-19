@@ -5,7 +5,7 @@ namespace TuneVault.Application.Features.Admin.Commands
 {
     public class SetUserActiveStateCommand : IRequest<bool>
     {
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -24,3 +24,5 @@ namespace TuneVault.Application.Features.Admin.Commands
         }
     }
 }
+
+

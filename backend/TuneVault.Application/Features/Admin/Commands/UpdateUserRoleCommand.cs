@@ -5,7 +5,7 @@ namespace TuneVault.Application.Features.Admin.Commands
 {
     public class UpdateUserRoleCommand : IRequest<bool>
     {
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
         public string Role { get; set; } = string.Empty;
     }
 
@@ -24,3 +24,5 @@ namespace TuneVault.Application.Features.Admin.Commands
         }
     }
 }
+
+

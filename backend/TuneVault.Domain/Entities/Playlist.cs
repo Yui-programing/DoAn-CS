@@ -7,7 +7,7 @@ namespace TuneVault.Domain.Entities
         public string? Description { get; set; }
         public bool IsPublic { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string OwnerId { get; set; } = null!;
+        public Guid OwnerId { get; set; }
         public int TracksCount { get; set; }
         public int TotalDuration { get; set; }
 

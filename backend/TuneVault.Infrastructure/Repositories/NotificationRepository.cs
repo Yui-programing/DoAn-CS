@@ -14,7 +14,7 @@ namespace TuneVault.Infrastructure.Repositories
             _dbConnection = dbConnection;
         }
 
-        public async Task<IEnumerable<Notification>> GetByUserIdAsync(string userId)
+        public async Task<IEnumerable<Notification>> GetByUserIdAsync(Guid userId)
         {
             const string sql = "SELECT * FROM Notification WHERE UserId = @UserId ORDER BY CreatedAt DESC";
             return await _dbConnection.QueryAsync<Notification>(sql, new { UserId = userId });
@@ -38,7 +38,7 @@ namespace TuneVault.Infrastructure.Repositories
             return rows > 0;
         }
 
-        public async Task<int> MarkAllAsReadAsync(string userId)
+        public async Task<int> MarkAllAsReadAsync(Guid userId)
         {
             const string sql = "UPDATE Notification SET IsRead = 1 WHERE UserId = @UserId AND IsRead = 0";
             int rows = await _dbConnection.ExecuteAsync(sql, new { UserId = userId });
@@ -46,3 +46,4 @@ namespace TuneVault.Infrastructure.Repositories
         }
     }
 }
+

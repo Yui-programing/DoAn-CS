@@ -12,8 +12,10 @@ public class UploadMediaCommand : IRequest<Guid>
     public string? CoverUrl { get; set; }
     public int DurationInSeconds { get; set; }
     public MediaType MediaType { get; set; }
-    public string OwnerId { get; set; } = null!;
+    public Guid OwnerId { get; set; }
     public string? AlbumName { get; set; }
     public string? ArtistName { get; set; }
     public bool IsPrivate { get; set; }
 }
+
+
