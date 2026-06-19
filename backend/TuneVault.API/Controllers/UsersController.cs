@@ -38,6 +38,27 @@ namespace TuneVault.API.Controllers
             return Ok(ApiResponse<UserProfileDto>.SetSuccess(data, "Lấy thông tin thành công!"));
         }
 
+        // GET / Xem hồ sơ người khác
+        [HttpGet("{id}/profile")]
+        public async Task<IActionResult> GetProfileById(Guid id)
+        {
+            var query = new GetProfileQuery { UserId = id };
+            try {
+                var data = await _mediator.Send(query);
+                var callerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Guid.TryParse(callerIdStr, out var callerId);
+
+                if (data.Id != callerId && !data.IsPublic)
+                {
+                    return StatusCode(403, ApiResponse<UserProfileDto>.SetFailure(new List<string> { "Hồ sơ riêng tư" }, "Không có quyền xem"));
+                }
+                
+                return Ok(ApiResponse<UserProfileDto>.SetSuccess(data, "Lấy thông tin thành công!"));
+            } catch (Exception ex) {
+                return NotFound(ApiResponse<UserProfileDto>.SetFailure(new List<string> { ex.Message }, "Lỗi"));
+            }
+        }
+
         // 2. PUT / Cập nhật hồ sơ người dùng
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UserProfileDto request)
@@ -55,7 +76,8 @@ namespace TuneVault.API.Controllers
                 UserId = userIdFromToken, // Lấy từ Token bảo mật
                 FullName = request.FullName, // Lấy từ Body thông qua DTO có sẵn
                 Bio = request.Bio,           // Lấy từ Body thông qua DTO có sẵn
-                AvatarUrl = request.AvatarUrl // Lấy từ Body thông qua DTO có sẵn
+                AvatarUrl = request.AvatarUrl, // Lấy từ Body thông qua DTO có sẵn
+                IsPublic = request.IsPublic
             };
 
             // 3. Đẩy sang Handler xử lý xuống Database

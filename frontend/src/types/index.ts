@@ -16,6 +16,10 @@ export interface UserProfile {
   fullName?: string;
   bio?: string;
   avatarUrl?: string;
+  genres?: string;
+  bannerUrl?: string;
+  verifiedAt?: string;
+  isPublic?: boolean;
 }
 
 export type MediaType = 0 | 1;
@@ -133,6 +137,8 @@ export interface UpdateProfileRequest {
   fullName: string;
   bio?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
+  isPublic?: boolean;
 }
 
 export interface CreatePlaylistRequest {

@@ -58,10 +58,14 @@ CREATE TABLE UserProfile
 -- Bảng chứa thông tin Ca sĩ / Nghệ sĩ
 CREATE TABLE Artist
 (
-    Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
     [Name] NVARCHAR(255) NOT NULL,
     Bio NVARCHAR(MAX) NULL,
-    AvatarUrl NVARCHAR(1000) NULL
+    AvatarUrl NVARCHAR(1000) NULL,
+    Genres NVARCHAR(500) NULL,
+    BannerUrl NVARCHAR(1000) NULL,
+    VerifiedAt DATETIME2 NULL,
+    FOREIGN KEY (Id) REFERENCES [User](Id) ON DELETE CASCADE
 );
 
 -- Bảng chứa thông tin Album
@@ -102,7 +106,7 @@ CREATE TABLE MediaItem
     ViewCount INT NOT NULL DEFAULT 0,
     FOREIGN KEY (OwnerId) REFERENCES UserProfile(Id) ON DELETE CASCADE,
     FOREIGN KEY (AlbumId) REFERENCES Album(Id) ON DELETE SET NULL,
-    FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE SET NULL
+    FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE NO ACTION
 );
 
 CREATE TABLE Playlist
@@ -217,7 +221,9 @@ GO
 DECLARE @U1 UNIQUEIDENTIFIER = '11111111-1111-1111-1111-111111111111',
         @U2 UNIQUEIDENTIFIER = '22222222-2222-2222-2222-222222222222',
         @U3 UNIQUEIDENTIFIER = '33333333-3333-3333-3333-333333333333',
-        @U4 UNIQUEIDENTIFIER = '44444444-4444-4444-4444-444444444444';
+        @U4 UNIQUEIDENTIFIER = '44444444-4444-4444-4444-444444444444',
+        @U5 UNIQUEIDENTIFIER = '55555555-5555-5555-5555-555555555555',
+        @U6 UNIQUEIDENTIFIER = '66666666-6666-6666-6666-666666666666';
 
 -- Insert tài khoản Đăng nhập vào bảng [User] (Mật khẩu: 123456)
 INSERT INTO [User]
@@ -226,7 +232,9 @@ VALUES
     (@U1, 'hoangphuc@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
     (@U2, 'khachhang2@gmail.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'User'),
     (@U3, 'admin@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Admin'),
-    (@U4, 'artist@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
+    (@U4, 'artist@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
+    (@U5, 'ngotband@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
+    (@U6, 'riotgames@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
 
 -- Insert UserProfile
 INSERT INTO UserProfile
@@ -235,7 +243,9 @@ VALUES
     (@U1, N'Lê Phạm Hoàng Phúc', 'https://avatar.com/phuc.jpg', N'Sinh viên ĐH Sài Gòn. Thường đi uống cafe thư giãn lúc rảnh.'),
     (@U2, N'Khách hàng 2', 'https://avatar.com/kh2.jpg', N'Đang sống và làm việc tại TP.HCM.'),
     (@U3, N'TuneVault Administrator', 'https://avatar.com/admin.jpg', N'Quản trị viên hệ thống TuneVault.'),
-    (@U4, N'Sơn Tùng M-TP', 'https://avatar.com/mtp.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.');
+    (@U4, N'Sơn Tùng M-TP', 'https://avatar.com/mtp.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.'),
+    (@U5, N'Ngọt Band', 'https://avatar.com/ngot.jpg', N'Ban nhạc Indie Việt Nam'),
+    (@U6, N'Riot Games Music', 'https://avatar.com/riot.jpg', N'Nhà sản xuất âm nhạc trò chơi');
 
 -- Insert Tags
 INSERT INTO Tag
@@ -246,18 +256,13 @@ VALUES
     ('T3', N'Gaming'),
     ('T4', N'Chill');
 
--- Khai báo các ID nghệ sĩ và Album mẫu
-DECLARE @Artist1Id UNIQUEIDENTIFIER = '12345678-1234-1234-1234-123456789012',
-        @Artist2Id UNIQUEIDENTIFIER = '23456789-2345-2345-2345-234567890123',
-        @Artist3Id UNIQUEIDENTIFIER = '34567890-3456-3456-3456-345678901234';
-
 -- Insert Artist
 INSERT INTO Artist
-    (Id, Name, Bio)
+    (Id, Name, Bio, AvatarUrl, Genres, BannerUrl, VerifiedAt)
 VALUES
-    (@Artist1Id, N'Ngọt Band', N'Ban nhạc Indie Việt Nam'),
-    (@Artist2Id, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi'),
-    (@Artist3Id, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam');
+    (@U5, N'Ngọt Band', N'Ban nhạc Indie Việt Nam', 'https://avatar.com/ngot.jpg', N'Indie, Rock', NULL, GETUTCDATE()),
+    (@U6, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi', 'https://avatar.com/riot.jpg', N'EDM, Rock, Pop', NULL, GETUTCDATE()),
+    (@U4, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam', 'https://avatar.com/mtp.jpg', N'Pop, R&B', NULL, GETUTCDATE());
 
 DECLARE @Album1Id UNIQUEIDENTIFIER = '98765432-9876-9876-9876-987654321098';
 
@@ -265,7 +270,7 @@ DECLARE @Album1Id UNIQUEIDENTIFIER = '98765432-9876-9876-9876-987654321098';
 INSERT INTO Album
     (Id, Title, ReleaseDate, ArtistId)
 VALUES
-    (@Album1Id, N'Tuyển tập Indie', '2025-01-01', @Artist1Id);
+    (@Album1Id, N'Tuyển tập Indie', '2025-01-01', @U5);
 
 -- Khai báo các Media Items ID thật (lưu online Cloudinary & wwwroot local)
 DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05', 
@@ -283,16 +288,16 @@ DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05',
 INSERT INTO MediaItem
     (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumId, ArtistId, AlbumName, ArtistName, IsPrivate, ApprovalStatus, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, @U1, @Album1Id, @Artist1Id, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 1200000),
-    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, @U1, @Album1Id, @Artist1Id, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 850000),
-    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, @U1, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 620000),
-    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, @U1, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 430000),
-    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, @U2, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 280000),
-    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, @U2, NULL, @Artist2Id, NULL, N'Riot Games Music', 0, 'Approved', 280000),
-    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, @U1, NULL, @Artist3Id, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 150000),
+    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, @U1, @Album1Id, @U5, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 1200000),
+    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, @U1, @Album1Id, @U5, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 850000),
+    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, @U1, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 620000),
+    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, @U1, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 430000),
+    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, @U2, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 280000),
+    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, @U2, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 280000),
+    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, @U1, NULL, @U4, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 150000),
     (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, @U1, NULL, NULL, NULL, NULL, 0, 'Approved', 150000),
     (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, @U1, NULL, NULL, NULL, N'Justatee x Phương Ly', 0, 'Approved', 950000),
-    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, @U1, NULL, @Artist3Id, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 950000);
+    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, @U1, NULL, @U4, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 950000);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag
