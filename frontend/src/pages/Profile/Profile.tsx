@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Edit2, Camera, Check, Loader2, UploadCloud, Music, Film, Eye } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { userService } from "../../services/userService";
@@ -22,6 +22,32 @@ export const Profile = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [myMedia, setMyMedia] = useState<MediaItem[]>([]);
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingAvatar(true);
+      setErrorMessage("");
+      const response = await userService.uploadAvatar(file);
+      if (response.success && response.data) {
+        setTempProfile({ ...tempProfile, avatarUrl: response.data });
+      } else {
+        setErrorMessage(response.message || "Tải ảnh lên thất bại.");
+      }
+    } catch (error: any) {
+      console.error("Lỗi khi tải ảnh lên:", error);
+      setErrorMessage("Có lỗi xảy ra khi tải ảnh lên.");
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   const loadMyMedia = async () => {
     if (user?.role !== "Artist") return;
@@ -141,9 +167,9 @@ export const Profile = () => {
         {/* Avatar */}
         <div className="relative group shrink-0">
           <div className="w-36 h-36 rounded-full bg-zinc-800 border-2 border-green-500/50 flex items-center justify-center font-black text-4xl text-green-400 shadow-2xl relative overflow-hidden">
-            {user.avatarUrl ? (
+            {(isEditing ? tempProfile.avatarUrl : user.avatarUrl) ? (
               <img
-                src={user.avatarUrl}
+                src={isEditing ? tempProfile.avatarUrl : user.avatarUrl}
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />
@@ -160,10 +186,24 @@ export const Profile = () => {
             )}
           </div>
           {isEditing && (
-            <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera className="w-6 h-6 text-green-400" />
+            <div 
+              className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-slate-100 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploadingAvatar ? (
+                <Loader2 className="w-6 h-6 text-green-400 animate-spin" />
+              ) : (
+                <Camera className="w-6 h-6 text-green-400" />
+              )}
             </div>
           )}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleAvatarUpload}
+            accept="image/*"
+            className="hidden"
+          />
         </div>
 
         {/* Thông tin hồ sơ */}
@@ -252,21 +292,7 @@ export const Profile = () => {
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-zinc-500 font-bold uppercase">
-                Ảnh đại diện (Avatar URL)
-              </label>
-              <input
-                type="text"
-                value={tempProfile.avatarUrl}
-                onChange={(e) =>
-                  setTempProfile({ ...tempProfile, avatarUrl: e.target.value })
-                }
-                className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-green-500"
-                placeholder="Nhập link ảnh (URL)..."
-                disabled={isSaving}
-              />
-            </div>
+
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
