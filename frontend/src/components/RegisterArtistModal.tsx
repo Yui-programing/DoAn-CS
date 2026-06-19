@@ -3,6 +3,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { userService } from "../services/userService";
 import { UploadCloud, FileImage, X, Loader2, Music } from "lucide-react";
 
+const POPULAR_GENRES = ["Pop", "R&B", "Hip Hop", "EDM", "Rock", "Indie", "Jazz", "Lofi", "Acoustic", "Nhạc Trữ Tình"];
+
 export const RegisterArtistModal = ({
   onClose,
   onSuccess,
@@ -12,7 +14,9 @@ export const RegisterArtistModal = ({
 }) => {
   const { user } = useAuth();
   const [stageName, setStageName] = useState("");
-  const [genres, setGenres] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [showOtherGenre, setShowOtherGenre] = useState(false);
+  const [otherGenre, setOtherGenre] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +31,12 @@ export const RegisterArtistModal = ({
     try {
       const form = new FormData();
       form.append("stageName", stageName.trim());
-      form.append("genres", genres.trim());
+      
+      let finalGenres = selectedGenres.join(", ");
+      if (showOtherGenre && otherGenre.trim()) {
+        finalGenres += finalGenres ? `, ${otherGenre.trim()}` : otherGenre.trim();
+      }
+      form.append("genres", finalGenres);
       form.append("idCard", file);
 
       const res = await userService.submitArtistRegistration(form);
@@ -92,16 +101,68 @@ export const RegisterArtistModal = ({
           </div>
 
           {/* Thể loại */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-bold text-slate-200">Thể loại âm nhạc chính</label>
-            <p className="text-xs text-zinc-500 font-medium">Các thể loại âm nhạc bạn thường sáng tác hoặc biểu diễn.</p>
-            <input
-              className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-slate-200 focus:outline-none focus:border-green-500 transition-colors"
-              placeholder="VD: Pop, R&B, Hip Hop (phân cách bằng dấu phẩy)"
-              value={genres}
-              onChange={(e) => setGenres(e.target.value)}
-              disabled={isSubmitting}
-            />
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-bold text-slate-200">Thể loại âm nhạc chính</label>
+              <p className="text-xs text-zinc-500 font-medium mt-1">Các thể loại âm nhạc bạn thường sáng tác hoặc biểu diễn.</p>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {POPULAR_GENRES.map(genre => (
+                <label 
+                  key={genre}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border cursor-pointer transition-all ${
+                    selectedGenres.includes(genre) 
+                      ? 'bg-green-500/20 border-green-500 text-green-400' 
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+                  }`}
+                >
+                  <input 
+                    type="checkbox" 
+                    className="hidden"
+                    checked={selectedGenres.includes(genre)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedGenres([...selectedGenres, genre]);
+                      } else {
+                        setSelectedGenres(selectedGenres.filter(g => g !== genre));
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                  {genre}
+                </label>
+              ))}
+              
+              <label 
+                className={`px-4 py-2 rounded-full text-sm font-medium border cursor-pointer transition-all ${
+                  showOtherGenre 
+                    ? 'bg-green-500/20 border-green-500 text-green-400' 
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
+                }`}
+              >
+                <input 
+                  type="checkbox" 
+                  className="hidden"
+                  checked={showOtherGenre}
+                  onChange={(e) => setShowOtherGenre(e.target.checked)}
+                  disabled={isSubmitting}
+                />
+                Khác
+              </label>
+            </div>
+
+            {showOtherGenre && (
+              <div className="animate-fadeIn mt-2">
+                <input
+                  className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-slate-200 focus:outline-none focus:border-green-500 transition-colors"
+                  placeholder="Nhập thể loại khác (phân cách bằng dấu phẩy nếu có nhiều)"
+                  value={otherGenre}
+                  onChange={(e) => setOtherGenre(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
+            )}
           </div>
 
           {/* Ảnh CMND/CCCD */}

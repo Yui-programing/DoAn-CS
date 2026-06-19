@@ -5,6 +5,7 @@ import Search from "../pages/Search/Search";
 import Library from "../pages/Library/Library";
 import PlaylistDetail from "../pages/PlaylistDetail/PlaylistDetail";
 import Profile from "../pages/Profile/Profile";
+import { UserProfileView } from "../pages/Profile/UserProfileView";
 import Notifications from "../pages/Notifications/Notifications";
 import ShareInbox from "../pages/ShareInbox/ShareInbox";
 import Login from "../pages/Login/Login";
@@ -37,6 +38,7 @@ export const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="library" element={<Library />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="user/:id" element={<UserProfileView />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="share" element={<ShareInbox />} />
           <Route path="favorites" element={<Favorites />} />

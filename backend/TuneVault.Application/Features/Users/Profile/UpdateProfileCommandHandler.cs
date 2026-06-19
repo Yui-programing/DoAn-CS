@@ -24,6 +24,7 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
         user.FullName = request.FullName;
         user.Bio = request.Bio;
         user.AvatarUrl = request.AvatarUrl;
+        user.IsPublic = request.IsPublic;
 
         // Lưu vào DB
         await _userRepository.UpdateProfileAsync(user);

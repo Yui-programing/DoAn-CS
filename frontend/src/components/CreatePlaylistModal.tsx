@@ -138,44 +138,17 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ isOpen
 
           <form id="playlist-form" onSubmit={handleSubmit} className="space-y-6">
             
-            {/* Loại (Playlist / Album) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-zinc-300">Loại <span className="text-red-400">*</span></label>
-              <div className="flex gap-4">
-                <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${type === 0 ? 'border-green-500 bg-green-500/10 text-green-400' : 'border-zinc-700 hover:border-zinc-500 text-zinc-400'}`}>
-                  <input 
-                    type="radio" 
-                    name="type" 
-                    value={0} 
-                    checked={type === 0} 
-                    onChange={() => setType(0)} 
-                    className="hidden"
-                  />
-                  <span className="font-semibold text-sm">Playlist</span>
-                </label>
-                <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${type === 1 ? 'border-green-500 bg-green-500/10 text-green-400' : 'border-zinc-700 hover:border-zinc-500 text-zinc-400'}`}>
-                  <input 
-                    type="radio" 
-                    name="type" 
-                    value={1} 
-                    checked={type === 1} 
-                    onChange={() => setType(1)} 
-                    className="hidden"
-                  />
-                  <span className="font-semibold text-sm">Album</span>
-                </label>
-              </div>
-            </div>
+
 
             {/* Title */}
             <div className="flex flex-col gap-2">
-              <label htmlFor="title" className="text-sm font-semibold text-zinc-300">Tên {type === 0 ? 'Playlist' : 'Album'} <span className="text-red-400">*</span></label>
+              <label htmlFor="title" className="text-sm font-semibold text-zinc-300">Tên Playlist <span className="text-red-400">*</span></label>
               <input
                 id="title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={type === 0 ? "VD: Nhạc quẩy cuối tuần" : "VD: Tên Album"}
+                placeholder="VD: Nhạc quẩy cuối tuần"
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-zinc-500 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
               />
             </div>
@@ -206,7 +179,7 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ isOpen
               </label>
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-slate-200">Công khai</span>
-                <span className="text-xs text-zinc-400">Người khác có thể tìm thấy và xem {type === 0 ? 'Playlist' : 'Album'} này.</span>
+                <span className="text-xs text-zinc-400">Người khác có thể tìm thấy và xem Playlist này.</span>
               </div>
             </div>
 

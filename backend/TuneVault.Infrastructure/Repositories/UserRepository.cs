@@ -36,8 +36,16 @@ namespace TuneVault.Infrastructure.Repositories
                 SET 
                     FullName = @FullName,
                     Bio = @Bio, 
+                    AvatarUrl = @AvatarUrl,
+                    IsPublic = @IsPublic
+                WHERE Id = @Id;
+
+                -- Đồng bộ sang bảng Artist nếu user này là Artist
+                UPDATE Artist
+                SET 
+                    Bio = @Bio,
                     AvatarUrl = @AvatarUrl
-                WHERE Id = @Id"; // Khóa ngoại liên kết
+                WHERE Id = @Id;"; // Khóa ngoại liên kết
 
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, profile);
             return rowsAffected > 0;
@@ -57,7 +65,7 @@ namespace TuneVault.Infrastructure.Repositories
         {
             const string sql = @"
                 SELECT u.Id, u.Email, u.PasswordHash, u.[Role], u.CreatedAt, u.IsActive,
-                       p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio
+                       p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio, p.IsPublic
                 FROM [User] u
                 LEFT JOIN UserProfile p ON u.Id = p.Id";
             var userDictionary = new Dictionary<Guid, User>();
@@ -84,7 +92,7 @@ namespace TuneVault.Infrastructure.Repositories
         {
             const string sql = @"
                 SELECT u.Id, u.Email, u.PasswordHash, u.[Role], u.CreatedAt, u.IsActive,
-                       p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio
+                       p.Id AS ProfileId, p.FullName, p.AvatarUrl, p.Bio, p.IsPublic
                 FROM [User] u
                 LEFT JOIN UserProfile p ON u.Id = p.Id
                 WHERE u.Id = @Id";

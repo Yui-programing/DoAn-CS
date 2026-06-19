@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Edit2, Camera, Check, Loader2, UploadCloud, Music, Film, Eye } from "lucide-react";
+import { Edit2, Camera, Check, Loader2, UploadCloud, Music, Film, Eye, CheckCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { userService } from "../../services/userService";
 import { mediaService } from "../../services";
@@ -14,6 +14,8 @@ export const Profile = () => {
     fullName: "",
     bio: "",
     avatarUrl: "",
+    bannerUrl: "",
+    isPublic: true,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -23,7 +25,9 @@ export const Profile = () => {
   const [myMedia, setMyMedia] = useState<MediaItem[]>([]);
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,6 +49,30 @@ export const Profile = () => {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingBanner(true);
+      setErrorMessage("");
+      const response = await userService.uploadBanner(file);
+      if (response.success && response.data) {
+        setTempProfile({ ...tempProfile, bannerUrl: response.data });
+      } else {
+        setErrorMessage(response.message || "Tải ảnh bìa lên thất bại.");
+      }
+    } catch (error: any) {
+      console.error("Lỗi khi tải ảnh bìa lên:", error);
+      setErrorMessage("Có lỗi xảy ra khi tải ảnh bìa lên.");
+    } finally {
+      setIsUploadingBanner(false);
+      if (bannerInputRef.current) {
+        bannerInputRef.current.value = "";
       }
     }
   };
@@ -71,6 +99,8 @@ export const Profile = () => {
         fullName: user.fullName || "",
         bio: user.bio || "",
         avatarUrl: user.avatarUrl || "",
+        bannerUrl: user.bannerUrl || "",
+        isPublic: user.isPublic ?? true,
       });
       if (user.role === "Artist") {
         loadMyMedia();
@@ -113,6 +143,7 @@ export const Profile = () => {
         fullName: tempProfile.fullName.trim(),
         bio: tempProfile.bio?.trim(),
         avatarUrl: tempProfile.avatarUrl?.trim(),
+        isPublic: tempProfile.isPublic,
       });
 
       if (response.success) {
@@ -162,89 +193,189 @@ export const Profile = () => {
         </div>
       )}
 
-      {/* Banner hồ sơ */}
-      <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900">
-        {/* Avatar */}
-        <div className="relative group shrink-0">
-          <div className="w-36 h-36 rounded-full bg-zinc-800 border-2 border-green-500/50 flex items-center justify-center font-black text-4xl text-green-400 shadow-2xl relative overflow-hidden">
-            {(isEditing ? tempProfile.avatarUrl : user.avatarUrl) ? (
-              <img
-                src={isEditing ? tempProfile.avatarUrl : user.avatarUrl}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span>
-                {user.fullName
-                  ? user.fullName
-                      .split(" ")
-                      .pop()
-                      ?.substring(0, 2)
-                      .toUpperCase()
-                  : "U"}
-              </span>
+      {/* === HEADER HỒ SƠ === */}
+      {user.role === "Artist" ? (
+        /* --- LAYOUT DÀNH CHO ARTIST (Giống Spotify) --- */
+        <div className="relative w-full h-[350px] md:h-[450px] lg:h-[500px] bg-zinc-900 border border-zinc-800 overflow-hidden group shadow-2xl rounded-3xl -mt-4">
+          {/* Banner Image */}
+          {(isEditing ? tempProfile.bannerUrl : user.bannerUrl) ? (
+            <img
+              src={isEditing ? tempProfile.bannerUrl : user.bannerUrl}
+              alt="Banner"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+              <Music className="w-24 h-24 text-zinc-700" />
+            </div>
+          )}
+
+          {/* Gradient Overlay (làm tối phía dưới để chữ trắng nổi lên) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-900/40 to-transparent pointer-events-none" />
+
+          {/* Nội dung Text */}
+          <div className="absolute bottom-0 left-0 p-6 md:p-10 w-full flex flex-col md:flex-row items-start md:items-end justify-between gap-6 z-10">
+            <div className="space-y-1 md:space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="w-5 h-5 md:w-6 md:h-6 fill-blue-500 text-white" />
+                <span className="text-xs md:text-sm text-white font-medium tracking-wide drop-shadow-md">Verified by TuneVault</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl lg:text-[100px] font-black text-white tracking-tighter drop-shadow-2xl leading-none">
+                {user.fullName}
+              </h1>
+              
+              {/* Thể loại âm nhạc */}
+              {user.genres && (
+                <div className="flex flex-wrap items-center gap-2 pt-4">
+                  {user.genres.split(",").map((genre, index) => (
+                    <span 
+                      key={index} 
+                      className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] md:text-xs font-bold rounded-full uppercase tracking-wider"
+                    >
+                      {genre.trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Nút Edit */}
+            {!isEditing && (
+              <button
+                onClick={() => {
+                  setTempProfile({
+                    fullName: user.fullName || "",
+                    bio: user.bio || "",
+                    avatarUrl: user.avatarUrl || "",
+                    bannerUrl: user.bannerUrl || "",
+                    isPublic: user.isPublic || false,
+                  });
+                  setIsEditing(true);
+                }}
+                className="shrink-0 bg-white hover:bg-zinc-200 text-black text-xs font-bold px-5 py-2.5 rounded-full transition-colors flex items-center gap-2"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Chỉnh sửa hồ sơ</span>
+              </button>
             )}
           </div>
+
+          {/* Banner Upload Overlay (Khi Edit) */}
           {isEditing && (
             <div 
-              className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-slate-100 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm z-20"
+              onClick={() => bannerInputRef.current?.click()}
             >
-              {isUploadingAvatar ? (
-                <Loader2 className="w-6 h-6 text-green-400 animate-spin" />
-              ) : (
-                <Camera className="w-6 h-6 text-green-400" />
-              )}
+              <div className="flex flex-col items-center gap-2 bg-zinc-900/90 px-8 py-6 rounded-3xl border border-zinc-700/50 shadow-2xl">
+                {isUploadingBanner ? (
+                  <Loader2 className="w-8 h-8 text-green-400 animate-spin" />
+                ) : (
+                  <>
+                    <Camera className="w-8 h-8 text-green-400" />
+                    <span className="text-base font-bold text-slate-200">Đổi ảnh bìa nền</span>
+                  </>
+                )}
+              </div>
             </div>
           )}
           <input
             type="file"
-            ref={fileInputRef}
-            onChange={handleAvatarUpload}
+            ref={bannerInputRef}
+            onChange={handleBannerUpload}
             accept="image/*"
             className="hidden"
           />
         </div>
+      ) : (
+        /* --- LAYOUT DÀNH CHO USER BÌNH THƯỜNG --- */
+        <>
+          {/* Thông tin hồ sơ Header */}
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900 relative z-10 pt-4">
+            {/* Avatar */}
+            <div className="relative group shrink-0">
+              <div className="w-36 h-36 rounded-full bg-zinc-800 border-2 border-green-500/50 flex items-center justify-center font-black text-4xl text-green-400 shadow-2xl relative overflow-hidden">
+                {(isEditing ? tempProfile.avatarUrl : user.avatarUrl) ? (
+                  <img
+                    src={isEditing ? tempProfile.avatarUrl : user.avatarUrl}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>
+                    {user.fullName
+                      ? user.fullName
+                          .split(" ")
+                          .pop()
+                          ?.substring(0, 2)
+                          .toUpperCase()
+                      : "U"}
+                  </span>
+                )}
+              </div>
+              {isEditing && (
+                <div 
+                  className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-slate-100 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploadingAvatar ? (
+                    <Loader2 className="w-6 h-6 text-green-400 animate-spin" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-green-400" />
+                  )}
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
 
-        {/* Thông tin hồ sơ */}
-        <div className="text-center md:text-left space-y-2 flex-1">
-          <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
-            Hồ sơ cá nhân
-          </span>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-100 mt-1">
-            {user.fullName}
-          </h2>
-          <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-xl">
-            {user.bio || "Chưa có tiểu sử giới thiệu bản thân."}
-          </p>
+            {/* Thông tin hồ sơ */}
+            <div className="text-center md:text-left space-y-2 flex-1">
+              <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 inline-block">
+                Hồ sơ cá nhân
+              </span>
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-100 mt-1 flex items-center justify-center md:justify-start gap-2">
+                {user.fullName}
+              </h2>
+              <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-xl">
+                {user.bio || "Chưa có tiểu sử giới thiệu bản thân."}
+              </p>
 
-          <div className="text-xs text-zinc-500 font-bold tracking-wide pt-1 flex items-center justify-center md:justify-start gap-4">
-            <span>2 Playlist cá nhân</span>
-            <span>•</span>
-            <span>12 Người theo dõi</span>
-            <span>•</span>
-            <span>8 Bài hát yêu thích</span>
+              <div className="text-xs text-zinc-500 font-bold tracking-wide pt-1 flex items-center justify-center md:justify-start gap-4">
+                <span>2 Playlist cá nhân</span>
+                <span>•</span>
+                <span>12 Người theo dõi</span>
+                <span>•</span>
+                <span>8 Bài hát yêu thích</span>
+              </div>
+            </div>
+
+            {/* Nút Edit */}
+            {!isEditing && (
+              <button
+                onClick={() => {
+                  setTempProfile({
+                    fullName: user.fullName || "",
+                    bio: user.bio || "",
+                    avatarUrl: user.avatarUrl || "",
+                    bannerUrl: user.bannerUrl || "",
+                    isPublic: user.isPublic || false,
+                  });
+                  setIsEditing(true);
+                }}
+                className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-green-400 text-xs font-bold px-4 py-2.5 rounded-full border border-zinc-800 transition-colors shrink-0"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Chỉnh sửa hồ sơ</span>
+              </button>
+            )}
           </div>
-        </div>
-
-        {/* Nút Edit */}
-        {!isEditing && (
-          <button
-            onClick={() => {
-              setTempProfile({
-                fullName: user.fullName || "",
-                bio: user.bio || "",
-                avatarUrl: user.avatarUrl || "",
-              });
-              setIsEditing(true);
-            }}
-            className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-green-400 text-xs font-bold px-4 py-2.5 rounded-full border border-zinc-800 transition-colors shrink-0"
-          >
-            <Edit2 className="w-4 h-4" />
-            <span>Chỉnh sửa hồ sơ</span>
-          </button>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Form chỉnh sửa nếu ở chế độ Edit */}
       {isEditing && (
@@ -260,6 +391,50 @@ export const Profile = () => {
           )}
 
           <div className="space-y-4">
+            {/* Nếu là Artist thì cho thêm nút upload Avatar ở đây (vì header ẩn mất Avatar rồi) */}
+            {user.role === "Artist" && (
+              <div className="flex flex-col gap-1.5 pb-2">
+                <label className="text-xs text-zinc-500 font-bold uppercase">
+                  Ảnh đại diện (Avatar)
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden shrink-0">
+                    {tempProfile.avatarUrl || user.avatarUrl ? (
+                      <img
+                        src={tempProfile.avatarUrl || user.avatarUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || 'U')}&background=3f3f46&color=fff&size=128`;
+                        }}
+                      />
+                    ) : (
+                      <Music className="w-6 h-6 text-zinc-600" />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                    Tải ảnh lên
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleAvatarUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col gap-1.5">
               <label className="text-xs text-zinc-500 font-bold uppercase">
                 Họ và Tên
@@ -292,6 +467,23 @@ export const Profile = () => {
               />
             </div>
 
+            {/* Toggle IsPublic */}
+            <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-4 rounded-lg">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-200">Hiển thị hồ sơ công khai</span>
+                <span className="text-xs text-zinc-500">Cho phép người khác tìm thấy và xem hồ sơ của bạn</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={tempProfile.isPublic}
+                  onChange={(e) => setTempProfile({ ...tempProfile, isPublic: e.target.checked })}
+                  disabled={isSaving}
+                />
+                <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+              </label>
+            </div>
 
           </div>
 
