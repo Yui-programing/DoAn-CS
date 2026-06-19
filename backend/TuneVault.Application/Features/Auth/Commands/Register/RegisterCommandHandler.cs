@@ -38,7 +38,7 @@ namespace TuneVault.Application.Features.Auth.Commands.Register
             // 3. Tạo cấu trúc Entity
             var newUser = new User
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Guid.NewGuid(),
                 Email = request.Email,
                 PasswordHash = passwordHash,
                 Role = "User",

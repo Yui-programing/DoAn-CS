@@ -5,7 +5,7 @@ namespace TuneVault.Application.Models
     public class FavoriteDto
     {
         public Guid Id { get; set; }
-        public string UserId { get; set; } = null!;
+        public Guid UserId { get; set; }
         public Guid MediaItemId { get; set; }
         public DateTime CreatedAt { get; set; }
         
@@ -17,3 +17,5 @@ namespace TuneVault.Application.Models
         public int MediaType { get; set; }
     }
 }
+
+

@@ -5,6 +5,7 @@ import Search from "../pages/Search/Search";
 import Library from "../pages/Library/Library";
 import PlaylistDetail from "../pages/PlaylistDetail/PlaylistDetail";
 import Profile from "../pages/Profile/Profile";
+import { UserProfileView } from "../pages/Profile/UserProfileView";
 import Notifications from "../pages/Notifications/Notifications";
 import ShareInbox from "../pages/ShareInbox/ShareInbox";
 import Login from "../pages/Login/Login";
@@ -32,11 +33,13 @@ export const AppRoutes = () => {
         <Route index element={<Home />} />
         <Route path="search" element={<Search />} />
         <Route path="playlist/:id" element={<PlaylistDetail />} />
+        <Route path="album/:id" element={<PlaylistDetail />} />
 
         {/* Các trang cần đăng nhập mới vào được (Protected) */}
         <Route element={<ProtectedRoute />}>
           <Route path="library" element={<Library />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="user/:id" element={<UserProfileView />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="share" element={<ShareInbox />} />
           <Route path="favorites" element={<Favorites />} />

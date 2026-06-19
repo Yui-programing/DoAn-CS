@@ -6,8 +6,10 @@ namespace TuneVault.Application.Features.Notifications.Commands
 {
     public class CreateNotificationCommand : IRequest<Notification>
     {
-        public string UserId { get; set; } = null!;
+        public Guid UserId { get; set; }
         public NotificationType Type { get; set; } = NotificationType.System;
         public string PayloadJson { get; set; } = null!;
     }
 }
+
+

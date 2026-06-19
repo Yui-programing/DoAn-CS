@@ -16,6 +16,7 @@ namespace TuneVault.Application.Models
         public int MediaType { get; set; }
         public int ViewCount { get; set; }
         public int DurationInSeconds { get; set; }
+        public bool IsVerified { get; set; }
     }
 
     public class SuggestionResultDto

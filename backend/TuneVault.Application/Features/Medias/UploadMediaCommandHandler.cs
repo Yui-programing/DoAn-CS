@@ -27,11 +27,8 @@ public class UploadMediaCommandHandler : IRequestHandler<UploadMediaCommand, Gui
             CoverUrl = request.CoverUrl,
             DurationInSeconds = request.DurationInSeconds,
             MediaType = request.MediaType,
-            OwnerId = request.OwnerId,
             AlbumId = null,
-            ArtistId = null,
-            AlbumName = request.AlbumName,
-            ArtistName = request.ArtistName,
+            ArtistId = request.ArtistId,
             IsPrivate = request.IsPrivate,
             ViewCount = 0
         };

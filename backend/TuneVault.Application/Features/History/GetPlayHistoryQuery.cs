@@ -8,7 +8,7 @@ namespace TuneVault.Application.Features.History;
 public class PlayHistoryResultDto
 {
     public Guid Id { get; set; }
-    public string UserId { get; set; } = null!;
+    public Guid UserId { get; set; }
     public Guid MediaItemId { get; set; }
     public DateTime PlayedAt { get; set; }
 
@@ -29,6 +29,8 @@ public class PlayHistoryMediaItemDto
 
 public class GetPlayHistoryQuery : IRequest<IEnumerable<PlayHistoryResultDto>>
 {
-    public string UserId { get; set; } = null!;
+    public Guid UserId { get; set; }
     public int Limit { get; set; } = 20;
 }
+
+

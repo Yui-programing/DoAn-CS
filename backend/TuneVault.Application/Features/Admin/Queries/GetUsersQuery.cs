@@ -9,7 +9,7 @@ namespace TuneVault.Application.Features.Admin.Queries
 
     public class AdminUserDto
     {
-        public string Id { get; set; } = string.Empty;
+        public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
@@ -46,3 +46,5 @@ namespace TuneVault.Application.Features.Admin.Queries
         }
     }
 }
+
+

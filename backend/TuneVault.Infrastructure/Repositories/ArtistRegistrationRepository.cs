@@ -47,10 +47,11 @@ namespace TuneVault.Infrastructure.Repositories
             return rows > 0;
         }
 
-        public async Task<IEnumerable<ArtistRegistration>> GetByUserIdAsync(string userId)
+        public async Task<IEnumerable<ArtistRegistration>> GetByUserIdAsync(Guid userId)
         {
             const string sql = "SELECT * FROM ArtistRegistrations WHERE UserId = @UserId ORDER BY SubmittedAt DESC";
             return await _dbConnection.QueryAsync<ArtistRegistration>(sql, new { UserId = userId });
         }
     }
 }
+

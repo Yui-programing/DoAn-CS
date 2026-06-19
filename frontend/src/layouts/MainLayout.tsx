@@ -29,10 +29,12 @@ import {
   Folder,
   Plus,
   Check,
+  CheckCircle,
 } from "lucide-react";
 import { NotificationBell } from "../components/NotificationBell";
 import { RightPanel } from "../components/RightPanel";
 import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
+import { CreateAlbumModal } from "../components/CreateAlbumModal";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 import { useFavorite } from "../contexts/FavoriteContext";
 import { formatTime, formatDuration } from "../utils";
@@ -95,6 +97,9 @@ export const MainLayout = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [addToPlaylistTrackId, setAddToPlaylistTrackId] = useState<string | null>(null);
   const [playlistModalPlacement, setPlaylistModalPlacement] = useState<'player' | 'right-panel'>('player');
+  const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [showCreateAlbum, setShowCreateAlbum] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const [isTrackInPlaylist, setIsTrackInPlaylist] = useState(false);
 
   // Lưu trạng thái thu gọn vào localStorage
@@ -361,8 +366,8 @@ export const MainLayout = () => {
             } else {
               handlePlaySong(item, songSuggestions);
             }
-          } else if (item.type === 'Artist') {
-            navigate(`/artist/${item.id}`);
+          } else if (item.type === 'Artist' || item.type === 'User') {
+            navigate(`/user/${item.id}`);
           }
           setShowDropdown(false);
         }
@@ -718,8 +723,8 @@ export const MainLayout = () => {
                               } else {
                                 handlePlaySong(item, songSuggestions);
                               }
-                            } else if (item.type === 'Artist') {
-                              navigate(`/artist/${item.id}`);
+                            } else if (item.type === 'Artist' || item.type === 'User') {
+                              navigate(`/user/${item.id}`);
                             }
                             setShowDropdown(false);
                           }}
@@ -732,22 +737,29 @@ export const MainLayout = () => {
                                 src={mediaService.getImageUrl(item.coverUrl)}
                                 alt={item.name || item.title}
                                 className={`w-8 h-8 object-cover shrink-0 ${
-                                  item.type === 'Artist' ? 'rounded-full' : 'rounded'
+                                  item.type === 'Artist' || item.type === 'User' ? 'rounded-full' : 'rounded'
                                 }`}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || item.title || 'A')}&background=3f3f46&color=fff`;
+                                }}
                               />
                             ) : (
                               <div className={`w-8 h-8 bg-zinc-800 flex items-center justify-center shrink-0 ${
-                                item.type === 'Artist' ? 'rounded-full' : 'rounded'
+                                item.type === 'Artist' || item.type === 'User' ? 'rounded-full' : 'rounded'
                               }`}>
                                 <Music className="w-4 h-4 text-zinc-500" />
                               </div>
                             )}
                             <div className="min-w-0">
-                              <h5 className={`text-xs font-semibold truncate ${isThisPlaying ? "text-green-400" : "text-zinc-200"}`}>
+                              <h5 className={`text-xs font-semibold flex items-center gap-1.5 truncate ${isThisPlaying ? "text-green-400" : "text-zinc-200"}`}>
                                 {item.name || item.title}
+                                {item.type === 'Artist' && item.isVerified && (
+                                  <CheckCircle className="w-3.5 h-3.5 text-blue-400 shrink-0" fill="currentColor" />
+                                )}
                               </h5>
                               <p className="text-[10px] text-zinc-400 truncate">
-                                {item.type === 'Artist' ? 'Nghệ sĩ' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
+                                {item.type === 'Artist' ? 'Nghệ sĩ' : item.type === 'User' ? 'Người dùng' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
                               </p>
                             </div>
                           </div>
@@ -860,7 +872,7 @@ export const MainLayout = () => {
         {/* 1. SIDEBAR (Bên trái) */}
         <aside 
           className={`${
-            isSidebarCollapsed ? "w-[72px]" : "w-80"
+            isSidebarCollapsed ? "w-[88px]" : "w-80"
           } bg-zinc-950 rounded-xl flex flex-col p-3.5 gap-4 shrink-0 border border-zinc-900 transition-all duration-300 ease-in-out overflow-hidden`}
         >
           {/* Logo */}
@@ -917,13 +929,49 @@ export const MainLayout = () => {
                 <span className="font-bold text-sm">Thư viện</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <button 
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="w-7 h-7 rounded-full hover:bg-zinc-900 flex items-center justify-center hover:text-white transition-colors cursor-pointer" 
-                  title="Tạo playlist"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowAddMenu(!showAddMenu)} 
+                    className="w-7 h-7 rounded-full hover:bg-zinc-900 flex items-center justify-center hover:text-white transition-colors cursor-pointer" 
+                    title="Tạo mới"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  
+                  {/* Dropdown Menu Tạo Mới */}
+                  {showAddMenu && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowAddMenu(false)}
+                      />
+                      <div className="absolute top-full right-0 mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50 overflow-hidden py-1">
+                        <button
+                          onClick={() => {
+                            setShowAddMenu(false);
+                            setIsCreateModalOpen(true);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                        >
+                          Tạo playlist mới
+                        </button>
+                        
+                        {user?.role === 'Artist' && (
+                          <button
+                            onClick={() => {
+                              setShowAddMenu(false);
+                              setShowCreateAlbum(true);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                          >
+                            Tạo album mới
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
                 <button 
                   onClick={() => handleToggleSidebar(true)} 
                   className="w-7 h-7 rounded-full hover:bg-zinc-900 flex items-center justify-center hover:text-white transition-colors cursor-pointer" 
@@ -1345,11 +1393,18 @@ export const MainLayout = () => {
       </footer>
 
       {/* MODAL TẠO PLAYLIST */}
-      <CreatePlaylistModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
+      <CreatePlaylistModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
 
+      {showCreateAlbum && (
+        <CreateAlbumModal
+          isOpen={showCreateAlbum}
+          onClose={() => setShowCreateAlbum(false)}
+        />
+      )}
+      
       {/* MODAL THÊM BÀI HÁT VÀO PLAYLIST */}
       {addToPlaylistTrackId && (
         <AddToPlaylistModal

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,8 +7,8 @@ namespace TuneVault.Application.Features.Share
 {
     public class SharePlaylistCommand: IRequest<Guid>
     {
-        public string ReceiverId { get; set; } = null!;
-        public string SenderId { get; set; } = null!;
+        public Guid ReceiverId { get; set; }
+        public Guid SenderId { get; set; }
 
         public Guid PlaylistId { get; set; }
 
@@ -16,3 +16,4 @@ namespace TuneVault.Application.Features.Share
 
     }
 }
+

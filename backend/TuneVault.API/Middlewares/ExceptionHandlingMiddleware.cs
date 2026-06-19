@@ -59,7 +59,14 @@ namespace TuneVault.API.Middlewares
             {
                 // Lỗi khi check IsOwnerAsync thất bại (Không có quyền)
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                message = "Bạn không có quyền thực hiện thao tác này.";
+                message = string.IsNullOrEmpty(exception.Message) || exception.Message.Contains("attempted to perform an unauthorized operation")
+                    ? "Bạn không có quyền thực hiện thao tác này."
+                    : exception.Message;
+            }
+            else if (exception is KeyNotFoundException)
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                message = exception.Message;
             }
             else if (exception is InvalidOperationException || exception is ArgumentException)
             {

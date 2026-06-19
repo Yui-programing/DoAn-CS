@@ -43,6 +43,7 @@ export const Search = () => {
   const [trendingTracks, setTrendingTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'All' | 'Artist' | 'Song' | 'Video' | 'Profile'>('All');
   
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorite();
@@ -100,6 +101,15 @@ export const Search = () => {
   const videoMVs = results.filter(item => item.type === 'Song' && item.mediaType === 1);
   const artists = results.filter(item => item.type === 'Artist');
   const playlists = results.filter(item => item.type === 'Playlist');
+  const profiles = results.filter(item => item.type === 'User');
+
+  const tabs: { id: 'All' | 'Artist' | 'Song' | 'Video' | 'Profile', label: string }[] = [
+    { id: 'All', label: 'Tất cả' },
+    { id: 'Song', label: 'Bài hát' },
+    { id: 'Artist', label: 'Nghệ sĩ' },
+    { id: 'Profile', label: 'Hồ sơ' },
+    { id: 'Video', label: 'Video' },
+  ];
 
   // Xử lý phát nhạc audio tìm kiếm
   const handlePlaySong = (song: any, tracksPool: any[]) => {
@@ -148,8 +158,23 @@ export const Search = () => {
             </div>
           ) : (
             <>
+              {/* Tabs Lọc */}
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
+                      activeTab === tab.id ? 'bg-white text-black' : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
               {/* PHẦN 2.1: BÀI HÁT (AUDIO) */}
-              {audioSongs.length > 0 && (
+              {(activeTab === 'All' || activeTab === 'Song') && audioSongs.length > 0 && (
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-bold">
                     <Music className="w-5 h-5 text-emerald-400" />
@@ -243,7 +268,7 @@ export const Search = () => {
               )}
 
               {/* PHẦN 2.2: PLAYLISTS */}
-              {playlists.length > 0 && (
+              {activeTab === 'All' && playlists.length > 0 && (
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-bold">
                     <ListMusic className="w-5 h-5 text-yellow-400" />
@@ -287,7 +312,7 @@ export const Search = () => {
               )}
 
               {/* PHẦN 2.3: MV CA NHẠC (VIDEO) */}
-              {videoMVs.length > 0 && (
+              {(activeTab === 'All' || activeTab === 'Video') && videoMVs.length > 0 && (
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-bold">
                     <Film className="w-5 h-5 text-cyan-400" />
@@ -336,7 +361,7 @@ export const Search = () => {
               )}
 
               {/* PHẦN 2.4: NGHỆ SĨ */}
-              {artists.length > 0 && (
+              {(activeTab === 'All' || activeTab === 'Artist') && artists.length > 0 && (
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-bold">
                     <User className="w-5 h-5 text-purple-400" />
@@ -367,6 +392,48 @@ export const Search = () => {
                           {artist.name}
                         </span>
                         <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Nghệ sĩ</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {/* PHẦN 2.5: NGƯỜI DÙNG (PROFILE) */}
+              {(activeTab === 'All' || activeTab === 'Profile') && profiles.length > 0 && (
+                <section className="space-y-4 mt-8">
+                  <div className="flex items-center gap-2 text-zinc-200 font-bold">
+                    <User className="w-5 h-5 text-blue-400" />
+                    <h3 className="text-xl tracking-tight">Hồ sơ</h3>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    {profiles.map((profile) => (
+                      <div 
+                        key={profile.id}
+                        onClick={() => navigate(`/user/${profile.id}`)}
+                        className="flex flex-col items-center p-3 bg-zinc-900/35 hover:bg-zinc-850/40 border border-transparent hover:border-zinc-800/50 rounded-xl transition-all duration-200 cursor-pointer text-center group"
+                      >
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-zinc-850 shadow-md mb-3 relative group-hover:shadow-blue-500/10 transition-shadow">
+                          {profile.coverUrl ? (
+                            <img 
+                              src={mediaService.getImageUrl(profile.coverUrl)} 
+                              alt={profile.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'U')}&background=3f3f46&color=fff`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500">
+                              <User className="w-8 h-8" />
+                            </div>
+                          )}
+                        </div>
+
+                        <span className="font-bold text-xs text-zinc-300 group-hover:text-white line-clamp-1">
+                          {profile.name}
+                        </span>
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Hồ sơ</span>
                       </div>
                     ))}
                   </div>

@@ -24,6 +24,7 @@ namespace TuneVault.Infrastructure
 
             // Đăng ký Repository
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IArtistRepository, ArtistRepository>();
             services.AddScoped<IPlaylistRepository, PlaylistRepository>();
             services.AddScoped<IMediaItemRepository, MediaItemRepository>();
             services.AddScoped<IArtistRegistrationRepository, ArtistRegistrationRepository>();
@@ -33,6 +34,7 @@ namespace TuneVault.Infrastructure
             services.AddScoped<ISearchRepository, SearchRepository>();
             services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
+            services.AddScoped<IAlbumRepository, AlbumRepository>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.IEmailService, EmailService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.INotificationService, NotificationService>();

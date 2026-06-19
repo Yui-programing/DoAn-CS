@@ -66,7 +66,7 @@ namespace TuneVault.API.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true, //Ngăn chặn Js truy cập
-                Secure = true, //Chỉ gửi qua HTTPS khi chạy Production
+                Secure = Request.IsHttps, // Tự động bật Secure khi dùng HTTPS, tắt khi dùng HTTP ở local
                 SameSite = SameSiteMode.Strict, // Chống CSRF
                 Expires = DateTimeOffset.UtcNow.AddDays(7)//Thời gian hết hạn của cookie là 7 ngày khớp với token
             };
@@ -84,7 +84,7 @@ namespace TuneVault.API.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = Request.IsHttps,
                 SameSite = SameSiteMode.Strict,
                 Expires = DateTimeOffset.UtcNow.AddDays(-1) // Hết hạn từ ngày hôm qua
             };

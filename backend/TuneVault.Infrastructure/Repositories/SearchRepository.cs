@@ -44,34 +44,57 @@ namespace TuneVault.Infrastructure.Repositories
 
             string sql = @"
             WITH SearchResults AS (
-                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds, CAST(0 AS BIT) AS IsVerified
                 FROM MediaItem m
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
-                FROM Artist 
-                WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
+                SELECT a.Id, a.Name, 'Artist' AS Type, p.AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CASE WHEN a.VerifiedAt IS NOT NULL THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsVerified
+                FROM Artist a
+                LEFT JOIN UserProfile p ON a.Id = p.Id
+                WHERE a.Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CAST(0 AS BIT) AS IsVerified
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
+                UNION ALL
+                SELECT p.Id, p.FullName AS Name, 'User' AS Type, p.AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CAST(0 AS BIT) AS IsVerified
+                FROM UserProfile p
+                INNER JOIN [User] u ON p.Id = u.Id
+                WHERE p.FullName LIKE @Keyword AND p.IsPublic = 1 AND u.Role = 'User' AND (@FilterType IS NULL OR @FilterType = 'User')
+                UNION ALL
+                SELECT a.Id, a.Title AS Name, 'Album' AS Type, a.CoverImageUrl AS CoverUrl, ar.Name AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CAST(0 AS BIT) AS IsVerified
+                FROM Album a
+                LEFT JOIN Artist ar ON a.ArtistId = ar.Id
+                WHERE a.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Album')
+
             )
             SELECT COUNT(1) FROM SearchResults;
 
             WITH SearchResults AS (
-                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds
+                SELECT m.Id, m.Title AS Name, 'Song' AS Type, m.CoverUrl, a.Name AS ArtistName, m.MediaType, m.ViewCount, m.DurationInSeconds, CAST(0 AS BIT) AS IsVerified
                 FROM MediaItem m
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT Id, Name, 'Artist' AS Type, AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
-                FROM Artist 
-                WHERE Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
+                SELECT a.Id, a.Name, 'Artist' AS Type, p.AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CASE WHEN a.VerifiedAt IS NOT NULL THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsVerified
+                FROM Artist a
+                LEFT JOIN UserProfile p ON a.Id = p.Id
+                WHERE a.Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')
                 UNION ALL
-                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds
+                SELECT Id, Title AS Name, 'Playlist' AS Type, NULL AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CAST(0 AS BIT) AS IsVerified
                 FROM Playlist
                 WHERE Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Playlist')
+                UNION ALL
+                SELECT p.Id, p.FullName AS Name, 'User' AS Type, p.AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CAST(0 AS BIT) AS IsVerified
+                FROM UserProfile p
+                INNER JOIN [User] u ON p.Id = u.Id
+                WHERE p.FullName LIKE @Keyword AND p.IsPublic = 1 AND u.Role = 'User' AND (@FilterType IS NULL OR @FilterType = 'User')
+                UNION ALL
+                SELECT a.Id, a.Title AS Name, 'Album' AS Type, a.CoverImageUrl AS CoverUrl, ar.Name AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CAST(0 AS BIT) AS IsVerified
+                FROM Album a
+                LEFT JOIN Artist ar ON a.ArtistId = ar.Id
+                WHERE a.Title LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Album')
             )
             SELECT * FROM SearchResults
             ORDER BY ViewCount DESC, Type, Name
