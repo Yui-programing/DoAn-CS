@@ -34,7 +34,12 @@ public class MediaController : ControllerBase
         _mediaItemRepository = mediaItemRepository;
     }
 
-    private string? GetUserIdFromJwt() => User.FindFirstValue(ClaimTypes.NameIdentifier);
+            private Guid GetUserIdFromJwt()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userIdStr, out var userId)) return userId;
+            return Guid.Empty;
+        }
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
@@ -42,7 +47,7 @@ public class MediaController : ControllerBase
     public async Task<IActionResult> UploadMedia([FromForm] UploadMediaRequest request)
     {
         var userId = GetUserIdFromJwt();
-        if (string.IsNullOrEmpty(userId))
+        if (userId == Guid.Empty)
             return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         if (request.MediaFile == null || request.MediaFile.Length == 0)
@@ -109,7 +114,7 @@ public class MediaController : ControllerBase
     public async Task<IActionResult> GetMyMedia()
     {
         var userId = GetUserIdFromJwt();
-        if (string.IsNullOrEmpty(userId))
+        if (userId == Guid.Empty)
             return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         var mediaItems = await _mediaItemRepository.GetByOwnerIdAsync(userId);
@@ -190,3 +195,4 @@ public class UploadMediaRequest
     public bool IsPrivate { get; set; }
     public int Duration { get; set; } // Thời lượng tính bằng giây do frontend gửi lên
 }
+

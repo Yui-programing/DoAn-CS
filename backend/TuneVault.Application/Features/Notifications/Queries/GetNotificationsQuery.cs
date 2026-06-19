@@ -6,6 +6,8 @@ namespace TuneVault.Application.Features.Notifications.Queries
 {
     public class GetNotificationsQuery : IRequest<IEnumerable<Notification>>
     {
-        public string UserId { get; set; } = null!;
+        public Guid UserId { get; set; }
     }
 }
+
+

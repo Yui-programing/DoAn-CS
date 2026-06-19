@@ -6,12 +6,12 @@ namespace TuneVault.Application.Features.Users.Profile
     // Yêu cầu lấy thông tin profile, truyền vào UserId kiểu string lấy từ Token
     public class GetProfileQuery : IRequest<UserProfileDto>
     {
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
     }
 
     public class UserProfileDto
     {
-        public string Id { get; set; } = string.Empty;
+        public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
@@ -53,3 +53,5 @@ namespace TuneVault.Application.Features.Users.Profile
         }
     }
 }
+
+

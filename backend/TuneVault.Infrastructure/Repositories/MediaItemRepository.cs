@@ -37,7 +37,7 @@ public class MediaItemRepository : IMediaItemRepository
         return await db.QueryFirstOrDefaultAsync<MediaItem>(sql, new { Id = id });
     }
 
-    public async Task<IEnumerable<MediaItem>> GetByOwnerIdAsync(string ownerId)
+    public async Task<IEnumerable<MediaItem>> GetByOwnerIdAsync(Guid ownerId)
     {
         const string sql = "SELECT * FROM MediaItem WHERE OwnerId = @OwnerId";
         using IDbConnection db = new SqlConnection(_connectionString);
@@ -85,3 +85,4 @@ public class MediaItemRepository : IMediaItemRepository
     }
 
 }
+

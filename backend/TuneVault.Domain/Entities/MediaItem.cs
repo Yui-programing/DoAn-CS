@@ -11,7 +11,7 @@ namespace TuneVault.Domain.Entities
         public string? CoverUrl { get; set; }
         public int DurationInSeconds { get; set; }
         public MediaType MediaType { get; set; }
-        public string OwnerId { get; set; } = null!;
+        public Guid OwnerId { get; set; }
         public Guid? AlbumId { get; set; }
         public Guid? ArtistId { get; set; }
         public string? AlbumName { get; set; }

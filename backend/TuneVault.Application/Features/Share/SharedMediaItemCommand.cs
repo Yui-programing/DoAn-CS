@@ -1,16 +1,17 @@
-﻿using MediatR;
+using MediatR;
 using System;
 
 namespace TuneVault.Application.Features.SharedMedia.Commands.ShareMediaItem
 {
     public class SharedMediaItemCommand : IRequest<Guid>
     {
-        // Những thông tin này Controller sẽ tự điền ngầm, Client không cần gửi
-        public string SenderId { get; set; } = null!;
+        // Nh?ng th�ng tin n�y Controller s? t? di?n ng?m, Client kh�ng c?n g?i
+        public Guid SenderId { get; set; }
         public Guid MediaItemId { get; set; } 
 
-        // Những thông tin này Client phải gửi lên trong Body
-        public string ReceiverId { get; set; } = null!;
+        // Nh?ng th�ng tin n�y Client ph?i g?i l�n trong Body
+        public Guid ReceiverId { get; set; }
         public string? Message { get; set; }
     }
 }
+

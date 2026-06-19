@@ -33,7 +33,7 @@ public class PlaylistRepository : IPlaylistRepository
     }
 
     // 2. Authorization Query: Fast look up checking if OwnerId matches CurrentUserId
-    public async Task<bool> IsOwnerAsync(Guid playlistId, string userId)
+    public async Task<bool> IsOwnerAsync(Guid playlistId, Guid userId)
     {
         const string sql = @"
             SELECT COUNT(1) 
@@ -142,7 +142,7 @@ public class PlaylistRepository : IPlaylistRepository
     }
 
     // ✅ ĐÃ SỬA: Logic kiểm tra trùng tên bằng Dapper SQL
-    public async Task<bool> IsTitleUniqueAsync(string title, Guid Id, string userId, CancellationToken cancellationToken)
+    public async Task<bool> IsTitleUniqueAsync(string title, Guid Id, Guid userId, CancellationToken cancellationToken)
     {
         // Viết câu lệnh SQL để đếm số lượng playlist trùng tên của cùng một User
         // Lưu ý: Tên cột trong DB của bạn là OwnerId (dựa vào hàm Create và IsOwner ở trên)
@@ -186,7 +186,7 @@ public class PlaylistRepository : IPlaylistRepository
         return count == 0; 
     }
 
-    public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId)
+    public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(Guid userId)
     {
         const string sql = @"
         SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration, Type

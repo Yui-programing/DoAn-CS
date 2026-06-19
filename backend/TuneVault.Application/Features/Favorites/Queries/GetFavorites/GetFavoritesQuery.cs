@@ -6,6 +6,8 @@ namespace TuneVault.Application.Features.Favorites.Queries.GetFavorites
 {
     public class GetFavoritesQuery : IRequest<IEnumerable<FavoriteDto>>
     {
-        public string UserId { get; set; } = null!;
+        public Guid UserId { get; set; }
     }
 }
+
+

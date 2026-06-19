@@ -31,7 +31,7 @@ public class PlayHistoryRepository : IPlayHistoryRepository
         return rowAffected > 0;
     }
 
-    public async Task<IEnumerable<PlayHistoryResultDto>> GetPlayHistoryAsync(string userId, int limit)
+    public async Task<IEnumerable<PlayHistoryResultDto>> GetPlayHistoryAsync(Guid userId, int limit)
     {
         const string sql = @"
             WITH RankedHistory AS (
@@ -68,3 +68,4 @@ public class PlayHistoryRepository : IPlayHistoryRepository
         return history;
     }
 }
+

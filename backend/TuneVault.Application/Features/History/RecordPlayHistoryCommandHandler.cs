@@ -29,12 +29,12 @@ public class RecordPlayHistoryCommandHandler : IRequestHandler<RecordPlayHistory
         bool isSuccess = true;
 
         // 2. Nếu có đăng nhập thì lưu vào bảng PlayHistory
-        if (!string.IsNullOrEmpty(request.UserId))
+        if (request.UserId.HasValue && request.UserId.Value != Guid.Empty)
         {
             var playHistory = new PlayHistory
             {
                 Id = Guid.NewGuid(),
-                UserId = request.UserId,
+                UserId = request.UserId.Value,
                 MediaItemId = request.MediaItemId,
                 PlayedAt = DateTime.UtcNow
             };

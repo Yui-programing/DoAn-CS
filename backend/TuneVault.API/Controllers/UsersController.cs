@@ -28,13 +28,12 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> GetProfile()
         {
 
-            // Lấy Id của người dùng đang đăng nhập từ trong JWT token
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr))
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
                 return Unauthorized("User ID không hợp lệ");
 
             // Tạo query và gửi cho MediatR xử lý
-            var query = new GetProfileQuery { UserId = userIdStr };
+            var query = new GetProfileQuery { UserId = userId };
             var data = await _mediator.Send(query);
             return Ok(ApiResponse<UserProfileDto>.SetSuccess(data, "Lấy thông tin thành công!"));
         }
@@ -43,14 +42,11 @@ namespace TuneVault.API.Controllers
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UserProfileDto request)
         {
-            // 1. Lấy UserId trực tiếp từ Claims của Token (Bảo mật, tránh bị sửa bậy UserId)
-            var userIdFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userIdFromToken))
+            var userIdFromTokenStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdFromTokenStr) || !Guid.TryParse(userIdFromTokenStr, out var userIdFromToken))
             {
-
                 var errors = new List<string> { "Token không hợp lệ hoặc đã hết hạn." };
-                return Unauthorized(ApiResponse<bool>.SetFailure(errors, "Xác thực thất bại!")); //
+                return Unauthorized(ApiResponse<bool>.SetFailure(errors, "Xác thực thất bại!"));
             }
 
             // 2. Map dữ liệu từ UserProfileDto và Token vào Command để đẩy qua MediatR
@@ -74,8 +70,9 @@ namespace TuneVault.API.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> SubmitArtistRegistration([FromForm] SubmitArtistRegistrationRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized(ApiResponse<bool>.SetFailure(new System.Collections.Generic.List<string> { "Token không hợp lệ." }, "Xác thực thất bại"));
+            var userIdStr2 = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr2) || !Guid.TryParse(userIdStr2, out var userId)) 
+                return Unauthorized(ApiResponse<bool>.SetFailure(new System.Collections.Generic.List<string> { "Token không hợp lệ." }, "Xác thực thất bại"));
 
             if (request.IdCard == null || request.IdCard.Length == 0) return BadRequest(ApiResponse<bool>.SetFailure(new System.Collections.Generic.List<string> { "Vui lòng tải lên ảnh CMND/CCCD." }, "Thiếu file"));
 
@@ -115,3 +112,4 @@ namespace TuneVault.API.Controllers
         }
     }
 }
+

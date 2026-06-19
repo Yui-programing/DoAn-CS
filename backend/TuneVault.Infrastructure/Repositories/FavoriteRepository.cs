@@ -31,7 +31,7 @@ namespace TuneVault.Infrastructure.Repositories
             return favorite.Id;
         }
 
-        public async Task DeleteAsync(string userId, Guid mediaItemId)
+        public async Task DeleteAsync(Guid userId, Guid mediaItemId)
         {
             const string sql = @"
                 DELETE FROM Favorite 
@@ -41,7 +41,7 @@ namespace TuneVault.Infrastructure.Repositories
             await db.ExecuteAsync(sql, new { UserId = userId, MediaItemId = mediaItemId });
         }
 
-        public async Task<bool> ExistsAsync(string userId, Guid mediaItemId)
+        public async Task<bool> ExistsAsync(Guid userId, Guid mediaItemId)
         {
             const string sql = @"
                 SELECT COUNT(1) 
@@ -53,7 +53,7 @@ namespace TuneVault.Infrastructure.Repositories
             return count > 0;
         }
 
-        public async Task<IEnumerable<FavoriteDto>> GetByUserIdAsync(string userId)
+        public async Task<IEnumerable<FavoriteDto>> GetByUserIdAsync(Guid userId)
         {
             const string sql = @"
                 SELECT 
@@ -76,3 +76,4 @@ namespace TuneVault.Infrastructure.Repositories
         }
     }
 }
+
