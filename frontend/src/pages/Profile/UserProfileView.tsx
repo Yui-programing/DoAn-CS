@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle, Loader2, Music, ShieldAlert } from "lucide-react";
 import { userService } from "../../services/userService";
-import { mediaService } from "../../services";
+import { mediaService, albumService } from "../../services";
 import type { UserProfile, MediaItem } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
+import { usePlayer } from "../../contexts/PlayerContext";
+import { formatDuration } from "../../utils";
 
 export const UserProfileView = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +17,37 @@ export const UserProfileView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+  const [albums, setAlbums] = useState<any[]>([]);
+  const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
+  const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  const playSong = (song: any) => {
+    const trackForPlayer = {
+      id: song.id,
+      title: song.title,
+      artist: song.artistName || profile?.fullName || 'Nghệ sĩ',
+      coverUrl: song.coverUrl,
+      duration: song.durationInSeconds ? formatDuration(song.durationInSeconds) : '0:00',
+      durationInSeconds: song.durationInSeconds,
+      filePath: mediaService.getStreamUrl(song.id)
+    };
+
+    const queueForPlayer = mediaList.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artistName || profile?.fullName || 'Nghệ sĩ',
+      coverUrl: s.coverUrl,
+      duration: s.durationInSeconds ? formatDuration(s.durationInSeconds) : '0:00',
+      durationInSeconds: s.durationInSeconds,
+      filePath: mediaService.getStreamUrl(s.id)
+    }));
+
+    if (currentTrack?.id === song.id) {
+      togglePlay();
+    } else {
+      playTrack(trackForPlayer, queueForPlayer);
+    }
+  };
 
   useEffect(() => {
     // Nếu ID là ID của người đang đăng nhập, thì điều hướng sang trang Profile cá nhân của họ luôn
@@ -33,10 +66,25 @@ export const UserProfileView = () => {
           setProfile(res.data);
           
           if (res.data.role === "Artist") {
-            const searchRes = await mediaService.searchAll(res.data.fullName || '', 20);
-            if (searchRes.success && searchRes.data && searchRes.data.items) {
-              const songs = searchRes.data.items.filter((i: any) => i.type === 'Song' && i.artistName === res.data.fullName);
-              setMediaList(songs);
+            try {
+              const songsRes = await mediaService.getArtistMedia(id);
+              if (songsRes.success) {
+                setMediaList(songsRes.data || []);
+              }
+            } catch (err) {
+              console.error("Lỗi khi tải danh sách tác phẩm nghệ sĩ:", err);
+            }
+
+            try {
+              setIsLoadingAlbums(true);
+              const albumRes = await albumService.getAlbumsByArtist(id);
+              if (albumRes.success) {
+                setAlbums(albumRes.data || []);
+              }
+            } catch (err) {
+              console.error("Lỗi khi tải danh sách album nghệ sĩ:", err);
+            } finally {
+              setIsLoadingAlbums(false);
             }
           }
         } else {
@@ -197,10 +245,18 @@ export const UserProfileView = () => {
               <h2 className="text-2xl font-bold text-white mb-6">Phổ biến</h2>
               <div className="space-y-1 bg-zinc-900/20 p-2 rounded-2xl border border-zinc-800/50">
                 {mediaList.map((song, index) => (
-                  <div key={song.id} className="group flex items-center justify-between p-3 hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
+                  <div 
+                    key={song.id} 
+                    onClick={() => playSong(song)}
+                    className="group flex items-center justify-between p-3 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  >
                     <div className="flex items-center gap-4">
-                      <span className="text-zinc-500 text-base font-medium w-6 text-center group-hover:text-white transition-colors">
-                        {index + 1}
+                      <span className={`text-zinc-500 text-base font-medium w-6 flex items-center justify-center transition-colors ${currentTrack?.id === song.id ? 'text-green-500 font-bold' : ''}`}>
+                        {currentTrack?.id === song.id && isPlaying ? (
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        ) : (
+                          index + 1
+                        )}
                       </span>
                       <img 
                         src={mediaService.getImageUrl(song.coverUrl)} 
@@ -208,13 +264,64 @@ export const UserProfileView = () => {
                         className="w-12 h-12 rounded object-cover shadow-md" 
                       />
                       <div>
-                        <h4 className="text-white text-sm font-semibold">{song.title}</h4>
+                        <h4 className={`text-sm font-semibold transition-colors ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`}>{song.title}</h4>
                       </div>
                     </div>
                     <span className="text-zinc-400 text-xs font-medium">{song.viewCount?.toLocaleString() || '0'} lượt nghe</span>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Album của Nghệ sĩ */}
+          {isArtist && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-white mb-6">Album</h2>
+              {isLoadingAlbums ? (
+                <div className="flex items-center justify-center py-12 text-zinc-500 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+                  <p className="text-xs font-medium">Đang tải danh sách album...</p>
+                </div>
+              ) : albums.length === 0 ? (
+                <div className="text-left py-6 text-zinc-500">
+                  <p className="text-sm font-medium">Nghệ sĩ chưa phát hành album nào.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                  {albums.map((album) => (
+                    <div
+                      key={album.id}
+                      onClick={() => navigate(`/album/${album.id}`)}
+                      className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-2xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
+                    >
+                      {/* Bìa Album */}
+                      <div className="aspect-square w-full rounded-xl overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors shadow-inner">
+                        {album.coverImageUrl ? (
+                          <img
+                            src={mediaService.getImageUrl(album.coverImageUrl)}
+                            alt={album.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                            <Music className="w-8 h-8 text-zinc-650" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Thông tin Album */}
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-sm text-slate-200 truncate group-hover:text-green-400 transition-colors" title={album.title}>
+                          {album.title}
+                        </h4>
+                        <p className="text-[10px] text-zinc-500 mt-1 font-medium">
+                          {new Date(album.releaseDate).toLocaleDateString("vi-VN")}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

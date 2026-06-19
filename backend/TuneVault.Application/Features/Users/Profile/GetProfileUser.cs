@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using TuneVault.Application.Repositories;
 
@@ -44,7 +48,7 @@ namespace TuneVault.Application.Features.Users.Profile
 
             if (user == null)
             {
-                throw new Exception("Không tìm thấy người dùng");
+                throw new KeyNotFoundException("Không tìm thấy người dùng");
             }
 
             // 2. Trả về thông tin profile cho Frontend

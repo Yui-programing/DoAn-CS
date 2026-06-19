@@ -9,7 +9,6 @@ namespace TuneVault.Application.Models
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsPublic { get; set; }
-        public int Type { get; set; } = 0; // 0: Playlist, 1: Album
     }   
     public class AddPlaylistTrackRequest
     {
@@ -22,7 +21,6 @@ namespace TuneVault.Application.Models
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsPublic { get; set; }
-        public int Type { get; set; } = 0; // 0: Playlist, 1: Album
     }
 
     public class MyPlaylistDto
@@ -32,7 +30,6 @@ namespace TuneVault.Application.Models
         public string? Description { get; set; }
         public bool IsPublic { get; set; }
         public int TracksCount { get; set; }
-        public int Type { get; set; }
         public DateTime CreatedAt { get; set; }
         public Guid OwnerId { get; set; }
     }

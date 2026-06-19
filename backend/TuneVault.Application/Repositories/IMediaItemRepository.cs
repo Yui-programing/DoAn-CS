@@ -9,7 +9,7 @@ public interface IMediaItemRepository
 {
     Task<Guid> AddAsync(MediaItem mediaItem);
     Task<MediaItem?> GetByIdAsync(Guid id);
-    Task<IEnumerable<MediaItem>> GetByOwnerIdAsync(Guid ownerId);
+    Task<IEnumerable<MediaItem>> GetByArtistIdAsync(Guid artistId);
     Task UpdateAsync(MediaItem mediaItem);
     Task<bool> DeleteAsync(Guid id);
     //Phương thức tăng lượng nghe cho chức năng 4 và 10

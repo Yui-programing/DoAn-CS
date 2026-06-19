@@ -52,6 +52,7 @@ CREATE TABLE UserProfile
     FullName NVARCHAR(255) NOT NULL,
     AvatarUrl NVARCHAR(1000) NULL,
     Bio NVARCHAR(MAX) NULL,
+    IsPublic BIT NOT NULL DEFAULT 1,
     FOREIGN KEY (Id) REFERENCES [User](Id) ON DELETE CASCADE
 );
 
@@ -96,17 +97,15 @@ CREATE TABLE MediaItem
     CoverUrl NVARCHAR(1000) NULL,
     DurationInSeconds INT NOT NULL DEFAULT 0,
     MediaType INT NOT NULL DEFAULT 0,
-    OwnerId UNIQUEIDENTIFIER NOT NULL,
     AlbumId UNIQUEIDENTIFIER NULL,
-    ArtistId UNIQUEIDENTIFIER NULL,
-    AlbumName NVARCHAR(255) NULL,
-    ArtistName NVARCHAR(255) NULL,
+    ArtistId UNIQUEIDENTIFIER NOT NULL,
+    -- references Artist(Id) (uploader/owner)
     IsPrivate BIT NOT NULL DEFAULT 0,
-    ApprovalStatus NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Approved, Rejected
+    ApprovalStatus NVARCHAR(50) NOT NULL DEFAULT 'Pending',
+    -- Pending, Approved, Rejected
     ViewCount INT NOT NULL DEFAULT 0,
-    FOREIGN KEY (OwnerId) REFERENCES UserProfile(Id) ON DELETE CASCADE,
     FOREIGN KEY (AlbumId) REFERENCES Album(Id) ON DELETE SET NULL,
-    FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE NO ACTION
+    FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE CASCADE
 );
 
 CREATE TABLE Playlist
@@ -114,7 +113,6 @@ CREATE TABLE Playlist
     Id UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
     Title NVARCHAR(255) NOT NULL,
     [Description] NVARCHAR(MAX) NULL,
-    [Type] INT NOT NULL DEFAULT 0,
     IsPublic BIT NOT NULL DEFAULT 1,
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     OwnerId UNIQUEIDENTIFIER NOT NULL,
@@ -208,7 +206,8 @@ CREATE TABLE ArtistRegistrations
     StageName NVARCHAR(255) NOT NULL,
     Genres NVARCHAR(255) NULL,
     IdCardUrl NVARCHAR(1000) NOT NULL,
-    Status NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Approved, Rejected
+    Status NVARCHAR(50) NOT NULL DEFAULT 'Pending',
+    -- Pending, Approved, Rejected
     SubmittedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     ReviewedAt DATETIME2 NULL,
     FOREIGN KEY (UserId) REFERENCES [User](Id) ON DELETE CASCADE
@@ -223,7 +222,9 @@ DECLARE @U1 UNIQUEIDENTIFIER = '11111111-1111-1111-1111-111111111111',
         @U3 UNIQUEIDENTIFIER = '33333333-3333-3333-3333-333333333333',
         @U4 UNIQUEIDENTIFIER = '44444444-4444-4444-4444-444444444444',
         @U5 UNIQUEIDENTIFIER = '55555555-5555-5555-5555-555555555555',
-        @U6 UNIQUEIDENTIFIER = '66666666-6666-6666-6666-666666666666';
+        @U6 UNIQUEIDENTIFIER = '66666666-6666-6666-6666-666666666666',
+        @U7 UNIQUEIDENTIFIER = '77777777-7777-7777-7777-777777777777',
+        @U8 UNIQUEIDENTIFIER = '88888888-8888-8888-8888-888888888888';
 
 -- Insert tài khoản Đăng nhập vào bảng [User] (Mật khẩu: 123456)
 INSERT INTO [User]
@@ -234,7 +235,9 @@ VALUES
     (@U3, 'admin@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Admin'),
     (@U4, 'artist@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
     (@U5, 'ngotband@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
-    (@U6, 'riotgames@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
+    (@U6, 'riotgames@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
+    (@U7, 'justatee@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
+    (@U8, 'freelanceartist@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
 
 -- Insert UserProfile
 INSERT INTO UserProfile
@@ -245,7 +248,9 @@ VALUES
     (@U3, N'TuneVault Administrator', 'https://avatar.com/admin.jpg', N'Quản trị viên hệ thống TuneVault.'),
     (@U4, N'Sơn Tùng M-TP', 'https://avatar.com/mtp.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.'),
     (@U5, N'Ngọt Band', 'https://avatar.com/ngot.jpg', N'Ban nhạc Indie Việt Nam'),
-    (@U6, N'Riot Games Music', 'https://avatar.com/riot.jpg', N'Nhà sản xuất âm nhạc trò chơi');
+    (@U6, N'Riot Games Music', 'https://avatar.com/riot.jpg', N'Nhà sản xuất âm nhạc trò chơi'),
+    (@U7, N'Justatee x Phương Ly', 'https://avatar.com/justatee.jpg', N'Ca sĩ và nhà sản xuất R&B hàng đầu'),
+    (@U8, N'Nghệ sĩ tự do', 'https://avatar.com/freelance.jpg', N'Nghệ sĩ tự do');
 
 -- Insert Tags
 INSERT INTO Tag
@@ -262,7 +267,9 @@ INSERT INTO Artist
 VALUES
     (@U5, N'Ngọt Band', N'Ban nhạc Indie Việt Nam', 'https://avatar.com/ngot.jpg', N'Indie, Rock', NULL, GETUTCDATE()),
     (@U6, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi', 'https://avatar.com/riot.jpg', N'EDM, Rock, Pop', NULL, GETUTCDATE()),
-    (@U4, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam', 'https://avatar.com/mtp.jpg', N'Pop, R&B', NULL, GETUTCDATE());
+    (@U4, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam', 'https://avatar.com/mtp.jpg', N'Pop, R&B', NULL, GETUTCDATE()),
+    (@U7, N'Justatee x Phương Ly', N'Nghệ sĩ R&B', 'https://avatar.com/justatee.jpg', N'R&B, Pop', NULL, GETUTCDATE()),
+    (@U8, N'Nghệ sĩ tự do', N'Nhà sản xuất tự do', 'https://avatar.com/freelance.jpg', N'Pop, Ballad', NULL, GETUTCDATE());
 
 DECLARE @Album1Id UNIQUEIDENTIFIER = '98765432-9876-9876-9876-987654321098';
 
@@ -286,18 +293,18 @@ DECLARE @M1 UNIQUEIDENTIFIER = 'E9EF9465-732D-4165-BF65-374AB7178F05',
 
 -- Insert MediaItem (Chỉ lưu các bài hát/MV thực tế có file thật, mặc định đã được duyệt - 'Approved')
 INSERT INTO MediaItem
-    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumId, ArtistId, AlbumName, ArtistName, IsPrivate, ApprovalStatus, ViewCount)
+    (Id, Title, FilePath, CoverUrl, DurationInSeconds, MediaType, AlbumId, ArtistId, IsPrivate, ApprovalStatus, ViewCount)
 VALUES
-    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, @U1, @Album1Id, @U5, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 1200000),
-    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, @U1, @Album1Id, @U5, N'Tuyển tập Indie', N'Ngọt Band', 0, 'Approved', 850000),
-    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, @U1, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 620000),
-    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, @U1, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 430000),
-    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, @U2, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 280000),
-    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, @U2, NULL, @U6, NULL, N'Riot Games Music', 0, 'Approved', 280000),
-    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, @U1, NULL, @U4, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 150000),
-    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, @U1, NULL, NULL, NULL, NULL, 0, 'Approved', 150000),
-    (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, @U1, NULL, NULL, NULL, N'Justatee x Phương Ly', 0, 'Approved', 950000),
-    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, @U1, NULL, @U4, NULL, N'Sơn Tùng M-TP', 0, 'Approved', 950000);
+    (@M1, N'Lần Cuối', '/media/Lan-Cuoi.mp3', '/images/lan-cuoi.png', 221, 0, @Album1Id, @U5, 0, 'Approved', 1200000),
+    (@M2, N'Em Dạo Này', '/media/Em-Dao-Nay.mp3', '/images/emdaonay.png', 252, 0, @Album1Id, @U5, 0, 'Approved', 850000),
+    (@M3, N'Ticking Away', '/media/Ticking Away.mp3', '/images/ticking-away.png', 204, 0, NULL, @U6, 0, 'Approved', 620000),
+    (@M4, N'To Ashes and Blood', '/media/to-ashes-and-blood.mp3', '/images/to ashe and blood.png', 245, 0, NULL, @U6, 0, 'Approved', 430000),
+    (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, NULL, @U6, 0, 'Approved', 280000),
+    (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, NULL, @U6, 0, 'Approved', 280000),
+    (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, NULL, @U5, 0, 'Approved', 150000),
+    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, NULL, @U8, 0, 'Approved', 150000),
+    (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, NULL, @U7, 0, 'Approved', 950000),
+    (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, NULL, @U4, 0, 'Approved', 950000);
 
 -- Map Tags to MediaItems
 INSERT INTO MediaTag

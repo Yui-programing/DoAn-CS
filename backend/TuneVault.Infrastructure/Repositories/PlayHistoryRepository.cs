@@ -37,11 +37,12 @@ public class PlayHistoryRepository : IPlayHistoryRepository
             WITH RankedHistory AS (
                 SELECT 
                     p.Id, p.UserId, p.MediaItemId, p.PlayedAt,
-                    m.Id as MediaId, m.Title, m.ArtistName, m.CoverUrl, m.FilePath, 
+                    m.Id as MediaId, m.Title, a.Name AS ArtistName, m.CoverUrl, m.FilePath, 
                     m.DurationInSeconds, m.ViewCount, m.MediaType,
                     ROW_NUMBER() OVER(PARTITION BY p.MediaItemId ORDER BY p.PlayedAt DESC) as RowNum
                 FROM PlayHistory p
                 INNER JOIN MediaItem m ON p.MediaItemId = m.Id
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE p.UserId = @UserId
             )
             SELECT 

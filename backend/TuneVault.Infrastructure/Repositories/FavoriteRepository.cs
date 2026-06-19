@@ -63,11 +63,12 @@ namespace TuneVault.Infrastructure.Repositories
                     f.AddedAt AS CreatedAt, 
                     m.Title AS MediaTitle, 
                     m.CoverUrl, 
-                    m.ArtistName, 
+                    a.Name AS ArtistName, 
                     m.DurationInSeconds,
                     m.MediaType 
                 FROM Favorite f
                 INNER JOIN MediaItem m ON f.MediaItemId = m.Id
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE f.UserId = @UserId
                 ORDER BY f.AddedAt DESC";
 

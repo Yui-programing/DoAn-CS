@@ -33,6 +33,7 @@ export const AppRoutes = () => {
         <Route index element={<Home />} />
         <Route path="search" element={<Search />} />
         <Route path="playlist/:id" element={<PlaylistDetail />} />
+        <Route path="album/:id" element={<PlaylistDetail />} />
 
         {/* Các trang cần đăng nhập mới vào được (Protected) */}
         <Route element={<ProtectedRoute />}>

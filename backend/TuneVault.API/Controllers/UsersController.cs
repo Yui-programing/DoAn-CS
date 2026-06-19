@@ -43,20 +43,16 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> GetProfileById(Guid id)
         {
             var query = new GetProfileQuery { UserId = id };
-            try {
-                var data = await _mediator.Send(query);
-                var callerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                Guid.TryParse(callerIdStr, out var callerId);
+            var data = await _mediator.Send(query);
+            var callerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Guid.TryParse(callerIdStr, out var callerId);
 
-                if (data.Id != callerId && !data.IsPublic)
-                {
-                    return StatusCode(403, ApiResponse<UserProfileDto>.SetFailure(new List<string> { "Hồ sơ riêng tư" }, "Không có quyền xem"));
-                }
-                
-                return Ok(ApiResponse<UserProfileDto>.SetSuccess(data, "Lấy thông tin thành công!"));
-            } catch (Exception ex) {
-                return NotFound(ApiResponse<UserProfileDto>.SetFailure(new List<string> { ex.Message }, "Lỗi"));
+            if (data.Id != callerId && !data.IsPublic)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền xem hồ sơ riêng tư này.");
             }
+            
+            return Ok(ApiResponse<UserProfileDto>.SetSuccess(data, "Lấy thông tin thành công!"));
         }
 
         // 2. PUT / Cập nhật hồ sơ người dùng

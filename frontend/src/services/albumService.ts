@@ -17,5 +17,15 @@ export const albumService = {
     getAlbumsByArtist: async (artistId: string): Promise<ApiResponse<any[]>> => {
         const response = await api.get<ApiResponse<any[]>>(`/albums/artist/${artistId}`);
         return response.data;
+    },
+
+    getAlbumById: async (id: string): Promise<ApiResponse<any>> => {
+        const response = await api.get<ApiResponse<any>>(`/albums/${id}`);
+        return response.data;
+    },
+
+    getTracks: async (id: string): Promise<ApiResponse<any[]>> => {
+        const response = await api.get<ApiResponse<any[]>>(`/albums/${id}/tracks`);
+        return response.data;
     }
 };

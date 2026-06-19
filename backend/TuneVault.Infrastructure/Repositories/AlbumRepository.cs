@@ -58,18 +58,36 @@ namespace TuneVault.Infrastructure.Repositories
 
             const string sql = @"
                 UPDATE MediaItem
-                SET AlbumId = @AlbumId, AlbumName = @AlbumName
+                SET AlbumId = @AlbumId
                 WHERE Id IN @MediaItemIds AND ArtistId = @ArtistId
             ";
             
             int rowsAffected = await _dbConnection.ExecuteAsync(sql, new 
             { 
                 AlbumId = albumId, 
-                AlbumName = albumName, 
                 MediaItemIds = mediaItemIds,
                 ArtistId = artistId
             });
             return rowsAffected > 0;
+        }
+
+        public async Task<IEnumerable<PlaylistTrackDto>> GetTracksByAlbumIdAsync(Guid albumId)
+        {
+            const string sql = @"
+                SELECT 
+                    m.Id AS MediaItemId, 
+                    m.Title, 
+                    a.Name AS ArtistName,
+                    m.CoverUrl,
+                    m.DurationInSeconds, 
+                    m.MediaType,
+                    GETUTCDATE() AS AddedAt
+                FROM MediaItem m
+                LEFT JOIN Artist a ON m.ArtistId = a.Id
+                WHERE m.AlbumId = @AlbumId
+                ORDER BY m.Title ASC";
+
+            return await _dbConnection.QueryAsync<PlaylistTrackDto>(sql, new { AlbumId = albumId });
         }
     }
 }

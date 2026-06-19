@@ -12,5 +12,6 @@ namespace TuneVault.Application.Repositories
         Task<IEnumerable<AlbumDto>> GetAlbumsByArtistIdAsync(Guid artistId);
         Task<AlbumDto?> GetAlbumByIdAsync(Guid albumId);
         Task<bool> UpdateMediaItemsAlbumAsync(Guid albumId, string albumName, List<Guid> mediaItemIds, Guid artistId);
+        Task<IEnumerable<PlaylistTrackDto>> GetTracksByAlbumIdAsync(Guid albumId);
     }
 }

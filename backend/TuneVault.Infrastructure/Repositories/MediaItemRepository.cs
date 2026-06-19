@@ -22,8 +22,8 @@ public class MediaItemRepository : IMediaItemRepository
     public async Task<Guid> AddAsync(MediaItem mediaItem)
     {
         const string sql = @"
-            INSERT INTO MediaItem (Id, Title, Description, FilePath, CoverUrl, DurationInSeconds, MediaType, OwnerId, AlbumId, ArtistId, IsPrivate, ApprovalStatus, ViewCount)
-            VALUES (@Id, @Title, @Description, @FilePath, @CoverUrl, @DurationInSeconds, @MediaType, @OwnerId, @AlbumId, @ArtistId, @IsPrivate, @ApprovalStatus, 0)";
+            INSERT INTO MediaItem (Id, Title, Description, FilePath, CoverUrl, DurationInSeconds, MediaType, AlbumId, ArtistId, IsPrivate, ApprovalStatus, ViewCount)
+            VALUES (@Id, @Title, @Description, @FilePath, @CoverUrl, @DurationInSeconds, @MediaType, @AlbumId, @ArtistId, @IsPrivate, @ApprovalStatus, 0)";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, mediaItem);
@@ -37,11 +37,11 @@ public class MediaItemRepository : IMediaItemRepository
         return await db.QueryFirstOrDefaultAsync<MediaItem>(sql, new { Id = id });
     }
 
-    public async Task<IEnumerable<MediaItem>> GetByOwnerIdAsync(Guid ownerId)
+    public async Task<IEnumerable<MediaItem>> GetByArtistIdAsync(Guid artistId)
     {
-        const string sql = "SELECT * FROM MediaItem WHERE OwnerId = @OwnerId";
+        const string sql = "SELECT * FROM MediaItem WHERE ArtistId = @ArtistId";
         using IDbConnection db = new SqlConnection(_connectionString);
-        return await db.QueryAsync<MediaItem>(sql, new { OwnerId = ownerId });
+        return await db.QueryAsync<MediaItem>(sql, new { ArtistId = artistId });
     }
 
     public async Task<IEnumerable<MediaItem>> GetPendingMediaItemsAsync()

@@ -13,7 +13,7 @@ public class UploadMediaCommandValidator : AbstractValidator<UploadMediaCommand>
         RuleFor(x => x.FilePath)
             .NotEmpty().WithMessage("Đường dẫn file media không được để trống.");
 
-        RuleFor(x => x.OwnerId)
-            .NotEmpty().WithMessage("ID người sở hữu không được để trống.");
+        RuleFor(x => x.ArtistId)
+            .NotEmpty().WithMessage("ID nghệ sĩ không được để trống.");
     }
 }

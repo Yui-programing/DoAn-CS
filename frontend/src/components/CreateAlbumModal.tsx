@@ -113,6 +113,7 @@ export const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({ isOpen, onCl
 
             if (res.success) {
                 setSuccess("Tạo Album thành công!");
+                window.dispatchEvent(new Event('albumChanged'));
                 setTimeout(() => {
                     onClose();
                     setSuccess(null);

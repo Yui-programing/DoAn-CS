@@ -10,7 +10,5 @@ namespace TuneVault.Domain.Entities
         public Guid OwnerId { get; set; }
         public int TracksCount { get; set; }
         public int TotalDuration { get; set; }
-
-        public int Type { get; set; } = 0;
     }
 }

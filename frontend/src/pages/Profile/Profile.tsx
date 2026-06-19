@@ -1,14 +1,51 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Edit2, Camera, Check, Loader2, UploadCloud, Music, Film, Eye, CheckCircle } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { userService } from "../../services/userService";
-import { mediaService } from "../../services";
+import { mediaService, albumService } from "../../services";
 import RegisterArtistModal from "../../components/RegisterArtistModal";
 import { UploadMediaModal } from "../../components/UploadMediaModal";
 import type { MediaItem } from "../../types";
+import { usePlayer } from "../../contexts/PlayerContext";
+import { formatDuration } from "../../utils";
 
 export const Profile = () => {
+  const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
+  const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  const playSong = (song: any) => {
+    if (song.mediaType !== 0) return; // Chỉ phát âm thanh (Audio/Song)
+    
+    const trackForPlayer = {
+      id: song.id,
+      title: song.title,
+      artist: user?.fullName || 'Nghệ sĩ',
+      coverUrl: song.coverUrl,
+      duration: song.durationInSeconds ? formatDuration(song.durationInSeconds) : '0:00',
+      durationInSeconds: song.durationInSeconds,
+      filePath: mediaService.getStreamUrl(song.id)
+    };
+
+    const queueForPlayer = myMedia
+      .filter((s: any) => s.mediaType === 0)
+      .map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        artist: user?.fullName || 'Nghệ sĩ',
+        coverUrl: s.coverUrl,
+        duration: s.durationInSeconds ? formatDuration(s.durationInSeconds) : '0:00',
+        durationInSeconds: s.durationInSeconds,
+        filePath: mediaService.getStreamUrl(s.id)
+      }));
+
+    if (currentTrack?.id === song.id) {
+      togglePlay();
+    } else {
+      playTrack(trackForPlayer, queueForPlayer);
+    }
+  };
   const [isEditing, setIsEditing] = useState(false);
   const [tempProfile, setTempProfile] = useState({
     fullName: "",
@@ -17,6 +54,9 @@ export const Profile = () => {
     bannerUrl: "",
     isPublic: true,
   });
+  const [myAlbums, setMyAlbums] = useState<any[]>([]);
+  const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
+  const [activeTab, setActiveTab] = useState<'works' | 'albums'>('works');
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -92,6 +132,21 @@ export const Profile = () => {
     }
   };
 
+  const loadMyAlbums = async () => {
+    if (user?.role !== "Artist" || !user.id) return;
+    try {
+      setIsLoadingAlbums(true);
+      const response = await albumService.getAlbumsByArtist(user.id);
+      if (response.success) {
+        setMyAlbums(response.data || []);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách album:", error);
+    } finally {
+      setIsLoadingAlbums(false);
+    }
+  };
+
   // Đồng bộ tempProfile khi user thay đổi
   useEffect(() => {
     if (user) {
@@ -104,8 +159,30 @@ export const Profile = () => {
       });
       if (user.role === "Artist") {
         loadMyMedia();
+        loadMyAlbums();
       }
     }
+  }, [user]);
+
+  // Lắng nghe sự kiện để tự động load lại dữ liệu khi upload thành công hoặc album thay đổi
+  useEffect(() => {
+    if (user?.role !== "Artist") return;
+    
+    const handleMediaUploaded = () => {
+      loadMyMedia();
+    };
+    const handleAlbumChanged = () => {
+      loadMyAlbums();
+      loadMyMedia();
+    };
+    
+    window.addEventListener('mediaUploaded', handleMediaUploaded);
+    window.addEventListener('albumChanged', handleAlbumChanged);
+
+    return () => {
+      window.removeEventListener('mediaUploaded', handleMediaUploaded);
+      window.removeEventListener('albumChanged', handleAlbumChanged);
+    };
   }, [user]);
 
   // Tự động ẩn thông báo sau 4 giây
@@ -490,7 +567,7 @@ export const Profile = () => {
           <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={() => setIsEditing(false)}
-              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-xs font-bold text-zinc-400 rounded-full border border-zinc-850"
+              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 rounded-full border border-zinc-850"
               disabled={isSaving}
             >
               Hủy
@@ -516,7 +593,6 @@ export const Profile = () => {
         </section>
       )}
 
-      {/* Bảng điều khiển nghệ sĩ (Artist Panel) */}
       {user?.role === "Artist" && (
         <section className="bg-zinc-900/10 border border-zinc-900 rounded-2xl p-6 mt-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900">
@@ -536,95 +612,179 @@ export const Profile = () => {
             </button>
           </div>
 
-          {isLoadingMedia ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-550 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-green-500" />
-              <p className="text-xs font-medium">Đang tải danh sách tác phẩm...</p>
-            </div>
-          ) : myMedia.length === 0 ? (
-            <div className="text-center py-16 border border-dashed border-zinc-800 rounded-xl space-y-2">
-              <p className="text-xs font-bold text-zinc-550">Bạn chưa đăng tải tác phẩm nào cả.</p>
-              <p className="text-[10px] text-zinc-600">Hãy nhấn nút "Đăng tác phẩm mới" để chia sẻ sản phẩm âm nhạc đầu tiên!</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-xs">
-                <thead>
-                  <tr className="border-b border-zinc-900 text-zinc-500 font-extrabold uppercase tracking-wider">
-                    <th className="pb-3 pl-2">Tác phẩm</th>
-                    <th className="pb-3">Định dạng</th>
-                    <th className="pb-3">Lượt nghe/xem</th>
-                    <th className="pb-3 text-center">Trạng thái</th>
-                    <th className="pb-3 text-right pr-2">Chế độ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-900/60 font-semibold text-zinc-300">
-                  {myMedia.map((media) => (
-                    <tr key={media.id} className="hover:bg-zinc-900/20 group transition-colors">
-                      {/* Title + Cover */}
-                      <td className="py-3 pl-2 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800/80 overflow-hidden flex items-center justify-center shrink-0">
-                          {media.coverUrl ? (
-                            <img src={media.coverUrl} alt={media.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <Music className="w-5 h-5 text-zinc-650" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-slate-200 truncate group-hover:text-green-400 transition-colors">{media.title}</p>
-                          <p className="text-[10px] text-zinc-550 truncate mt-0.5">{media.description || "Không có mô tả"}</p>
-                        </div>
-                      </td>
-                      
-                      {/* MediaType */}
-                      <td className="py-3">
-                        <span className="flex items-center gap-1 text-zinc-400">
-                          {media.mediaType === 0 ? (
-                            <>
-                              <Music className="w-3.5 h-3.5 text-zinc-500" />
-                              Audio
-                            </>
-                          ) : (
-                            <>
-                              <Film className="w-3.5 h-3.5 text-zinc-500" />
-                              Video
-                            </>
-                          )}
-                        </span>
-                      </td>
+          {/* Hệ thống TAB */}
+          <div className="flex gap-6 border-b border-zinc-800 pb-px">
+            <button
+              onClick={() => setActiveTab('works')}
+              className={`pb-3 text-xs font-bold border-b-2 cursor-pointer transition-all duration-250 ${
+                activeTab === 'works'
+                  ? 'border-green-500 text-green-400'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              Tác phẩm ({myMedia.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('albums')}
+              className={`pb-3 text-xs font-bold border-b-2 cursor-pointer transition-all duration-250 ${
+                activeTab === 'albums'
+                  ? 'border-green-500 text-green-400'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              Album ({myAlbums.length})
+            </button>
+          </div>
 
-                      {/* Views */}
-                      <td className="py-3">
-                        <span className="flex items-center gap-1 text-zinc-400">
-                          <Eye className="w-3.5 h-3.5 text-zinc-500" />
-                          {media.viewCount.toLocaleString()} lượt
-                        </span>
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3 text-center">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                          media.approvalStatus === "Approved"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : media.approvalStatus === "Rejected"
-                            ? "bg-red-500/10 text-red-400 border-red-500/20"
-                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        }`}>
-                          {media.approvalStatus === "Approved" ? "Đã duyệt" : media.approvalStatus === "Rejected" ? "Từ chối" : "Chờ duyệt"}
-                        </span>
-                      </td>
-
-                      {/* Privacy */}
-                      <td className="py-3 text-right pr-2">
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase">
-                          {media.isPrivate ? "Riêng tư" : "Công khai"}
-                        </span>
-                      </td>
+          {activeTab === 'works' ? (
+            isLoadingMedia ? (
+              <div className="flex flex-col items-center justify-center py-12 text-zinc-550 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+                <p className="text-xs font-medium">Đang tải danh sách tác phẩm...</p>
+              </div>
+            ) : myMedia.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-zinc-800 rounded-xl space-y-2">
+                <p className="text-xs font-bold text-zinc-550">Bạn chưa đăng tải tác phẩm nào cả.</p>
+                <p className="text-[10px] text-zinc-600">Hãy nhấn nút "Đăng tác phẩm mới" để chia sẻ sản phẩm âm nhạc đầu tiên!</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-900 text-zinc-500 font-extrabold uppercase tracking-wider">
+                      <th className="pb-3 pl-2">Tác phẩm</th>
+                      <th className="pb-3">Định dạng</th>
+                      <th className="pb-3">Lượt nghe/xem</th>
+                      <th className="pb-3 text-center">Trạng thái</th>
+                      <th className="pb-3 text-right pr-2">Chế độ</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900/60 font-semibold text-zinc-300">
+                    {myMedia.map((media) => (
+                      <tr 
+                        key={media.id} 
+                        onClick={() => playSong(media)}
+                        className={`hover:bg-zinc-900/20 group transition-colors ${media.mediaType === 0 ? 'cursor-pointer' : ''}`}
+                      >
+                        {/* Title + Cover */}
+                        <td className="py-3 pl-2 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800/80 overflow-hidden flex items-center justify-center shrink-0">
+                            {media.coverUrl ? (
+                              <img src={mediaService.getImageUrl(media.coverUrl)} alt={media.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <Music className="w-5 h-5 text-zinc-650" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`font-bold truncate group-hover:text-green-400 transition-colors ${currentTrack?.id === media.id ? 'text-green-500 font-extrabold' : 'text-slate-200'}`}>
+                              {media.title}
+                              {currentTrack?.id === media.id && isPlaying && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-green-500 font-bold ml-2">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                  Đang phát
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-[10px] text-zinc-550 truncate mt-0.5">{media.description || "Không có mô tả"}</p>
+                          </div>
+                        </td>
+                        
+                        {/* MediaType */}
+                        <td className="py-3">
+                          <span className="flex items-center gap-1 text-zinc-400">
+                            {media.mediaType === 0 ? (
+                              <>
+                                <Music className="w-3.5 h-3.5 text-zinc-500" />
+                                Audio
+                              </>
+                            ) : (
+                              <>
+                                <Film className="w-3.5 h-3.5 text-zinc-500" />
+                                Video
+                              </>
+                            )}
+                          </span>
+                        </td>
+
+                        {/* Views */}
+                        <td className="py-3">
+                          <span className="flex items-center gap-1 text-zinc-400">
+                            <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                            {media.viewCount.toLocaleString()} lượt
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 text-center">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                            media.approvalStatus === "Approved"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              : media.approvalStatus === "Rejected"
+                              ? "bg-red-500/10 text-red-400 border-red-500/20"
+                              : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          }`}>
+                            {media.approvalStatus === "Approved" ? "Đã duyệt" : media.approvalStatus === "Rejected" ? "Từ chối" : "Chờ duyệt"}
+                          </span>
+                        </td>
+
+                        {/* Privacy */}
+                        <td className="py-3 text-right pr-2">
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase">
+                            {media.isPrivate ? "Riêng tư" : "Công khai"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : (
+            isLoadingAlbums ? (
+              <div className="flex flex-col items-center justify-center py-12 text-zinc-550 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+                <p className="text-xs font-medium">Đang tải danh sách album...</p>
+              </div>
+            ) : myAlbums.length === 0 ? (
+              <div className="text-center py-16 border border-dashed border-zinc-800 rounded-xl space-y-2">
+                <p className="text-xs font-bold text-zinc-550">Bạn chưa tạo album nào.</p>
+                <p className="text-[10px] text-zinc-600">Sử dụng nút tạo album ở thanh công cụ hoặc sidebar để tạo mới.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {myAlbums.map((album) => (
+                  <div
+                    key={album.id}
+                    onClick={() => navigate(`/album/${album.id}`)}
+                    className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
+                  >
+                    {/* Bìa Album */}
+                    <div className="aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors shadow-inner">
+                      {album.coverImageUrl ? (
+                        <img
+                          src={mediaService.getImageUrl(album.coverImageUrl)}
+                          alt={album.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                          <Music className="w-8 h-8 text-zinc-650" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Thông tin Album */}
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm text-slate-200 truncate group-hover:text-green-400 transition-colors" title={album.title}>
+                        {album.title}
+                      </h4>
+                      <p className="text-[10px] text-zinc-550 mt-1">
+                        {new Date(album.releaseDate).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </section>
       )}

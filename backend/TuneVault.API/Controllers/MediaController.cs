@@ -100,7 +100,7 @@ public class MediaController : ControllerBase
             CoverUrl = coverUrl,
             DurationInSeconds = duration,
             MediaType = request.MediaType,
-            OwnerId = userId,
+            ArtistId = userId,
             IsPrivate = request.IsPrivate
         };
 
@@ -117,7 +117,7 @@ public class MediaController : ControllerBase
         if (userId == Guid.Empty)
             return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
-        var mediaItems = await _mediaItemRepository.GetByOwnerIdAsync(userId);
+        var mediaItems = await _mediaItemRepository.GetByArtistIdAsync(userId);
         return Ok(ApiResponse<IEnumerable<MediaItem>>.SetSuccess(mediaItems, "Lấy danh sách media của tôi thành công."));
     }
 
@@ -182,6 +182,15 @@ public class MediaController : ControllerBase
         // Bật enableRangeProcessing = true để hỗ trợ Range header phát video/audio
         var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         return File(fileStream, contentType, enableRangeProcessing: true);
+    }
+
+    [HttpGet("artist/{artistId:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetArtistMedia(Guid artistId)
+    {
+        var mediaItems = await _mediaItemRepository.GetByArtistIdAsync(artistId);
+        var publicApprovedMedia = mediaItems.Where(m => m.ApprovalStatus == "Approved" && !m.IsPrivate);
+        return Ok(ApiResponse<IEnumerable<MediaItem>>.SetSuccess(publicApprovedMedia, "Lấy danh sách tác phẩm của nghệ sĩ thành công."));
     }
 }
 
