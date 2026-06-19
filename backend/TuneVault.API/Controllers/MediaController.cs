@@ -109,6 +109,20 @@ public class MediaController : ControllerBase
         return Ok(ApiResponse<Guid>.SetSuccess(mediaId, "Tải lên file media thành công!"));
     }
 
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    [Authorize]
+    public async Task<IActionResult> UploadImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(ApiResponse<object>.SetFailure(message: "File ảnh không hợp lệ."));
+
+        using var stream = file.OpenReadStream();
+        var url = await _cloudinaryService.UploadImageAsync(stream, file.FileName, "TuneVault/Covers");
+
+        return Ok(ApiResponse<string>.SetSuccess(url, "Tải ảnh lên thành công."));
+    }
+
     [HttpGet("my-media")]
     [Authorize(Roles = "Artist")]
     public async Task<IActionResult> GetMyMedia()
