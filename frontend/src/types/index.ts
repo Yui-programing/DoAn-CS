@@ -20,6 +20,8 @@ export interface UserProfile {
   bannerUrl?: string;
   verifiedAt?: string;
   isPublic?: boolean;
+  followerCount?: number;
+  followingCount?: number;
 }
 
 export type MediaType = 0 | 1;

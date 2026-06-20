@@ -11,3 +11,4 @@ export * from './playlistService';
 export * from './shareService';
 export * from './notificationService';
 export * from './albumService';
+export * from './followService';

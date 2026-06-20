@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle, Loader2, Music, ShieldAlert } from "lucide-react";
 import { userService } from "../../services/userService";
-import { mediaService, albumService } from "../../services";
+import { mediaService, albumService, followService } from "../../services";
 import type { UserProfile, MediaItem } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePlayer } from "../../contexts/PlayerContext";
@@ -20,6 +20,34 @@ export const UserProfileView = () => {
   const [albums, setAlbums] = useState<any[]>([]);
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+
+  const handleFollowToggle = async () => {
+    if (!id || !currentUser || isFollowLoading) return;
+    try {
+      setIsFollowLoading(true);
+      if (isFollowing) {
+        const res = await followService.unfollowArtist(id);
+        if (res.success) {
+          setIsFollowing(false);
+          setFollowerCount((prev) => Math.max(0, prev - 1));
+        }
+      } else {
+        const res = await followService.followArtist(id);
+        if (res.success) {
+          setIsFollowing(true);
+          setFollowerCount((prev) => prev + 1);
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi thay đổi trạng thái theo dõi:", err);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const playSong = (song: any) => {
     const trackForPlayer = {
@@ -64,6 +92,18 @@ export const UserProfileView = () => {
         const res = await userService.getUserProfile(id);
         if (res.success && res.data) {
           setProfile(res.data);
+          setFollowerCount(res.data.followerCount || 0);
+
+          if (currentUser) {
+            try {
+              const followRes = await followService.checkFollowStatus(id);
+              if (followRes.success) {
+                setIsFollowing(followRes.data);
+              }
+            } catch (err) {
+              console.error("Lỗi khi kiểm tra trạng thái follow:", err);
+            }
+          }
           
           if (res.data.role === "Artist") {
             try {
@@ -170,6 +210,9 @@ export const UserProfileView = () => {
                 <h1 className="text-5xl md:text-7xl lg:text-[100px] font-black text-white tracking-tighter drop-shadow-2xl leading-none">
                   {profile.fullName}
                 </h1>
+                <p className="text-sm md:text-base font-semibold text-zinc-300 drop-shadow-md pt-2">
+                  {followerCount.toLocaleString()} người theo dõi
+                </p>
                 
                 {profile.genres && (
                   <div className="flex flex-wrap items-center gap-2 pt-4">
@@ -214,6 +257,9 @@ export const UserProfileView = () => {
               <h1 className="text-4xl md:text-5xl lg:text-7xl font-black text-white tracking-tighter drop-shadow-md mb-2">
                 {profile.fullName}
               </h1>
+              <p className="text-sm font-semibold text-zinc-400">
+                {followerCount.toLocaleString()} người theo dõi
+              </p>
             </div>
           </div>
         )}
@@ -222,9 +268,20 @@ export const UserProfileView = () => {
         <div className="mt-8 space-y-8 max-w-4xl">
           {/* Action Buttons */}
           <div className="flex items-center gap-4">
-            <button className="px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 transition-transform">
-              Theo dõi
-            </button>
+            {currentUser && (
+              <button
+                disabled={isFollowLoading}
+                onClick={handleFollowToggle}
+                className={`px-8 py-3 font-bold rounded-full hover:scale-105 transition-transform flex items-center gap-2 ${
+                  isFollowing
+                    ? "bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-700"
+                    : "bg-white text-black hover:bg-zinc-100"
+                }`}
+              >
+                {isFollowLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isFollowing ? "Đang theo dõi" : "Theo dõi"}
+              </button>
+            )}
             <button className="w-10 h-10 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-300 hover:text-white hover:border-white transition-colors">
               •••
             </button>

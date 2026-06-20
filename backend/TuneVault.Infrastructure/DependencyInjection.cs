@@ -35,6 +35,7 @@ namespace TuneVault.Infrastructure
             services.AddScoped<IFavoriteRepository, FavoriteRepository>();
             services.AddScoped<IOtpRepository, OtpRepository>();
             services.AddScoped<IAlbumRepository, AlbumRepository>();
+            services.AddScoped<IFollowRepository, FollowRepository>();
             services.AddScoped<ICloudinaryService, CloudinaryService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.IEmailService, EmailService>();
             services.AddScoped<TuneVault.Application.Common.Interfaces.INotificationService, NotificationService>();

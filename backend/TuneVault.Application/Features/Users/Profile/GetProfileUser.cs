@@ -28,17 +28,23 @@ namespace TuneVault.Application.Features.Users.Profile
         public string? Genres { get; set; }
         public string? BannerUrl { get; set; }
         public DateTime? VerifiedAt { get; set; }
+
+        // Follow counts
+        public int FollowerCount { get; set; }
+        public int FollowingCount { get; set; }
     }
 
     public class GetProfileQueryHandler : IRequestHandler<GetProfileQuery, UserProfileDto>
     {
         private readonly IUserRepository _userRepository;
         private readonly IArtistRepository _artistRepository;
+        private readonly IFollowRepository _followRepository;
 
-        public GetProfileQueryHandler(IUserRepository userRepository, IArtistRepository artistRepository)
+        public GetProfileQueryHandler(IUserRepository userRepository, IArtistRepository artistRepository, IFollowRepository followRepository)
         {
             _userRepository = userRepository;
             _artistRepository = artistRepository;
+            _followRepository = followRepository;
         }
 
         public async Task<UserProfileDto> Handle(GetProfileQuery request, CancellationToken cancellationToken)
@@ -63,6 +69,10 @@ namespace TuneVault.Application.Features.Users.Profile
                 AvatarUrl = user.Profile?.AvatarUrl,
                 IsPublic = user.Profile?.IsPublic ?? true
             };
+
+            // Fetch follow counts dynamically (Option 1)
+            dto.FollowerCount = await _followRepository.GetFollowerCountAsync(request.UserId);
+            dto.FollowingCount = await _followRepository.GetFollowingCountAsync(request.UserId);
 
             if (user.Role == "Artist")
             {
