@@ -95,7 +95,7 @@ export const CreateAlbumModal: React.FC<CreateAlbumModalProps> = ({ isOpen, onCl
             if (coverImage) {
                 const formData = new FormData();
                 formData.append('file', coverImage);
-                const uploadRes = await mediaService.uploadMedia(formData);
+                const uploadRes = await mediaService.uploadImage(formData);
                 if (uploadRes.success && uploadRes.data) {
                     coverImageUrl = uploadRes.data;
                 } else {

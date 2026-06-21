@@ -10,6 +10,13 @@ export const mediaService = {
         return response.data;
     },
 
+    uploadImage: async (formData: FormData): Promise<ApiResponse<string>> => {
+        const response = await api.post<ApiResponse<string>>('/media/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
     getMyMedia: async (): Promise<ApiResponse<MediaItem[]>> => {
         const response = await api.get<ApiResponse<MediaItem[]>>('/media/my-media');
         return response.data;
