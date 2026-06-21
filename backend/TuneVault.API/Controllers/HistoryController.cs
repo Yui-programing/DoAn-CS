@@ -27,7 +27,8 @@ public class HistoryController : ControllerBase
     public async Task<IActionResult> RecordPlayHistory([FromBody] RecordHistoryRequest request)
     {
         // 1. Lấy UserId từ JWT Token đang đăng nhập (Nếu có)
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = Guid.Parse(userIdStr!);
 
         // 2. Map sang MediatR Command
         var command = new RecordPlayHistoryCommand
@@ -49,8 +50,9 @@ public class HistoryController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetPlayHistory([FromQuery] int limit = 20)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = Guid.Parse(userIdStr!);
+        if (userId == Guid.Empty)
         {
             return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ hoặc đã hết hạn."));
         }
@@ -71,3 +73,5 @@ public class RecordHistoryRequest
 {
     public Guid MediaItemId { get; set; }
 }
+
+

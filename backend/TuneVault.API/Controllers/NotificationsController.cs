@@ -25,13 +25,18 @@ namespace TuneVault.API.Controllers
             _mediator = mediator;
         }
 
-        private string? GetUserIdFromJwt() => User.FindFirstValue(ClaimTypes.NameIdentifier);
+                private Guid GetUserIdFromJwt()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userIdStr, out var userId)) return userId;
+            return Guid.Empty;
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetList()
         {
             var userId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var list = await _mediator.Send(new GetNotificationsQuery { UserId = userId });
@@ -42,7 +47,7 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateNotificationRequest request)
         {
             var senderId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(senderId))
+            if (senderId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var command = new CreateNotificationCommand
@@ -60,7 +65,7 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> MarkAsRead(Guid id)
         {
             var userId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var command = new MarkAsReadCommand { NotificationId = id, UserId = userId };
@@ -76,7 +81,7 @@ namespace TuneVault.API.Controllers
         public async Task<IActionResult> MarkAllAsRead()
         {
             var userId = GetUserIdFromJwt();
-            if (string.IsNullOrEmpty(userId))
+            if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
             var command = new MarkAllAsReadCommand { UserId = userId };
@@ -87,9 +92,11 @@ namespace TuneVault.API.Controllers
 
         public class CreateNotificationRequest
         {
-            public string UserId { get; set; } = null!;
+            public Guid UserId { get; set; }
             public NotificationType Type { get; set; } = NotificationType.System;
             public string PayloadJson { get; set; } = null!;
         }
     }
 }
+
+

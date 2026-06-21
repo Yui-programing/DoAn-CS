@@ -24,8 +24,8 @@ public class PlaylistRepository : IPlaylistRepository
     public async Task<Guid> CreateAsync(Playlist playlist)
     {
         const string sql = @"
-            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt, Type)
-            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE(), @Type)";
+            INSERT INTO Playlist (Id, Title, Description, IsPublic, OwnerId, CreatedAt)
+            VALUES (@Id, @Title, @Description, @IsPublic, @OwnerId, GETUTCDATE())";
 
         using IDbConnection db = new SqlConnection(_connectionString);
         await db.ExecuteAsync(sql, playlist);
@@ -33,7 +33,7 @@ public class PlaylistRepository : IPlaylistRepository
     }
 
     // 2. Authorization Query: Fast look up checking if OwnerId matches CurrentUserId
-    public async Task<bool> IsOwnerAsync(Guid playlistId, string userId)
+    public async Task<bool> IsOwnerAsync(Guid playlistId, Guid userId)
     {
         const string sql = @"
             SELECT COUNT(1) 
@@ -50,7 +50,7 @@ public class PlaylistRepository : IPlaylistRepository
     {
         const string sql = @"
             UPDATE Playlist 
-            SET Title = @title, Description = @description, IsPublic = @isPublic, Type = @type
+            SET Title = @title, Description = @description, IsPublic = @isPublic
             WHERE Id = @Id";
 
         using IDbConnection db = new SqlConnection(_connectionString);
@@ -142,7 +142,7 @@ public class PlaylistRepository : IPlaylistRepository
     }
 
     // ✅ ĐÃ SỬA: Logic kiểm tra trùng tên bằng Dapper SQL
-    public async Task<bool> IsTitleUniqueAsync(string title, Guid Id, string userId, CancellationToken cancellationToken)
+    public async Task<bool> IsTitleUniqueAsync(string title, Guid Id, Guid userId, CancellationToken cancellationToken)
     {
         // Viết câu lệnh SQL để đếm số lượng playlist trùng tên của cùng một User
         // Lưu ý: Tên cột trong DB của bạn là OwnerId (dựa vào hàm Create và IsOwner ở trên)
@@ -186,10 +186,10 @@ public class PlaylistRepository : IPlaylistRepository
         return count == 0; 
     }
 
-    public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId)
+    public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(Guid userId)
     {
         const string sql = @"
-        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration, Type
+        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration
         FROM Playlist 
         WHERE OwnerId = @UserId
         ORDER BY CreatedAt DESC"; // Sắp xếp cái mới nhất lên đầu
@@ -205,13 +205,14 @@ public class PlaylistRepository : IPlaylistRepository
         SELECT 
             m.Id AS MediaItemId, 
             m.Title, 
-            m.ArtistName,
+            a.Name AS ArtistName,
             m.CoverUrl,
             m.DurationInSeconds, 
             m.MediaType,
             pt.AddedAt
         FROM PlaylistTrack pt
         INNER JOIN MediaItem m ON pt.MediaItemId = m.Id
+        LEFT JOIN Artist a ON m.ArtistId = a.Id
         WHERE pt.PlaylistId = @PlaylistId
         ORDER BY pt.AddedAt DESC"; // Sắp xếp: Bài mới thêm vào sẽ nằm trên cùng
 

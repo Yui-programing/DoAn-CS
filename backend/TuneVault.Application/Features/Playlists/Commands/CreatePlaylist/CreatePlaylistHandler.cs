@@ -27,7 +27,6 @@ public class CreatePlaylistCommandHandler : IRequestHandler<CreatePlaylistComman
             Title = request.Title,
             Description = request.Description,
             IsPublic = request.IsPublic,
-            Type = request.Type,
             OwnerId = request.OwnerId,
         };
 

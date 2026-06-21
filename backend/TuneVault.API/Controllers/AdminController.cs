@@ -28,7 +28,7 @@ namespace TuneVault.API.Controllers
         }
 
         [HttpPut("users/{id}/role")]
-        public async Task<IActionResult> UpdateUserRole(string id, [FromBody] UpdateUserRoleRequest request)
+        public async Task<IActionResult> UpdateUserRole(Guid id, [FromBody] UpdateUserRoleRequest request)
         {
             var command = new UpdateUserRoleCommand
             {
@@ -40,7 +40,7 @@ namespace TuneVault.API.Controllers
         }
 
         [HttpPut("users/{id}/active")]
-        public async Task<IActionResult> SetUserActiveState(string id, [FromBody] SetUserActiveStateRequest request)
+        public async Task<IActionResult> SetUserActiveState(Guid id, [FromBody] SetUserActiveStateRequest request)
         {
             var command = new SetUserActiveStateCommand
             {
@@ -104,3 +104,5 @@ namespace TuneVault.API.Controllers
         public bool IsActive { get; set; }
     }
 }
+
+

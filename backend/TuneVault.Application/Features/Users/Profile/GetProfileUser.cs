@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using TuneVault.Application.Repositories;
 
@@ -6,27 +10,35 @@ namespace TuneVault.Application.Features.Users.Profile
     // Yêu cầu lấy thông tin profile, truyền vào UserId kiểu string lấy từ Token
     public class GetProfileQuery : IRequest<UserProfileDto>
     {
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
     }
 
     public class UserProfileDto
     {
-        public string Id { get; set; } = string.Empty;
+        public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string? Bio { get; set; }
         public string? AvatarUrl { get; set; }
+        public bool IsPublic { get; set; } = true;
+        
+        // Artist fields
+        public string? Genres { get; set; }
+        public string? BannerUrl { get; set; }
+        public DateTime? VerifiedAt { get; set; }
     }
 
     public class GetProfileQueryHandler : IRequestHandler<GetProfileQuery, UserProfileDto>
     {
         private readonly IUserRepository _userRepository;
+        private readonly IArtistRepository _artistRepository;
 
-        public GetProfileQueryHandler(IUserRepository userRepository)
+        public GetProfileQueryHandler(IUserRepository userRepository, IArtistRepository artistRepository)
         {
             _userRepository = userRepository;
+            _artistRepository = artistRepository;
         }
 
         public async Task<UserProfileDto> Handle(GetProfileQuery request, CancellationToken cancellationToken)
@@ -36,11 +48,11 @@ namespace TuneVault.Application.Features.Users.Profile
 
             if (user == null)
             {
-                throw new Exception("Không tìm thấy người dùng");
+                throw new KeyNotFoundException("Không tìm thấy người dùng");
             }
 
             // 2. Trả về thông tin profile cho Frontend
-            return new UserProfileDto
+            var dto = new UserProfileDto
             {
                 Id = user.Id,
                 Email = user.Email,
@@ -48,8 +60,24 @@ namespace TuneVault.Application.Features.Users.Profile
                 IsActive = user.IsActive,
                 FullName = user.Profile?.FullName ?? string.Empty,
                 Bio = user.Profile?.Bio,
-                AvatarUrl = user.Profile?.AvatarUrl
+                AvatarUrl = user.Profile?.AvatarUrl,
+                IsPublic = user.Profile?.IsPublic ?? true
             };
+
+            if (user.Role == "Artist")
+            {
+                var artist = await _artistRepository.GetArtistByIdAsync(user.Id);
+                if (artist != null)
+                {
+                    dto.Genres = artist.Genres;
+                    dto.BannerUrl = artist.BannerUrl;
+                    dto.VerifiedAt = artist.VerifiedAt;
+                }
+            }
+
+            return dto;
         }
     }
 }
+
+

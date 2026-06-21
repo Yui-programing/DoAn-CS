@@ -34,7 +34,12 @@ public class MediaController : ControllerBase
         _mediaItemRepository = mediaItemRepository;
     }
 
-    private string? GetUserIdFromJwt() => User.FindFirstValue(ClaimTypes.NameIdentifier);
+            private Guid GetUserIdFromJwt()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userIdStr, out var userId)) return userId;
+            return Guid.Empty;
+        }
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
@@ -42,7 +47,7 @@ public class MediaController : ControllerBase
     public async Task<IActionResult> UploadMedia([FromForm] UploadMediaRequest request)
     {
         var userId = GetUserIdFromJwt();
-        if (string.IsNullOrEmpty(userId))
+        if (userId == Guid.Empty)
             return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         if (request.MediaFile == null || request.MediaFile.Length == 0)
@@ -95,7 +100,7 @@ public class MediaController : ControllerBase
             CoverUrl = coverUrl,
             DurationInSeconds = duration,
             MediaType = request.MediaType,
-            OwnerId = userId,
+            ArtistId = userId,
             IsPrivate = request.IsPrivate
         };
 
@@ -109,10 +114,10 @@ public class MediaController : ControllerBase
     public async Task<IActionResult> GetMyMedia()
     {
         var userId = GetUserIdFromJwt();
-        if (string.IsNullOrEmpty(userId))
+        if (userId == Guid.Empty)
             return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
-        var mediaItems = await _mediaItemRepository.GetByOwnerIdAsync(userId);
+        var mediaItems = await _mediaItemRepository.GetByArtistIdAsync(userId);
         return Ok(ApiResponse<IEnumerable<MediaItem>>.SetSuccess(mediaItems, "Lấy danh sách media của tôi thành công."));
     }
 
@@ -178,6 +183,15 @@ public class MediaController : ControllerBase
         var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         return File(fileStream, contentType, enableRangeProcessing: true);
     }
+
+    [HttpGet("artist/{artistId:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetArtistMedia(Guid artistId)
+    {
+        var mediaItems = await _mediaItemRepository.GetByArtistIdAsync(artistId);
+        var publicApprovedMedia = mediaItems.Where(m => m.ApprovalStatus == "Approved" && !m.IsPrivate);
+        return Ok(ApiResponse<IEnumerable<MediaItem>>.SetSuccess(publicApprovedMedia, "Lấy danh sách tác phẩm của nghệ sĩ thành công."));
+    }
 }
 
 public class UploadMediaRequest
@@ -190,3 +204,4 @@ public class UploadMediaRequest
     public bool IsPrivate { get; set; }
     public int Duration { get; set; } // Thời lượng tính bằng giây do frontend gửi lên
 }
+

@@ -5,8 +5,9 @@ namespace TuneVault.Application.Common.Interfaces
 {
     public interface INotificationService
     {
-        Task SendNotificationToUserAsync(string userId, Notification notification);
-        Task NotifyUserReadAsync(string userId, System.Guid notificationId);
-        Task NotifyUserMarkedAllReadAsync(string userId, int count);
+        Task SendNotificationToUserAsync(Guid userId, Notification notification);
+        Task NotifyUserReadAsync(Guid userId, System.Guid notificationId);
+        Task NotifyUserMarkedAllReadAsync(Guid userId, int count);
     }
 }
+

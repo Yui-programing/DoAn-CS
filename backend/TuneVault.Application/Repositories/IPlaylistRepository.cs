@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,18 +20,19 @@ namespace TuneVault.Application.Repositories
 
         Task RemoveTrackAsync(Guid playlistId, Guid mediaitemId);
 
-        Task<bool> IsOwnerAsync (Guid playlistId, string userId);
+        Task<bool> IsOwnerAsync (Guid playlistId, Guid userId);
 
         Task<bool> IsMediaItemInPlaylistAsync(Guid playlistId, Guid mediaitemId);
 
-        Task<bool> IsTitleUniqueAsync(string title, Guid Id, string userId, CancellationToken cancellationToken);
+        Task<bool> IsTitleUniqueAsync(string title, Guid Id, Guid userId, CancellationToken cancellationToken);
 
         Task<bool> IsPlaylistEmptyAsync(Guid playlistId);
 
         Task<bool> IsPlaylistDeletedAsync(Guid playlistId);
 
-        Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(string userId);
+        Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(Guid userId);
 
         Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId);
     }
 }
+

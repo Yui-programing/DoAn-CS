@@ -10,3 +10,4 @@ export * from './mediaService';
 export * from './playlistService';
 export * from './shareService';
 export * from './notificationService';
+export * from './albumService';

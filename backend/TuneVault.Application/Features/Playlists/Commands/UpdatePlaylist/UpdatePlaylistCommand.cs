@@ -15,8 +15,8 @@ namespace TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist
 
         public bool IsPublic { get; set; }
 
-        public int Type { get; set; } = 0; // 0: Playlist, 1: Album
-
-        public string OwnerId { get; set; } = null!;
+        public Guid OwnerId { get; set; }
     }
 }
+
+

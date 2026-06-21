@@ -9,7 +9,7 @@ interface AddToPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
   mediaItemId: string; // ID của bài hát cần thêm
-  placement?: 'player' | 'right-panel'; // Vị trí hiển thị để tự định vị
+  placement?: 'player' | 'right-panel' | 'center'; // Vị trí hiển thị để tự định vị
 }
 
 export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({ 
@@ -221,18 +221,22 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
 
   return (
     <>
-      {/* Invisible backdrop to dismiss when clicking outside */}
+      {/* Nền mờ/vô hình để đóng modal khi click ra ngoài */}
       <div 
-        className="fixed inset-0 z-50 bg-transparent cursor-default" 
+        className={`fixed inset-0 z-50 cursor-default ${
+          placement === 'center' ? 'bg-black/60 backdrop-blur-xs' : 'bg-transparent'
+        }`} 
         onClick={onClose}
       />
 
-      {/* Floating Card */}
+      {/* Khung chứa nổi */}
       <div 
         className={`fixed z-55 w-[310px] bg-[#181818] border border-zinc-800/80 rounded-lg shadow-2xl flex flex-col max-h-[380px] p-4 text-slate-100 ${
           placement === 'player'
             ? 'bottom-28 left-6 animate-slideUp'
-            : 'top-32 right-[340px] animate-slideUp'
+            : placement === 'right-panel'
+              ? 'top-32 right-[340px] animate-slideUp'
+              : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-fadeIn'
         }`}
       >
         {/* Title */}

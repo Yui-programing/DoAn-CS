@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -24,25 +24,25 @@ namespace TuneVault.Application.Features.Auth.Commands.Login
 
         public async Task<string> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            // 1. Tìm User theo Email dưới DB
+            // 1. T�m User theo Email du?i DB
             var user = await _userRepository.GetByEmailAsync(request.Email);
             if (user == null)
             {
-                throw new FluentValidation.ValidationException("Email hoặc mật khẩu không chính xác.");
+                throw new FluentValidation.ValidationException("Email ho?c m?t kh?u kh�ng ch�nh x�c.");
             }
 
-            // 2. Kiểm tra mật khẩu thô với mật khẩu đã băm
+            // 2. Ki?m tra m?t kh?u th� v?i m?t kh?u d� bam
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
             if (!isPasswordValid)
             {
-                throw new FluentValidation.ValidationException("Email hoặc mật khẩu không chính xác.");
+                throw new FluentValidation.ValidationException("Email ho?c m?t kh?u kh�ng ch�nh x�c.");
             }
 
-            // 3. Đúng hết thì ký sinh JWT Token trả về
+            // 3. ��ng h?t th� k� sinh JWT Token tr? v?
             return GenerateJwtToken(user.Id, user.Email, user.Role);
         }
 
-        private string GenerateJwtToken(string userId, string email, string role)
+        private string GenerateJwtToken(Guid userId, string email, string role)
         {
             var secretKey = _configuration["JwtSettings:Secret"];
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
@@ -50,7 +50,7 @@ namespace TuneVault.Application.Features.Auth.Commands.Login
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, role)
             };
@@ -71,3 +71,4 @@ namespace TuneVault.Application.Features.Auth.Commands.Login
         }
     }
 }
+

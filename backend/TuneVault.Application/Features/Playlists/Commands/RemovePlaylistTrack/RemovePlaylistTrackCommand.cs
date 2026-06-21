@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,6 +11,8 @@ namespace TuneVault.Application.Features.Playlists.Commands.RemovePlaylistTrack
         public Guid PlaylistId {  get; set; }
         public Guid MediaItemId { get; set; }
 
-        public string UserId { get; set; } = null!;
+        public Guid UserId { get; set; }
     }
 }
+
+
