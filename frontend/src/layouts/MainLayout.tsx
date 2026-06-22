@@ -598,9 +598,6 @@ export const MainLayout = () => {
       <header className="h-16 flex items-center justify-between px-6 bg-black shrink-0 z-20">
         {/* Left: Navigation Buttons */}
         <div className="flex items-center gap-2">
-          {/* Ba dấu chấm mô phỏng window frame */}
-          <span className="text-zinc-550 font-bold text-base mr-2 select-none">•••</span>
-          
           <button
             onClick={() => navigate(-1)}
             className="w-8 h-8 bg-zinc-900/80 hover:bg-zinc-850 hover:text-white rounded-full flex items-center justify-center text-zinc-400 cursor-pointer transition-all active:scale-90"
@@ -992,30 +989,6 @@ export const MainLayout = () => {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-              </div>
-            </div>
-          )}
-
-          {/* Chips (Playlist, Album, Nghệ sĩ) */}
-          {!isSidebarCollapsed && (
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 select-none text-[10px] font-bold px-1 shrink-0">
-              <span className="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-full cursor-pointer transition-colors shrink-0">Playlist</span>
-              <span className="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-full cursor-pointer transition-colors shrink-0">Album</span>
-              <span className="bg-zinc-900 hover:bg-zinc-800 text-zinc-200 px-3 py-1.5 rounded-full cursor-pointer transition-colors shrink-0">Nghệ sĩ</span>
-            </div>
-          )}
-
-          {/* Search/Sort */}
-          {!isSidebarCollapsed && (
-            <div className="flex items-center justify-between px-2 text-zinc-400 text-[10px] select-none shrink-0 font-semibold">
-              <button className="hover:text-slate-100 transition-colors cursor-pointer">
-                <Search className="w-3.5 h-3.5" />
-              </button>
-              <div className="flex items-center gap-1 hover:text-slate-100 transition-colors cursor-pointer">
-                <span>Gần đây</span>
-                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current">
-                  <path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z" />
-                </svg>
               </div>
             </div>
           )}

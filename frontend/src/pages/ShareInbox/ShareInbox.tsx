@@ -73,10 +73,13 @@ export const ShareInbox = () => {
     try {
       const res = await inboxService.acceptMessageRequest(selectedUser.userId);
       if (res.success) {
-        // Move from requests to main
+        // Move from requests to main, avoiding duplicates
         const newRequests = requestContacts.filter(c => c.userId !== selectedUser.userId);
         setRequestContacts(newRequests);
-        setMainContacts([selectedUser, ...mainContacts]);
+        setMainContacts(prev => {
+          const filtered = prev.filter(c => c.userId !== selectedUser.userId);
+          return [selectedUser, ...filtered];
+        });
         setActiveTab('main');
       }
     } catch (error) {
