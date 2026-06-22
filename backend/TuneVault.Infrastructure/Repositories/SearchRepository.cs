@@ -31,6 +31,12 @@ namespace TuneVault.Infrastructure.Repositories
             SELECT DISTINCT TOP (@Limit) Name AS Text, 'Artist' AS Type
             FROM Artist 
             WHERE Name LIKE @Keyword
+            
+            UNION
+            
+            SELECT DISTINCT TOP (@Limit) Title AS Text, 'Album' AS Type
+            FROM Album 
+            WHERE Title LIKE @Keyword
         
             ORDER BY Text ASC;"; // Có thể sắp xếp theo bảng chữ cái
 

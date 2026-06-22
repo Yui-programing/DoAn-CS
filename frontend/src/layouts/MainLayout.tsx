@@ -369,6 +369,10 @@ export const MainLayout = () => {
             }
           } else if (item.type === 'Artist' || item.type === 'User') {
             navigate(`/user/${item.id}`);
+          } else if (item.type === 'Album') {
+            navigate(`/album/${item.id}`);
+          } else if (item.type === 'Playlist') {
+            navigate(`/playlist/${item.id}`);
           }
           setShowDropdown(false);
         }
@@ -662,8 +666,12 @@ export const MainLayout = () => {
               className="w-full bg-transparent py-3 pl-12 pr-14 text-xs placeholder-zinc-500 text-slate-100 outline-none"
             />
             {/* Vertical separator & browse icon */}
-            <div className="absolute right-4 flex items-center gap-3 text-zinc-450 border-l border-zinc-800/60 pl-3 py-1" title="Duyệt tìm">
-              <Folder className="w-5 h-5 hover:text-slate-100 cursor-pointer transition-colors" />
+            <div 
+              className="absolute right-4 flex items-center gap-3 text-zinc-450 border-l border-zinc-800/60 pl-3 py-1 cursor-pointer" 
+              title="Duyệt tìm"
+              onClick={() => navigate('/search')}
+            >
+              <Folder className="w-5 h-5 hover:text-slate-100 transition-colors" />
             </div>
 
             {/* SUGGESTION DROPDOWN */}
@@ -726,6 +734,10 @@ export const MainLayout = () => {
                               }
                             } else if (item.type === 'Artist' || item.type === 'User') {
                               navigate(`/user/${item.id}`);
+                            } else if (item.type === 'Album') {
+                              navigate(`/album/${item.id}`);
+                            } else if (item.type === 'Playlist') {
+                              navigate(`/playlist/${item.id}`);
                             }
                             setShowDropdown(false);
                           }}
@@ -760,7 +772,7 @@ export const MainLayout = () => {
                                 )}
                               </h5>
                               <p className="text-[10px] text-zinc-400 truncate">
-                                {item.type === 'Artist' ? 'Nghệ sĩ' : item.type === 'User' ? 'Người dùng' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
+                                {item.type === 'Artist' ? 'Nghệ sĩ' : item.type === 'User' ? 'Người dùng' : item.type === 'Album' ? `Album • ${item.artistName || 'Nghệ sĩ tự do'}` : item.type === 'Playlist' ? 'Danh sách phát' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
                               </p>
                             </div>
                           </div>
@@ -1438,4 +1450,5 @@ export const MainLayout = () => {
 };
 
 export default MainLayout;
+
 

@@ -69,13 +69,10 @@ export const PlaylistDetail = () => {
           }
         } else {
           // 1. Tìm thông tin cơ bản của Playlist (Title, Description)
-          const playlistsRes = await playlistService.getMyPlaylists();
-          if (playlistsRes.success) {
-            const found = playlistsRes.data.find((p: any) => p.id === id);
-            if (found) {
-              setPlaylistInfo(found);
-              document.title = `TuneVault - Danh sách phát: ${found.title}`;
-            }
+          const playlistsRes = await playlistService.getPlaylistById(id);
+          if (playlistsRes.success && playlistsRes.data) {
+            setPlaylistInfo(playlistsRes.data);
+            document.title = `TuneVault - Danh sách phát: ${playlistsRes.data.title}`;
           }
 
           // 2. Lấy danh sách các bài hát trong Playlist này

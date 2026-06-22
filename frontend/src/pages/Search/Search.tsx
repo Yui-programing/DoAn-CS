@@ -43,7 +43,7 @@ export const Search = () => {
   const [trendingTracks, setTrendingTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'All' | 'Artist' | 'Song' | 'Video' | 'Profile'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Artist' | 'Song' | 'Video' | 'Profile' | 'Album'>('All');
 
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorite();
@@ -102,13 +102,15 @@ export const Search = () => {
   const artists = results.filter(item => item.type === 'Artist');
   const playlists = results.filter(item => item.type === 'Playlist');
   const profiles = results.filter(item => item.type === 'User');
+  const albums = results.filter(item => item.type === 'Album');
 
-  const tabs: { id: 'All' | 'Artist' | 'Song' | 'Video' | 'Profile', label: string }[] = [
+  const tabs: { id: 'All' | 'Artist' | 'Song' | 'Video' | 'Profile' | 'Album', label: string }[] = [
     { id: 'All', label: 'Tất cả' },
     { id: 'Song', label: 'Bài hát' },
     { id: 'Artist', label: 'Nghệ sĩ' },
     { id: 'Profile', label: 'Hồ sơ' },
     { id: 'Video', label: 'Video' },
+    { id: 'Album', label: 'Album' },
   ];
 
   // Xử lý phát nhạc audio tìm kiếm
@@ -371,6 +373,7 @@ export const Search = () => {
                     {artists.map((artist) => (
                       <div
                         key={artist.id}
+                        onClick={() => navigate(`/user/${artist.id}`)}
                         className="flex flex-col items-center p-3 bg-zinc-900/35 hover:bg-zinc-850/40 border border-transparent hover:border-zinc-800/50 rounded-xl transition-all duration-200 cursor-pointer text-center group"
                       >
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-zinc-850 shadow-md mb-3 relative group-hover:shadow-purple-500/10 transition-shadow">
@@ -438,122 +441,56 @@ export const Search = () => {
                   </div>
                 </section>
               )}
+
+              {/* PHẦN 2.6: ALBUMS */}
+              {(activeTab === 'All' || activeTab === 'Album') && albums.length > 0 && (
+                <section className="space-y-4 mt-8">
+                  <div className="flex items-center gap-2 text-zinc-200 font-bold">
+                    <ListMusic className="w-5 h-5 text-yellow-500" />
+                    <h3 className="text-xl tracking-tight">Album</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {albums.map((al) => (
+                      <div
+                        key={al.id}
+                        onClick={() => navigate(`/album/${al.id}`)}
+                        className="bg-zinc-800/40 hover:bg-zinc-800/80 p-4 rounded-xl transition-all duration-300 cursor-pointer group"
+                      >
+                        <div className="relative aspect-square mb-4 rounded-lg overflow-hidden shadow-lg">
+                          {al.coverUrl ? (
+                            <img
+                              src={mediaService.getImageUrl(al.coverUrl)}
+                              alt={al.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 to-zinc-800 flex items-center justify-center text-yellow-500/80">
+                              <ListMusic className="w-12 h-12" />
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-white truncate text-base mb-1">{al.name}</h3>
+                        {al.artistName && (
+                          <p className="text-sm text-zinc-400 truncate">{al.artistName}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
             </>
           )}
 
         </div>
       ) : (
-        /* 3. TRẠNG THÁI TRỐNG: DUYỆT TÌM & GỢI Ý TRENDING */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* CỘT TRÁI & GIỮA: DANH MỤC DUYỆT TÌM */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2 text-zinc-300 font-bold">
-              <Compass className="w-5 h-5 text-green-400" />
-              <h3 className="text-xl tracking-tight">Duyệt tìm tất cả danh mục</h3>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {categories.map((category, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSearchQuery(category.query)}
-                  className={`h-36 rounded-xl bg-gradient-to-br ${category.color} p-4 relative overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 shadow group`}
-                >
-                  <h4 className="font-extrabold text-base sm:text-lg text-white leading-tight break-words">
-                    {category.title}
-                  </h4>
-                  <div className="absolute -right-6 -bottom-6 w-20 h-20 bg-white/10 rounded-full rotate-12 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-45" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CỘT PHẢI: TRENDING NỔI BẬT */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-zinc-350 font-bold">
-              <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
-              <h3 className="text-xl tracking-tight">Trending nổi bật</h3>
-            </div>
-
-            {trendingTracks.length === 0 ? (
-              <div className="h-40 border border-zinc-800/40 bg-zinc-900/10 rounded-xl flex items-center justify-center text-xs text-zinc-500">
-                Đang tải bảng xếp hạng...
-              </div>
-            ) : (
-              <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl divide-y divide-zinc-850 overflow-hidden shadow-sm">
-                {trendingTracks.map((song, idx) => {
-                  const isThisPlaying = currentTrack?.id === song.id && isPlaying;
-                  return (
-                    <div
-                      key={song.id}
-                      onClick={() => handlePlaySong(song, trendingTracks)}
-                      className="flex items-center justify-between p-3 hover:bg-zinc-850/40 transition-colors cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="w-5 text-center font-extrabold text-sm text-zinc-555 group-hover:text-green-400 shrink-0">
-                          {idx + 1}
-                        </span>
-
-                        <div className="relative w-9 h-9 rounded bg-zinc-800 overflow-hidden shrink-0">
-                          {song.coverUrl ? (
-                            <img src={mediaService.getImageUrl(song.coverUrl)} alt={song.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Music className="w-4 h-4 text-zinc-600" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            {isThisPlaying ? (
-                              <Pause className="w-4 h-4 text-green-400 fill-green-400" />
-                            ) : (
-                              <Play className="w-4 h-4 text-white fill-white" />
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className={`font-bold text-xs truncate ${isThisPlaying ? 'text-green-400' : 'text-slate-200'}`}>
-                            {song.name || song.title}
-                          </p>
-                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">
-                            {song.artistName || 'Nghệ sĩ tự do'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Cột Lượt nghe ở Trending */}
-                      <div className="text-[10px] text-zinc-400 text-right pr-2 shrink-0 font-medium">
-                        {formatViewCount(song.viewCount)}
-                      </div>
-
-                      {/* Thời lượng & Action ở Trending */}
-                      <div className="w-24 flex items-center justify-end gap-3 shrink-0">
-                        <span className="text-[10px] text-zinc-500 font-semibold tracking-wider">
-                          {formatDuration(song.durationInSeconds)}
-                        </span>
-                        {user && (
-                          <TrackDropdownMenu
-                            onAddToPlaylist={() => setSelectedMediaId(song.id)}
-                            onShare={() => console.log('Share')}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        /* 3. TRẠNG THÁI TRỐNG: TÌM KIẾM */
+        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+          <SearchIcon className="w-16 h-16 text-zinc-700" />
+          <h2 className="text-2xl font-bold text-zinc-400">Hãy nhập từ khóa để tìm kiếm</h2>
+          <p className="text-zinc-500">Tìm kiếm bài hát, nghệ sĩ, album và nhiều hơn nữa</p>
         </div>
-      )}
-
-      {/* Modal Add to Playlist */}
-      {selectedMediaId && (
-        <AddToPlaylistModal
-          isOpen={true}
-          onClose={() => setSelectedMediaId(null)}
-          mediaItemId={selectedMediaId}
-        />
       )}
     </div>
   );

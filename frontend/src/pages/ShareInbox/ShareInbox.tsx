@@ -221,7 +221,6 @@ export const ShareInbox = () => {
                               artist: 'Shared Track',
                               coverUrl: msg.attachedMediaCoverUrl,
                               duration: '0:00',
-                              durationInSeconds: 0,
                               filePath: mediaService.getStreamUrl(msg.mediaItemId!)
                             });
                           }}
