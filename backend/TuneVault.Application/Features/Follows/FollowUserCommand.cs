@@ -30,9 +30,7 @@ namespace TuneVault.Application.Features.Follows
 
         public async Task<bool> Handle(FollowUserCommand request, CancellationToken cancellationToken)
         {
-            if (request.FollowerId == request.FollowingUserId)
-                return false;
-
+            // Xoá check thủ công FollowerId == FollowingUserId vì đã có Validator lo
             // Check if target profile exists
             var targetProfile = await _userRepository.GetProfileByUserIdAsync(request.FollowingUserId);
             if (targetProfile == null)
