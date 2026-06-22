@@ -1,14 +1,17 @@
-import { Bell, Mail, UserPlus, Info, Check } from 'lucide-react';
+import { Bell, Mail, UserPlus, Info, Check, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
 import type { Notification } from '../../types';
 
 export const Notifications = () => {
   const { notifications, markAsRead, markAllAsRead } = useNotification();
+  const navigate = useNavigate();
 
   const getIcon = (type: number) => {
     switch (type) {
       case 0: return <Mail className="w-5 h-5 text-blue-400" />;
       case 1: return <UserPlus className="w-5 h-5 text-green-400" />;
+      case 2: return <Heart className="w-5 h-5 text-red-500" />;
       default: return <Info className="w-5 h-5 text-amber-400" />;
     }
   };
@@ -62,7 +65,25 @@ export const Notifications = () => {
           notifications.map((n: Notification) => (
             <div 
               key={n.id}
-              onClick={() => { if (!n.isRead) markAsRead(n.id); }}
+              onClick={() => { 
+                if (!n.isRead) markAsRead(n.id); 
+                
+                // Điều hướng dựa vào loại thông báo
+                if (n.type === 0) {
+                  navigate('/share');
+                } else if (n.type === 1) {
+                  try {
+                    const data = JSON.parse(n.payloadJson);
+                    if (data.SenderId) navigate(`/user/${data.SenderId}`);
+                  } catch (e) {}
+                } else if (n.type === 2) {
+                  // Với thông báo thả tim, nếu có profile thì vào xem profile của người đó
+                  try {
+                    const data = JSON.parse(n.payloadJson);
+                    if (data.ActionUserId) navigate(`/user/${data.ActionUserId}`);
+                  } catch (e) {}
+                }
+              }}
               className={`p-4 rounded-xl border transition-all flex gap-4 items-start cursor-pointer ${
                 n.isRead 
                   ? 'bg-zinc-900/10 border-zinc-900/50 text-zinc-400' 

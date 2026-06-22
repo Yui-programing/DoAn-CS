@@ -176,14 +176,22 @@ public class PlaylistRepository : IPlaylistRepository
     }
     public async Task<bool> IsPlaylistDeletedAsync(Guid playlistId)
     {
-        // Đếm xem có record nào mang Id này không. 
-        // Trả về 0 nghĩa là không tồn tại -> Đã bị xóa (Hard Delete).
         const string sql = @"SELECT COUNT(1) FROM Playlist WHERE Id = @playlistId";
-    
         using IDbConnection db = new SqlConnection(_connectionString);
         var count = await db.ExecuteScalarAsync<int>(sql, new { PlaylistId = playlistId });
-    
         return count == 0; 
+    }
+
+    public async Task<bool> HasAccessAsync(Guid playlistId, Guid userId)
+    {
+        const string sql = @"
+            SELECT CASE WHEN EXISTS (
+                SELECT 1 FROM Playlist p
+                LEFT JOIN MediaShare s ON p.Id = s.PlaylistId AND s.ReceiverId = @UserId
+                WHERE p.Id = @PlaylistId AND (p.IsPublic = 1 OR p.OwnerId = @UserId OR s.Id IS NOT NULL)
+            ) THEN 1 ELSE 0 END";
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.ExecuteScalarAsync<bool>(sql, new { PlaylistId = playlistId, UserId = userId });
     }
 
     public async Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(Guid userId)
@@ -196,6 +204,16 @@ public class PlaylistRepository : IPlaylistRepository
 
         using IDbConnection db = new SqlConnection(_connectionString);
         return await db.QueryAsync<MyPlaylistDto>(sql, new { UserId = userId });
+    }
+
+    public async Task<MyPlaylistDto?> GetByIdAsync(Guid playlistId)
+    {
+        const string sql = @"
+        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration
+        FROM Playlist 
+        WHERE Id = @PlaylistId";
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.QueryFirstOrDefaultAsync<MyPlaylistDto>(sql, new { PlaylistId = playlistId });
     }
 
     public async Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId)

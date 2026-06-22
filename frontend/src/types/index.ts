@@ -22,6 +22,8 @@ export interface UserProfile {
   isPublic?: boolean;
   followerCount?: number;
   followingCount?: number;
+  playlistCount?: number;
+  favoriteCount?: number;
 }
 
 export type MediaType = 0 | 1;
@@ -162,9 +164,42 @@ export interface ShareMediaItemRequest {
 }
 
 export interface SharePlaylistRequest {
-  receiverid: string; // Chú ý: Backend C# đang viết chữ 'i' thường (ShareDto.cs)
+  receiverId: string; // Chú ý: Đã sửa lại thành receiverId theo C# mới
   playlistId: string;
   message?: string;
+}
+
+export interface ShareAlbumRequest {
+  receiverId: string;
+  albumId: string;
+  message?: string;
+}
+
+export interface InboxContact {
+  userId: string;
+  fullName: string;
+  avatarUrl?: string;
+  lastMessage?: string;
+  lastMessageAt: string;
+  isUnread: boolean;
+}
+
+export interface InboxResult {
+  mainInbox: InboxContact[];
+  messageRequests: InboxContact[];
+}
+
+export interface ChatHistoryItem {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  message?: string;
+  sharedAt: string;
+  mediaItemId?: string;
+  playlistId?: string;
+  albumId?: string;
+  attachedMediaTitle?: string;
+  attachedMediaCoverUrl?: string;
 }
 
 export type { AdminUser } from "./admin";

@@ -29,8 +29,12 @@ namespace TuneVault.Application.Repositories
         Task<bool> IsPlaylistEmptyAsync(Guid playlistId);
 
         Task<bool> IsPlaylistDeletedAsync(Guid playlistId);
+        
+        Task<bool> HasAccessAsync(Guid playlistId, Guid userId);
 
         Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(Guid userId);
+
+        Task<MyPlaylistDto?> GetByIdAsync(Guid playlistId);
 
         Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId);
     }

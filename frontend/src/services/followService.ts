@@ -20,5 +20,10 @@ export const followService = {
   getFollowingArtists: async (): Promise<ApiResponse<UserProfile[]>> => {
     const response = await api.get<ApiResponse<UserProfile[]>>("/follows/following");
     return response.data;
+  },
+
+  getFollowingUsers: async (): Promise<ApiResponse<UserProfile[]>> => {
+    const response = await api.get<ApiResponse<UserProfile[]>>("/follows/following-users");
+    return response.data;
   }
 };

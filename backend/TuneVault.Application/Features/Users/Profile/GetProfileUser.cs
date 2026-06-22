@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -32,6 +33,10 @@ namespace TuneVault.Application.Features.Users.Profile
         // Follow counts
         public int FollowerCount { get; set; }
         public int FollowingCount { get; set; }
+        
+        // Other stats
+        public int PlaylistCount { get; set; }
+        public int FavoriteCount { get; set; }
     }
 
     public class GetProfileQueryHandler : IRequestHandler<GetProfileQuery, UserProfileDto>
@@ -39,12 +44,21 @@ namespace TuneVault.Application.Features.Users.Profile
         private readonly IUserRepository _userRepository;
         private readonly IArtistRepository _artistRepository;
         private readonly IFollowRepository _followRepository;
+        private readonly IPlaylistRepository _playlistRepository;
+        private readonly IFavoriteRepository _favoriteRepository;
 
-        public GetProfileQueryHandler(IUserRepository userRepository, IArtistRepository artistRepository, IFollowRepository followRepository)
+        public GetProfileQueryHandler(
+            IUserRepository userRepository, 
+            IArtistRepository artistRepository, 
+            IFollowRepository followRepository,
+            IPlaylistRepository playlistRepository,
+            IFavoriteRepository favoriteRepository)
         {
             _userRepository = userRepository;
             _artistRepository = artistRepository;
             _followRepository = followRepository;
+            _playlistRepository = playlistRepository;
+            _favoriteRepository = favoriteRepository;
         }
 
         public async Task<UserProfileDto> Handle(GetProfileQuery request, CancellationToken cancellationToken)
@@ -73,6 +87,13 @@ namespace TuneVault.Application.Features.Users.Profile
             // Fetch follow counts dynamically (Option 1)
             dto.FollowerCount = await _followRepository.GetFollowerCountAsync(request.UserId);
             dto.FollowingCount = await _followRepository.GetFollowingCountAsync(request.UserId);
+
+            // Fetch Playlist and Favorite counts
+            var playlists = await _playlistRepository.GetByOwnerIdAsync(request.UserId);
+            dto.PlaylistCount = playlists.Count();
+
+            var favorites = await _favoriteRepository.GetByUserIdAsync(request.UserId);
+            dto.FavoriteCount = favorites.Count();
 
             if (user.Role == "Artist")
             {

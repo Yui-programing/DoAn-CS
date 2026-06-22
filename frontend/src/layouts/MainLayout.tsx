@@ -30,16 +30,16 @@ import {
   Plus,
   Check,
   CheckCircle,
+  Share2,
 } from "lucide-react";
 import { NotificationBell } from "../components/NotificationBell";
 import { RightPanel } from "../components/RightPanel";
 import { CreatePlaylistModal } from "../components/CreatePlaylistModal";
 import { CreateAlbumModal } from "../components/CreateAlbumModal";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
+import { ShareModal } from "../components/ShareModal";
 import { useFavorite } from "../contexts/FavoriteContext";
 import { formatTime, formatDuration } from "../utils";
-
-
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
@@ -101,6 +101,7 @@ export const MainLayout = () => {
   const [showCreateAlbum, setShowCreateAlbum] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [isTrackInPlaylist, setIsTrackInPlaylist] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Lưu trạng thái thu gọn vào localStorage
   const handleToggleSidebar = (collapsed: boolean) => {
@@ -368,6 +369,10 @@ export const MainLayout = () => {
             }
           } else if (item.type === 'Artist' || item.type === 'User') {
             navigate(`/user/${item.id}`);
+          } else if (item.type === 'Album') {
+            navigate(`/album/${item.id}`);
+          } else if (item.type === 'Playlist') {
+            navigate(`/playlist/${item.id}`);
           }
           setShowDropdown(false);
         }
@@ -661,8 +666,12 @@ export const MainLayout = () => {
               className="w-full bg-transparent py-3 pl-12 pr-14 text-xs placeholder-zinc-500 text-slate-100 outline-none"
             />
             {/* Vertical separator & browse icon */}
-            <div className="absolute right-4 flex items-center gap-3 text-zinc-450 border-l border-zinc-800/60 pl-3 py-1" title="Duyệt tìm">
-              <Folder className="w-5 h-5 hover:text-slate-100 cursor-pointer transition-colors" />
+            <div 
+              className="absolute right-4 flex items-center gap-3 text-zinc-450 border-l border-zinc-800/60 pl-3 py-1 cursor-pointer" 
+              title="Duyệt tìm"
+              onClick={() => navigate('/search')}
+            >
+              <Folder className="w-5 h-5 hover:text-slate-100 transition-colors" />
             </div>
 
             {/* SUGGESTION DROPDOWN */}
@@ -725,6 +734,10 @@ export const MainLayout = () => {
                               }
                             } else if (item.type === 'Artist' || item.type === 'User') {
                               navigate(`/user/${item.id}`);
+                            } else if (item.type === 'Album') {
+                              navigate(`/album/${item.id}`);
+                            } else if (item.type === 'Playlist') {
+                              navigate(`/playlist/${item.id}`);
                             }
                             setShowDropdown(false);
                           }}
@@ -759,7 +772,7 @@ export const MainLayout = () => {
                                 )}
                               </h5>
                               <p className="text-[10px] text-zinc-400 truncate">
-                                {item.type === 'Artist' ? 'Nghệ sĩ' : item.type === 'User' ? 'Người dùng' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
+                                {item.type === 'Artist' ? 'Nghệ sĩ' : item.type === 'User' ? 'Người dùng' : item.type === 'Album' ? `Album • ${item.artistName || 'Nghệ sĩ tự do'}` : item.type === 'Playlist' ? 'Danh sách phát' : `Bài hát • ${item.artistName || 'Nghệ sĩ tự do'}`}
                               </p>
                             </div>
                           </div>
@@ -1204,6 +1217,14 @@ export const MainLayout = () => {
                   </svg>
                 )}
               </button>
+              
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="text-zinc-450 hover:text-green-400 transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                title="Chia sẻ bài hát"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
             </div>
           )}
         </div>
@@ -1414,9 +1435,20 @@ export const MainLayout = () => {
           placement={playlistModalPlacement}
         />
       )}
+
+      {/* MODAL CHIA SẺ */}
+      {showShareModal && currentTrack && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          mediaItemId={currentTrack.id}
+          title={`Bài hát: ${currentTrack.title}`}
+        />
+      )}
     </div>
   );
 };
 
 export default MainLayout;
+
 

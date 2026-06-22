@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,6 +18,10 @@ namespace TuneVault.Application.Features.Playlists.Commands.ViewPlaylistTrack
 
         public async Task<IEnumerable<PlaylistTrackDto>> Handle(GetPlaylistTracksQuery request, CancellationToken cancellationToken)
         {
+            var hasAccess = await _playlistRepository.HasAccessAsync(request.PlaylistId, request.UserId);
+            if (!hasAccess)
+                return new List<PlaylistTrackDto>(); // Hoặc throw UnauthorizedAccessException
+                
             return await _playlistRepository.GetTracksByPlaylistIdAsync(request.PlaylistId);
         }
     }

@@ -7,6 +7,11 @@ export const playlistService = {
         return response.data;
     },
 
+    getPlaylistById: async (id: string): Promise<ApiResponse<Playlist>> => {
+        const response = await api.get<ApiResponse<Playlist>>(`/playlists/${id}`);
+        return response.data;
+    },
+
     createPlaylist: async (data: CreatePlaylistRequest): Promise<ApiResponse<string>> => {
         const response = await api.post<ApiResponse<string>>('/playlists', data);
         return response.data;

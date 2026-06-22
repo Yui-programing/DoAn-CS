@@ -8,6 +8,7 @@ import { playlistService, mediaService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { ShareModal } from '../../components/ShareModal';
 import { useFavorite } from '../../contexts/FavoriteContext';
 import { formatDuration, formatViewCount } from '../../utils';
 
@@ -28,8 +29,9 @@ export const Home = () => {
   const audioTracks = suggestedTracks.filter((track: any) => track.mediaType === 0);
   const videoTracks = suggestedTracks.filter((track: any) => track.mediaType === 1);
 
-  // Trạng thái cho Add to Playlist Modal
+  // Trạng thái cho Add to Playlist Modal và Share Modal
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [sharingTrack, setSharingTrack] = useState<any | null>(null);
 
   // BƯỚC 2: Tự động gọi API khi vừa mở trang Home
   useEffect(() => {
@@ -278,22 +280,32 @@ export const Home = () => {
                         </div>
                       )}
                       {/* Nút play nổi khi hover */}
-                      <div className={`absolute inset-0 bg-black/40 flex items-end justify-end p-2 transition-opacity duration-300 ${
+                      <div className={`absolute inset-0 bg-black/40 flex flex-col justify-between p-2 transition-opacity duration-300 ${
                         isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                       }`}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTrackClick(track, audioTracks);
-                          }}
-                          className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 active:scale-95 transition-all transform translate-y-2 group-hover:translate-y-0 duration-300 cursor-pointer"
-                        >
-                          {isCurrent && isPlaying ? (
-                            <Pause className="w-5 h-5 fill-current" />
-                          ) : (
-                            <Play className="w-5 h-5 fill-current ml-0.5" />
-                          )}
-                        </button>
+                        {/* Góc trên phải: Menu Dropdown */}
+                        <div className="flex justify-end">
+                          <TrackDropdownMenu 
+                            onAddToPlaylist={() => setSelectedMediaId(track.id)}
+                            onShare={() => setSharingTrack(track)}
+                          />
+                        </div>
+                        {/* Góc dưới phải: Nút Play */}
+                        <div className="flex justify-end">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTrackClick(track, audioTracks);
+                            }}
+                            className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 active:scale-95 transition-all transform translate-y-2 group-hover:translate-y-0 duration-300 cursor-pointer"
+                          >
+                            {isCurrent && isPlaying ? (
+                              <Pause className="w-5 h-5 fill-current" />
+                            ) : (
+                              <Play className="w-5 h-5 fill-current ml-0.5" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     {/* Thông tin bài hát */}
@@ -426,7 +438,7 @@ export const Home = () => {
                       </span>
                       <TrackDropdownMenu 
                         onAddToPlaylist={() => setSelectedMediaId(track.id)}
-                        onShare={() => console.log('Share')}
+                        onShare={() => setSharingTrack(track)}
                       />
                     </div>
                   </div>
@@ -443,6 +455,16 @@ export const Home = () => {
           isOpen={true}
           onClose={() => setSelectedMediaId(null)}
           mediaItemId={selectedMediaId}
+        />
+      )}
+
+      {/* Modal Share */}
+      {sharingTrack && (
+        <ShareModal 
+          isOpen={!!sharingTrack}
+          onClose={() => setSharingTrack(null)}
+          mediaItemId={sharingTrack.id}
+          title={`Bài hát: ${sharingTrack.title}`}
         />
       )}
     </div>

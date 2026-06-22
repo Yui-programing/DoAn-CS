@@ -13,5 +13,6 @@ namespace TuneVault.Application.Repositories
         Task<int> GetFollowerCountAsync(Guid userId);
         Task<int> GetFollowingCountAsync(Guid userId);
         Task<IEnumerable<UserProfile>> GetFollowingArtistsAsync(Guid userId);
+        Task<IEnumerable<UserProfile>> GetFollowingUsersAsync(Guid userId);
     }
 }

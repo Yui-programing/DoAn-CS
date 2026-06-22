@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Thêm icon Loader2
-import { Play, Pause, Heart, Music, ArrowLeft, Loader2, Edit2, Trash2 } from 'lucide-react';
+import { Play, Pause, Heart, Music, ArrowLeft, Loader2, Edit2, Trash2, Share2 } from 'lucide-react';
 // Import dịch vụ API
 import { playlistService, mediaService, albumService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';
 import { TrackListTable } from '../../components/TrackListTable';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
+import { ShareModal } from '../../components/ShareModal';
 import { formatDuration } from '../../utils';
 import { useFavorite } from '../../contexts/FavoriteContext';
 
@@ -26,6 +27,7 @@ export const PlaylistDetail = () => {
   const [tracks, setTracks] = useState<any[]>([]);             // Chứa danh sách bài hát
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isShareModalOpen, setShareModalOpen] = useState(false);
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
 
   // BƯỚC 2: Gọi API khi vào trang chi tiết
@@ -67,13 +69,10 @@ export const PlaylistDetail = () => {
           }
         } else {
           // 1. Tìm thông tin cơ bản của Playlist (Title, Description)
-          const playlistsRes = await playlistService.getMyPlaylists();
-          if (playlistsRes.success) {
-            const found = playlistsRes.data.find((p: any) => p.id === id);
-            if (found) {
-              setPlaylistInfo(found);
-              document.title = `TuneVault - Danh sách phát: ${found.title}`;
-            }
+          const playlistsRes = await playlistService.getPlaylistById(id);
+          if (playlistsRes.success && playlistsRes.data) {
+            setPlaylistInfo(playlistsRes.data);
+            document.title = `TuneVault - Danh sách phát: ${playlistsRes.data.title}`;
           }
 
           // 2. Lấy danh sách các bài hát trong Playlist này
@@ -236,6 +235,14 @@ export const PlaylistDetail = () => {
           <Heart className="w-6 h-6" />
         </button>
 
+        {/* Share Button */}
+        <button 
+          onClick={() => setShareModalOpen(true)}
+          className="text-zinc-400 hover:text-green-400 transition-colors p-2 flex items-center gap-2 text-sm font-semibold"
+        >
+          <Share2 className="w-6 h-6" />
+        </button>
+
         {user && playlistInfo && !playlistInfo.isAlbum && user.id === playlistInfo.ownerId && (
           <>
             <div className="w-px h-8 bg-zinc-800 mx-2"></div>
@@ -287,6 +294,15 @@ export const PlaylistDetail = () => {
           mediaItemId={selectedMediaId}
         />
       )}
+
+      {/* Modal Share */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        playlistId={playlistInfo?.isAlbum ? undefined : playlistInfo?.id}
+        albumId={playlistInfo?.isAlbum ? playlistInfo?.id : undefined}
+        title={`${playlistInfo?.isAlbum ? 'Album' : 'Playlist'}: ${playlistInfo?.title}`}
+      />
     </div>
   );
 };

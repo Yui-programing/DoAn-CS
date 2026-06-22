@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Heart, Music } from 'lucide-react';
 import { usePlayer } from '../contexts/PlayerContext';
@@ -6,6 +6,7 @@ import { useFavorite } from '../contexts/FavoriteContext';
 import { useAuth } from '../contexts/AuthContext';
 import { mediaService } from '../services';
 import { TrackDropdownMenu } from './TrackDropdownMenu';
+import { ShareModal } from './ShareModal';
 
 export interface TrackData {
     id: string;
@@ -29,6 +30,7 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
     const { currentTrack, isPlaying, togglePlay, playTrack } = usePlayer();
     const { isFavorite, toggleFavorite } = useFavorite();
     const navigate = useNavigate();
+    const [sharingTrack, setSharingTrack] = useState<TrackData | null>(null);
 
     const handleTrackClick = (track: TrackData) => {
         const isVideo = track.mediaType === 1;
@@ -106,10 +108,7 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <TrackDropdownMenu
                                                 onAddToPlaylist={() => onAddToPlaylist && onAddToPlaylist(track.id)}
-                                                onShare={() => {
-                                                    // Placeholder share
-                                                    alert("Đã copy link chia sẻ: " + track.title);
-                                                }}
+                                                onShare={() => setSharingTrack(track)}
                                                 onRemoveFromPlaylist={onRemoveTrack ? () => onRemoveTrack(track.id) : undefined}
                                             />
                                         </div>
@@ -120,6 +119,15 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
                     })}
                 </tbody>
             </table>
+
+            {sharingTrack && (
+                <ShareModal 
+                    isOpen={!!sharingTrack}
+                    onClose={() => setSharingTrack(null)}
+                    mediaItemId={sharingTrack.id}
+                    title={`Bài hát: ${sharingTrack.title}`}
+                />
+            )}
         </div>
     );
 };
