@@ -2,18 +2,39 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using System;
 using TuneVault.API.Common;
-using TuneVault.Application.Features.Playlists.Commands.ViewPlaylist;
 using TuneVault.Application.Features.Share;
 using TuneVault.Application.Features.SharedMedia.Commands.ShareMediaItem;
 using TuneVault.Application.Models;
 
 namespace TuneVault.API.Controllers
 {
-    [Authorize] // B?t bu?c dang nh?p d? l?y thÙng tin SenderId t? JWT
+    public class ShareMediaItemRequest
+    {
+        public Guid ReceiverId { get; set; }
+        public Guid MediaItemId { get; set; }
+        public string? Message { get; set; }
+    }
+
+    public class SharePlaylistRequest
+    {
+        public Guid ReceiverId { get; set; }
+        public Guid PlaylistId { get; set; }
+        public string? Message { get; set; }
+    }
+
+    public class ShareAlbumRequest
+    {
+        public Guid ReceiverId { get; set; }
+        public Guid AlbumId { get; set; }
+        public string? Message { get; set; }
+    }
+
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    
     public class ShareController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -22,26 +43,20 @@ namespace TuneVault.API.Controllers
         {
             _mediator = mediator;
         }
-                private Guid GetUserIdFromJwt()
+
+        private Guid GetUserIdFromJwt()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(userIdStr, out var userId)) return userId;
             return Guid.Empty;
         }
-        // –u?ng d?n d?ng: POST /api/share
-        [HttpPost]
+
+        [HttpPost("media")]
         public async Task<IActionResult> ShareMedia([FromBody] ShareMediaItemRequest request)
         {
-            // 1. L?y UserId c?a ngu?i g?i t? JWT token hi?n t?i
             var senderId = GetUserIdFromJwt();
-            if (senderId == Guid.Empty)
-            {
-                return Unauthorized(ApiResponse<object>.SetFailure(message: "Token khÙng h?p l? ho?c d„ h?t h?n."));
-            }
+            if (senderId == Guid.Empty) return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh√¥ng h·ª£p l·ªá."));
 
-            
-            
-            // 2. –Ûng gÛi d? li?u d?u v‡o th‡nh Command g?i xu?ng Handler
             var command = new SharedMediaItemCommand
             {
                 MediaItemId = request.MediaItemId,
@@ -50,30 +65,44 @@ namespace TuneVault.API.Controllers
                 Message = request.Message
             };
 
-            // 3. Ch? k?t qu? x? l˝ t? MediatR
-            var result = await _mediator.Send(command);
-
-            // 4. Tr? v? ph?n h?i th‡nh cÙng b?c trong ApiResponse
-            return Ok(ApiResponse<Guid>.SetSuccess(result, "Chia s? b‡i h·t th‡nh cÙng!"));
-            
-            
+            var shareId = await _mediator.Send(command);
+            return Ok(ApiResponse<Guid>.SetSuccess(shareId, "Chia s·∫ª b√†i h√°t th√†nh c√¥ng."));
         }
-        [HttpGet]
-        public async Task<IActionResult> GetMyShareMedia()
-        {
-            var receiverId = GetUserIdFromJwt();
-            if(receiverId == Guid.Empty)
-            {
-                return Unauthorized(ApiResponse<object>.SetFailure(message: "Token khÙng h?p l? ho?c d„ h?t h?n."));
-            }
-            var query = new GetMediaItemQuery
-            {
-                OwnerId= receiverId
-            };
-            var result = await _mediator.Send(query);
 
-            return Ok(ApiResponse<IEnumerable<SharedMediaItemDto>>.SetSuccess(result, "L?y danh s·ch b‡i h·t du?c chia s? th‡nh cÙng!"));
+        [HttpPost("playlist")]
+        public async Task<IActionResult> SharePlaylist([FromBody] SharePlaylistRequest request)
+        {
+            var senderId = GetUserIdFromJwt();
+            if (senderId == Guid.Empty) return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh√¥ng h·ª£p l·ªá."));
+
+            var command = new SharePlaylistCommand
+            {
+                PlaylistId = request.PlaylistId,
+                SenderId = senderId,
+                ReceiverId = request.ReceiverId,
+                Message = request.Message
+            };
+
+            var shareId = await _mediator.Send(command);
+            return Ok(ApiResponse<Guid>.SetSuccess(shareId, "Chia s·∫ª Playlist th√†nh c√¥ng."));
+        }
+
+        [HttpPost("album")]
+        public async Task<IActionResult> ShareAlbum([FromBody] ShareAlbumRequest request)
+        {
+            var senderId = GetUserIdFromJwt();
+            if (senderId == Guid.Empty) return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh√¥ng h·ª£p l·ªá."));
+
+            var command = new ShareAlbumCommand
+            {
+                AlbumId = request.AlbumId,
+                SenderId = senderId,
+                ReceiverId = request.ReceiverId,
+                Message = request.Message
+            };
+
+            var shareId = await _mediator.Send(command);
+            return Ok(ApiResponse<Guid>.SetSuccess(shareId, "Chia s·∫ª Album th√†nh c√¥ng."));
         }
     }
 }
-

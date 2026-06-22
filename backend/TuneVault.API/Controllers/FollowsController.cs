@@ -96,13 +96,29 @@ namespace TuneVault.API.Controllers
             if (userId == Guid.Empty)
                 return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
-            var query = new GetFollowingArtistsQuery
+            var query = new TuneVault.Application.Features.Follows.GetFollowingArtistsQuery
             {
                 UserId = userId
             };
 
             var following = await _mediator.Send(query);
             return Ok(ApiResponse<IEnumerable<UserProfile>>.SetSuccess(following, "Lấy danh sách nghệ sĩ đang theo dõi thành công!"));
+        }
+
+        [HttpGet("following-users")]
+        public async Task<IActionResult> GetFollowingUsers()
+        {
+            var userId = GetUserIdFromJwt();
+            if (userId == Guid.Empty)
+                return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
+
+            var query = new TuneVault.Application.Features.Follows.Queries.GetFollowingUsersQuery
+            {
+                UserId = userId
+            };
+
+            var following = await _mediator.Send(query);
+            return Ok(ApiResponse<IEnumerable<UserProfile>>.SetSuccess(following, "Lấy danh sách người dùng đang theo dõi thành công!"));
         }
     }
 }

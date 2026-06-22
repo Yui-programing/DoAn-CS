@@ -2,19 +2,19 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using TuneVault.Application.Repositories;
 using TuneVault.Application.Models;
+using TuneVault.Domain.Entities;
 
 namespace TuneVault.Infrastructure.Repositories
 {
-
     public class SharedMediaRepository : ISharedRepository
     {
         private readonly IDbConnection _dbConnection;
 
-        // T?ng Infrastructure tr?c ti?p qu?n l� Connection d? truy v?n SQL b?ng Dapper
         public SharedMediaRepository(IDbConnection dbConnection)
         {
             _dbConnection = dbConnection;
@@ -33,6 +33,7 @@ namespace TuneVault.Infrastructure.Repositories
             var count = await _dbConnection.ExecuteScalarAsync<int>(sql, new { MediaItemId = mediaItemId });
             return count > 0;
         }
+
         public async Task<bool> PlaylistExistsAsync(Guid playlistId)
         {
             string sql = "SELECT COUNT(1) FROM Playlist WHERE Id = @PlaylistId";
@@ -40,12 +41,19 @@ namespace TuneVault.Infrastructure.Repositories
             return count > 0;
         }
 
-        public async Task<Guid> ShareMediaItemAsync(Guid senderId, Guid receiverId, Guid mediaItemId, string? message)
+        public async Task<bool> AlbumExistsAsync(Guid id)
+        {
+            string sql = "SELECT COUNT(1) FROM Album WHERE Id = @Id";
+            var count = await _dbConnection.ExecuteScalarAsync<int>(sql, new { Id = id });
+            return count > 0;
+        }
+
+        public async Task<Guid> ShareMediaItemAsync(Guid senderId, Guid receiverId, Guid mediaItemId, string? message, bool isAccepted)
         {
             var shareId = Guid.NewGuid();
             string sql = @"
-                INSERT INTO MediaShare (Id, SenderId, ReceiverId, MediaItemId, PlaylistId, Message, SharedAt)
-                VALUES (@Id, @SenderId, @ReceiverId, @MediaItemId, @PlaylistId, @Message, @SharedAt)";
+                INSERT INTO MediaShare (Id, SenderId, ReceiverId, MediaItemId, Message, SharedAt, IsAccepted)
+                VALUES (@Id, @SenderId, @ReceiverId, @MediaItemId, @Message, @SharedAt, @IsAccepted)";
 
             await _dbConnection.ExecuteAsync(sql, new
             {
@@ -53,17 +61,54 @@ namespace TuneVault.Infrastructure.Repositories
                 SenderId = senderId,
                 ReceiverId = receiverId,
                 MediaItemId = mediaItemId,
-                PlaylistId = (Guid?)null,
                 Message = message,
-                SharedAt = DateTime.UtcNow
+                SharedAt = DateTime.UtcNow,
+                IsAccepted = isAccepted
             });
 
             return shareId;
         }
-        public async Task<Guid> SharePlaylistAsync(Guid senderId, Guid receiverId, Guid playlistId, string? message)
-        {
-            throw new NotImplementedException("Ch?c nang share playlist chua du?c hi?n th?c.");
 
+        public async Task<Guid> SharePlaylistAsync(Guid senderId, Guid receiverId, Guid playlistId, string? message, bool isAccepted)
+        {
+            var shareId = Guid.NewGuid();
+            string sql = @"
+                INSERT INTO MediaShare (Id, SenderId, ReceiverId, PlaylistId, Message, SharedAt, IsAccepted)
+                VALUES (@Id, @SenderId, @ReceiverId, @PlaylistId, @Message, @SharedAt, @IsAccepted)";
+
+            await _dbConnection.ExecuteAsync(sql, new
+            {
+                Id = shareId,
+                SenderId = senderId,
+                ReceiverId = receiverId,
+                PlaylistId = playlistId,
+                Message = message,
+                SharedAt = DateTime.UtcNow,
+                IsAccepted = isAccepted
+            });
+
+            return shareId;
+        }
+
+        public async Task<Guid> ShareAlbumAsync(Guid senderId, Guid receiverId, Guid albumId, string? message, bool isAccepted)
+        {
+            var shareId = Guid.NewGuid();
+            string sql = @"
+                INSERT INTO MediaShare (Id, SenderId, ReceiverId, AlbumId, Message, SharedAt, IsAccepted)
+                VALUES (@Id, @SenderId, @ReceiverId, @AlbumId, @Message, @SharedAt, @IsAccepted)";
+
+            await _dbConnection.ExecuteAsync(sql, new
+            {
+                Id = shareId,
+                SenderId = senderId,
+                ReceiverId = receiverId,
+                AlbumId = albumId,
+                Message = message,
+                SharedAt = DateTime.UtcNow,
+                IsAccepted = isAccepted
+            });
+
+            return shareId;
         }
 
         public async Task<IEnumerable<SharedMediaItemDto>> GetSharedMediaItemsByReceiverIdAsync(Guid receiverId)
@@ -74,6 +119,50 @@ namespace TuneVault.Infrastructure.Repositories
                 WHERE ReceiverId = @ReceiverId AND MediaItemId IS NOT NULL";
             return await _dbConnection.QueryAsync<SharedMediaItemDto>(sql, new { ReceiverId = receiverId });
         }
-}
-}
 
+        public async Task<IEnumerable<MediaShare>> GetInboxAsync(Guid receiverId)
+        {
+            // Lấy tất cả chia sẻ mà user này là người nhận và IsAccepted = 1
+            // HOẶC user này là người gửi (họ đã chủ động gửi thì tất nhiên là Inbox chính).
+            string sql = @"
+                SELECT *
+                FROM MediaShare
+                WHERE (ReceiverId = @UserId AND IsAccepted = 1)
+                   OR (SenderId = @UserId)
+                ORDER BY SharedAt DESC";
+            return await _dbConnection.QueryAsync<MediaShare>(sql, new { UserId = receiverId });
+        }
+
+        public async Task<IEnumerable<MediaShare>> GetMessageRequestsAsync(Guid receiverId)
+        {
+            // Lấy tất cả chia sẻ mà user này là người nhận và IsAccepted = 0
+            string sql = @"
+                SELECT *
+                FROM MediaShare
+                WHERE ReceiverId = @UserId AND IsAccepted = 0
+                ORDER BY SharedAt DESC";
+            return await _dbConnection.QueryAsync<MediaShare>(sql, new { UserId = receiverId });
+        }
+
+        public async Task<IEnumerable<MediaShare>> GetChatHistoryAsync(Guid userId1, Guid userId2)
+        {
+            string sql = @"
+                SELECT *
+                FROM MediaShare
+                WHERE (SenderId = @U1 AND ReceiverId = @U2)
+                   OR (SenderId = @U2 AND ReceiverId = @U1)
+                ORDER BY SharedAt ASC";
+            return await _dbConnection.QueryAsync<MediaShare>(sql, new { U1 = userId1, U2 = userId2 });
+        }
+
+        public async Task<bool> AcceptMessageRequestAsync(Guid receiverId, Guid senderId)
+        {
+            string sql = @"
+                UPDATE MediaShare
+                SET IsAccepted = 1
+                WHERE ReceiverId = @ReceiverId AND SenderId = @SenderId AND IsAccepted = 0";
+            var affectedRows = await _dbConnection.ExecuteAsync(sql, new { ReceiverId = receiverId, SenderId = senderId });
+            return affectedRows > 0;
+        }
+    }
+}

@@ -77,7 +77,7 @@ namespace TuneVault.Infrastructure.Repositories
                 LEFT JOIN Artist a ON m.ArtistId = a.Id
                 WHERE m.Title LIKE @Keyword AND m.ApprovalStatus = 'Approved' AND (@FilterType IS NULL OR @FilterType = 'Song')
                 UNION ALL
-                SELECT a.Id, a.Name, 'Artist' AS Type, p.AvatarUrl AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CASE WHEN a.VerifiedAt IS NOT NULL THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsVerified
+                SELECT a.Id, a.Name, 'Artist' AS Type, COALESCE(a.AvatarUrl, p.AvatarUrl) AS CoverUrl, NULL AS ArtistName, 0 AS MediaType, 0 AS ViewCount, 0 AS DurationInSeconds, CASE WHEN a.VerifiedAt IS NOT NULL THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS IsVerified
                 FROM Artist a
                 LEFT JOIN UserProfile p ON a.Id = p.Id
                 WHERE a.Name LIKE @Keyword AND (@FilterType IS NULL OR @FilterType = 'Artist')

@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { mediaService } from '../../services';
-import { 
-  Search as SearchIcon, 
-  Compass, 
-  Loader2, 
-  Play, 
-  Pause, 
-  Music, 
-  Film, 
-  User, 
+import {
+  Search as SearchIcon,
+  Compass,
+  Loader2,
+  Play,
+  Pause,
+  Music,
+  Film,
+  User,
   Sparkles,
   ListMusic,
   Heart
@@ -44,7 +44,7 @@ export const Search = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'All' | 'Artist' | 'Song' | 'Video' | 'Profile'>('All');
-  
+
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorite();
 
@@ -145,7 +145,7 @@ export const Search = () => {
       {/* 2. HIỂN THỊ KẾT QUẢ TÌM KIẾM */}
       {searchQuery.trim() !== '' ? (
         <div className="space-y-10">
-          
+
           {isLoading && results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-3">
               <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
@@ -164,9 +164,8 @@ export const Search = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
-                      activeTab === tab.id ? 'bg-white text-black' : 'bg-zinc-800 text-white hover:bg-zinc-700'
-                    }`}
+                    className={`px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${activeTab === tab.id ? 'bg-white text-black' : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                      }`}
                   >
                     {tab.label}
                   </button>
@@ -185,7 +184,7 @@ export const Search = () => {
                     {audioSongs.map((song, index) => {
                       const isThisPlaying = currentTrack?.id === song.id && isPlaying;
                       return (
-                        <div 
+                        <div
                           key={song.id}
                           className="flex items-center justify-between p-3.5 hover:bg-zinc-850/50 transition-all duration-200 group cursor-pointer"
                           onClick={() => handlePlaySong(song, audioSongs)}
@@ -197,17 +196,17 @@ export const Search = () => {
                             </span>
                             <div className="relative w-11 h-11 rounded-md overflow-hidden bg-zinc-800 shrink-0 shadow">
                               {song.coverUrl ? (
-                                <img 
-                                  src={mediaService.getImageUrl(song.coverUrl)} 
-                                  alt={song.name} 
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                                <img
+                                  src={mediaService.getImageUrl(song.coverUrl)}
+                                  alt={song.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-zinc-800">
                                   <Music className="w-5 h-5 text-zinc-600" />
                                 </div>
                               )}
-                              
+
                               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 {isThisPlaying ? (
                                   <Pause className="w-5 h-5 text-green-400 fill-green-400" />
@@ -240,7 +239,7 @@ export const Search = () => {
                               </span>
                             )}
                             {user && (
-                              <button 
+                              <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleFavorite(song.id);
@@ -254,7 +253,7 @@ export const Search = () => {
                               {formatDuration(song.durationInSeconds)}
                             </span>
                             {user && (
-                              <TrackDropdownMenu 
+                              <TrackDropdownMenu
                                 onAddToPlaylist={() => setSelectedMediaId(song.id)}
                                 onShare={() => console.log('Share')}
                               />
@@ -277,17 +276,17 @@ export const Search = () => {
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                     {playlists.map((pl) => (
-                      <div 
+                      <div
                         key={pl.id}
                         onClick={() => navigate(`/playlist/${pl.id}`)}
                         className="p-4 rounded-xl bg-zinc-900/50 hover:bg-zinc-850 border border-zinc-800/40 hover:border-zinc-700/60 transition-all duration-300 cursor-pointer group relative flex flex-col gap-3"
                       >
                         <div className="aspect-square w-full rounded-lg bg-zinc-800 overflow-hidden relative shadow">
                           {pl.coverUrl ? (
-                            <img 
-                              src={mediaService.getImageUrl(pl.coverUrl)} 
-                              alt={pl.name} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                            <img
+                              src={mediaService.getImageUrl(pl.coverUrl)}
+                              alt={pl.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 to-zinc-800 flex items-center justify-center text-yellow-500/80">
@@ -321,16 +320,16 @@ export const Search = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {videoMVs.map((mv) => (
-                      <div 
+                      <div
                         key={mv.id}
                         onClick={() => navigate(`/video/${mv.id}`)}
                         className="group bg-zinc-900 border border-zinc-800/60 rounded-xl overflow-hidden cursor-pointer hover:border-zinc-700 transition-all duration-300 shadow-md"
                       >
                         <div className="aspect-video w-full bg-zinc-800 relative overflow-hidden">
                           {mv.coverUrl ? (
-                            <img 
-                              src={mediaService.getImageUrl(mv.coverUrl)} 
-                              alt={mv.name} 
+                            <img
+                              src={mediaService.getImageUrl(mv.coverUrl)}
+                              alt={mv.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
@@ -370,16 +369,16 @@ export const Search = () => {
 
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
                     {artists.map((artist) => (
-                      <div 
+                      <div
                         key={artist.id}
                         className="flex flex-col items-center p-3 bg-zinc-900/35 hover:bg-zinc-850/40 border border-transparent hover:border-zinc-800/50 rounded-xl transition-all duration-200 cursor-pointer text-center group"
                       >
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-zinc-850 shadow-md mb-3 relative group-hover:shadow-purple-500/10 transition-shadow">
                           {artist.coverUrl ? (
-                            <img 
-                              src={mediaService.getImageUrl(artist.coverUrl)} 
-                              alt={artist.name} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                            <img
+                              src={mediaService.getImageUrl(artist.coverUrl)}
+                              alt={artist.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500">
@@ -407,17 +406,17 @@ export const Search = () => {
 
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
                     {profiles.map((profile) => (
-                      <div 
+                      <div
                         key={profile.id}
                         onClick={() => navigate(`/user/${profile.id}`)}
                         className="flex flex-col items-center p-3 bg-zinc-900/35 hover:bg-zinc-850/40 border border-transparent hover:border-zinc-800/50 rounded-xl transition-all duration-200 cursor-pointer text-center group"
                       >
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-zinc-850 shadow-md mb-3 relative group-hover:shadow-blue-500/10 transition-shadow">
                           {profile.coverUrl ? (
-                            <img 
-                              src={mediaService.getImageUrl(profile.coverUrl)} 
-                              alt={profile.name} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                            <img
+                              src={mediaService.getImageUrl(profile.coverUrl)}
+                              alt={profile.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
                                 e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'U')}&background=3f3f46&color=fff`;
@@ -455,7 +454,7 @@ export const Search = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {categories.map((category, index) => (
-                <div 
+                <div
                   key={index}
                   onClick={() => setSearchQuery(category.query)}
                   className={`h-36 rounded-xl bg-gradient-to-br ${category.color} p-4 relative overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 shadow group`}
@@ -485,7 +484,7 @@ export const Search = () => {
                 {trendingTracks.map((song, idx) => {
                   const isThisPlaying = currentTrack?.id === song.id && isPlaying;
                   return (
-                    <div 
+                    <div
                       key={song.id}
                       onClick={() => handlePlaySong(song, trendingTracks)}
                       className="flex items-center justify-between p-3 hover:bg-zinc-850/40 transition-colors cursor-pointer group"
@@ -533,7 +532,7 @@ export const Search = () => {
                           {formatDuration(song.durationInSeconds)}
                         </span>
                         {user && (
-                          <TrackDropdownMenu 
+                          <TrackDropdownMenu
                             onAddToPlaylist={() => setSelectedMediaId(song.id)}
                             onShare={() => console.log('Share')}
                           />

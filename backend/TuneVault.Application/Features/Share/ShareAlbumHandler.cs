@@ -1,23 +1,21 @@
 using MediatR;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TuneVault.Application.Features.SharedMedia.Commands.ShareMediaItem;
 using TuneVault.Application.Repositories;
 using TuneVault.Domain.Entities;
 using System.Text.Json;
 
 namespace TuneVault.Application.Features.Share
 {
-    public class SharePlaylistHandler : IRequestHandler<SharePlaylistCommand, Guid>
+    public class ShareAlbumHandler : IRequestHandler<ShareAlbumCommand, Guid>
     {
         private readonly ISharedRepository _sharedMediaRepository;
         private readonly IFollowRepository _followRepository;
         private readonly INotificationRepository _notificationRepository;
 
-        public SharePlaylistHandler(
+        public ShareAlbumHandler(
             ISharedRepository sharedMediaRepository,
             IFollowRepository followRepository,
             INotificationRepository notificationRepository)
@@ -27,11 +25,11 @@ namespace TuneVault.Application.Features.Share
             _notificationRepository = notificationRepository;
         }
 
-        public async Task<Guid> Handle(SharePlaylistCommand command, CancellationToken cancellationToken)
+        public async Task<Guid> Handle(ShareAlbumCommand command, CancellationToken cancellationToken)
         {
             if (command.SenderId == command.ReceiverId)
             {
-                throw new ArgumentException("Bạn không thể tự chia sẻ bài hát cho chính mình.");
+                throw new ArgumentException("Bạn không thể tự chia sẻ album cho chính mình.");
             }
 
             var userExists = await _sharedMediaRepository.UserExistsAsync(command.ReceiverId);
@@ -40,10 +38,10 @@ namespace TuneVault.Application.Features.Share
                 throw new KeyNotFoundException("Người nhận không tồn tại trên hệ thống.");
             }
 
-            var playlistExists = await _sharedMediaRepository.PlaylistExistsAsync(command.PlaylistId);
-            if (!playlistExists)
+            var albumExists = await _sharedMediaRepository.AlbumExistsAsync(command.AlbumId);
+            if (!albumExists)
             {
-                throw new KeyNotFoundException("Playlist không tồn tại.");
+                throw new KeyNotFoundException("Album không tồn tại.");
             }
 
             // 1. Sender phải follow Receiver
@@ -57,10 +55,10 @@ namespace TuneVault.Application.Features.Share
             var receiverFollowsSender = await _followRepository.IsFollowingAsync(command.ReceiverId, command.SenderId);
             bool isAccepted = receiverFollowsSender;
 
-            var shareId = await _sharedMediaRepository.SharePlaylistAsync(
+            var shareId = await _sharedMediaRepository.ShareAlbumAsync(
                 command.SenderId,
                 command.ReceiverId,
-                command.PlaylistId,
+                command.AlbumId,
                 command.Message,
                 isAccepted
             );
@@ -76,8 +74,8 @@ namespace TuneVault.Application.Features.Share
                 PayloadJson = JsonSerializer.Serialize(new
                 {
                     SenderId = command.SenderId,
-                    PlaylistId = command.PlaylistId,
-                    Message = "Ai đó đã chia sẻ một Playlist cho bạn.",
+                    AlbumId = command.AlbumId,
+                    Message = "Ai đó đã chia sẻ một Album cho bạn.",
                     IsMessageRequest = !isAccepted
                 })
             };

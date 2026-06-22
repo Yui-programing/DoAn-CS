@@ -80,5 +80,17 @@ namespace TuneVault.Infrastructure.Repositories
 
             return await _dbConnection.QueryAsync<UserProfile>(sql, new { UserId = userId });
         }
+
+        public async Task<IEnumerable<UserProfile>> GetFollowingUsersAsync(Guid userId)
+        {
+            const string sql = @"
+                SELECT p.Id, p.FullName, p.AvatarUrl, p.Bio, p.IsPublic
+                FROM Follow f
+                INNER JOIN UserProfile p ON f.FollowingUserId = p.Id
+                WHERE f.FollowerId = @UserId
+                ORDER BY f.FollowedAt DESC";
+
+            return await _dbConnection.QueryAsync<UserProfile>(sql, new { UserId = userId });
+        }
     }
 }

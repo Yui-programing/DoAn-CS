@@ -178,12 +178,15 @@ CREATE TABLE MediaShare
     ReceiverId UNIQUEIDENTIFIER NOT NULL,
     MediaItemId UNIQUEIDENTIFIER NULL,
     PlaylistId UNIQUEIDENTIFIER NULL,
+    AlbumId UNIQUEIDENTIFIER NULL,
     [Message] NVARCHAR(MAX) NULL,
     SharedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    IsAccepted BIT NOT NULL DEFAULT 0,
     FOREIGN KEY (SenderId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
     FOREIGN KEY (ReceiverId) REFERENCES UserProfile(Id) ON DELETE NO ACTION,
     FOREIGN KEY (MediaItemId) REFERENCES MediaItem(Id) ON DELETE NO ACTION,
-    FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE NO ACTION
+    FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE NO ACTION,
+    FOREIGN KEY (AlbumId) REFERENCES Album(Id) ON DELETE NO ACTION
 );
 
 -- Type: 0 = Shared, 1 = Followed, 2 = System
@@ -243,14 +246,14 @@ VALUES
 INSERT INTO UserProfile
     (Id, FullName, AvatarUrl, Bio)
 VALUES
-    (@U1, N'Lê Phạm Hoàng Phúc', 'https://avatar.com/phuc.jpg', N'Sinh viên ĐH Sài Gòn. Thường đi uống cafe thư giãn lúc rảnh.'),
-    (@U2, N'Khách hàng 2', 'https://avatar.com/kh2.jpg', N'Đang sống và làm việc tại TP.HCM.'),
-    (@U3, N'TuneVault Administrator', 'https://avatar.com/admin.jpg', N'Quản trị viên hệ thống TuneVault.'),
-    (@U4, N'Sơn Tùng M-TP', 'https://avatar.com/mtp.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.'),
-    (@U5, N'Ngọt Band', 'https://avatar.com/ngot.jpg', N'Ban nhạc Indie Việt Nam'),
-    (@U6, N'Riot Games Music', 'https://avatar.com/riot.jpg', N'Nhà sản xuất âm nhạc trò chơi'),
-    (@U7, N'Justatee x Phương Ly', 'https://avatar.com/justatee.jpg', N'Ca sĩ và nhà sản xuất R&B hàng đầu'),
-    (@U8, N'Nghệ sĩ tự do', 'https://avatar.com/freelance.jpg', N'Nghệ sĩ tự do');
+    (@U1, N'Lê Phạm Hoàng Phúc', '/images/user1.jpg', N'Sinh viên ĐH Sài Gòn. Thường đi uống cafe thư giãn lúc rảnh.'),
+    (@U2, N'Khách hàng 2', '/images/user2.jpg', N'Đang sống và làm việc tại TP.HCM.'),
+    (@U3, N'TuneVault Administrator', '/images/user3.jpg', N'Quản trị viên hệ thống TuneVault.'),
+    (@U4, N'Sơn Tùng M-TP', '/images/user4.jpg', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam.'),
+    (@U5, N'Ngọt Band', '/images/user5.jpg', N'Ban nhạc Indie Việt Nam'),
+    (@U6, N'Riot Games Music', '/images/user6.jpg', N'Nhà sản xuất âm nhạc trò chơi'),
+    (@U7, N'Justatee x Phương Ly', '/images/user7.jpg', N'Ca sĩ và nhà sản xuất R&B hàng đầu'),
+    (@U8, N'Nghệ sĩ tự do', '/images/user8.jpg', N'Nghệ sĩ tự do');
 
 -- Insert Tags
 INSERT INTO Tag
@@ -265,11 +268,11 @@ VALUES
 INSERT INTO Artist
     (Id, Name, Bio, AvatarUrl, Genres, BannerUrl, VerifiedAt)
 VALUES
-    (@U5, N'Ngọt Band', N'Ban nhạc Indie Việt Nam', 'https://avatar.com/ngot.jpg', N'Indie, Rock', NULL, GETUTCDATE()),
-    (@U6, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi', 'https://avatar.com/riot.jpg', N'EDM, Rock, Pop', NULL, GETUTCDATE()),
-    (@U4, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam', 'https://avatar.com/mtp.jpg', N'Pop, R&B', NULL, GETUTCDATE()),
-    (@U7, N'Justatee x Phương Ly', N'Nghệ sĩ R&B', 'https://avatar.com/justatee.jpg', N'R&B, Pop', NULL, GETUTCDATE()),
-    (@U8, N'Nghệ sĩ tự do', N'Nhà sản xuất tự do', 'https://avatar.com/freelance.jpg', N'Pop, Ballad', NULL, GETUTCDATE());
+    (@U5, N'Ngọt Band', N'Ban nhạc Indie Việt Nam', '/images/user5.jpg', N'Indie, Rock', NULL, GETUTCDATE()),
+    (@U6, N'Riot Games Music', N'Nhà sản xuất âm nhạc trò chơi', '/images/user6.jpg', N'EDM, Rock, Pop', NULL, GETUTCDATE()),
+    (@U4, N'Sơn Tùng M-TP', N'Nghệ sĩ nhạc Pop hàng đầu Việt Nam', '/images/user4.jpg', N'Pop, R&B', NULL, GETUTCDATE()),
+    (@U7, N'Justatee x Phương Ly', N'Nghệ sĩ R&B', '/images/user7.jpg', N'R&B, Pop', NULL, GETUTCDATE()),
+    (@U8, N'Nghệ sĩ tự do', N'Nhà sản xuất tự do', '/images/user8.jpg', N'Pop, Ballad', NULL, GETUTCDATE());
 
 DECLARE @Album1Id UNIQUEIDENTIFIER = '98765432-9876-9876-9876-987654321098';
 
@@ -342,9 +345,9 @@ VALUES
 
 -- Insert MediaShare (U1 share Playlist cho U2)
 INSERT INTO MediaShare
-    (SenderId, ReceiverId, PlaylistId, Message)
+    (SenderId, ReceiverId, PlaylistId, Message, IsAccepted)
 VALUES
-    (@U1, @U2, @P1, N'Nhạc này nghe lúc rảnh hay lắm nè!');
+    (@U1, @U2, @P1, N'Nhạc này nghe lúc rảnh hay lắm nè!', 1);
 
 -- Insert Notification (Thông báo cho U2)
 INSERT INTO Notification

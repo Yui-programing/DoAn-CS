@@ -277,7 +277,7 @@ export const Profile = () => {
           {/* Banner Image */}
           {(isEditing ? tempProfile.bannerUrl : user.bannerUrl) ? (
             <img
-              src={isEditing ? tempProfile.bannerUrl : user.bannerUrl}
+              src={mediaService.getImageUrl(isEditing ? tempProfile.bannerUrl : user.bannerUrl)}
               alt="Banner"
               className="w-full h-full object-cover"
             />
@@ -373,7 +373,7 @@ export const Profile = () => {
               <div className="w-36 h-36 rounded-full bg-zinc-800 border-2 border-green-500/50 flex items-center justify-center font-black text-4xl text-green-400 shadow-2xl relative overflow-hidden">
                 {(isEditing ? tempProfile.avatarUrl : user.avatarUrl) ? (
                   <img
-                    src={isEditing ? tempProfile.avatarUrl : user.avatarUrl}
+                    src={mediaService.getImageUrl(isEditing ? tempProfile.avatarUrl : user.avatarUrl)}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />
@@ -478,7 +478,7 @@ export const Profile = () => {
                   <div className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden shrink-0">
                     {tempProfile.avatarUrl || user.avatarUrl ? (
                       <img
-                        src={tempProfile.avatarUrl || user.avatarUrl}
+                        src={mediaService.getImageUrl(tempProfile.avatarUrl || user.avatarUrl)}
                         alt="Avatar"
                         className="w-full h-full object-cover"
                         onError={(e) => {
