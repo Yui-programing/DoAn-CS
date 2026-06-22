@@ -22,6 +22,8 @@ export interface UserProfile {
   isPublic?: boolean;
   followerCount?: number;
   followingCount?: number;
+  playlistCount?: number;
+  favoriteCount?: number;
 }
 
 export type MediaType = 0 | 1;

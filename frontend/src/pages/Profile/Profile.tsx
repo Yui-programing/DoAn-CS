@@ -423,11 +423,11 @@ export const Profile = () => {
               </p>
 
               <div className="text-xs text-zinc-500 font-bold tracking-wide pt-1 flex items-center justify-center md:justify-start gap-4">
-                <span>2 Playlist cá nhân</span>
+                <span>{user.playlistCount || 0} Playlist cá nhân</span>
                 <span>•</span>
-                <span>12 Người theo dõi</span>
+                <span>{user.followerCount || 0} Người theo dõi</span>
                 <span>•</span>
-                <span>8 Bài hát yêu thích</span>
+                <span>{user.favoriteCount || 0} Bài hát yêu thích</span>
               </div>
             </div>
 
