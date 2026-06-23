@@ -40,7 +40,7 @@ export const Home = () => {
         setIsLoading(true);
 
         // 1. Gọi API lấy bài hát gợi ý (Public API)
-        const searchRes = await mediaService.searchSongs('%', 10);
+        const searchRes = await mediaService.searchSongs('%', 100);
         if (searchRes.success && searchRes.data && searchRes.data.items) {
           const mapped = searchRes.data.items.map((item: any) => ({
             id: item.id,

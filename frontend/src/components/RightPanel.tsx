@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, Music, Eye, Clock, Check } from 'lucide-react';
-import { mediaService } from '../services';
+import { mediaService, userService } from '../services';
 import { formatDuration, formatViewCount } from '../utils';
 
 interface RightPanelProps {
@@ -13,6 +13,7 @@ interface RightPanelProps {
 export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist }: RightPanelProps) => {
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [artistProfile, setArtistProfile] = useState<any>(null);
 
   useEffect(() => {
     if (!track?.id) {
@@ -41,6 +42,31 @@ export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist 
       isMounted = false;
     };
   }, [track?.id]);
+
+  useEffect(() => {
+    if (!details?.artistId) {
+      setArtistProfile(null);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchArtistProfile = async () => {
+      try {
+        const res = await userService.getUserProfile(details.artistId);
+        if (res.success && isMounted) {
+          setArtistProfile(res.data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải thông tin nghệ sĩ:', error);
+      }
+    };
+
+    fetchArtistProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [details?.artistId]);
 
   if (!track) {
     return (
@@ -158,9 +184,17 @@ export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist 
         {/* Artist Profile Info Card */}
         <div className="p-4 bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-900 rounded-2xl flex flex-col gap-4 relative overflow-hidden group/artist">
           <div className="flex items-center gap-3 relative z-10">
-            <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-emerald-400 border border-zinc-700 uppercase shrink-0">
-              {track.artist ? track.artist.charAt(0) : 'A'}
-            </div>
+            {artistProfile?.avatarUrl ? (
+              <img
+                src={mediaService.getImageUrl(artistProfile.avatarUrl)}
+                alt={track.artist}
+                className="w-12 h-12 rounded-full object-cover shrink-0 border border-zinc-700"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-emerald-400 border border-zinc-700 uppercase shrink-0">
+                {track.artist ? track.artist.charAt(0) : 'A'}
+              </div>
+            )}
             <div className="min-w-0">
               <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Nghệ sĩ chính</span>
               <h4 className="text-sm font-bold text-slate-200 group-hover/artist:text-green-400 transition-colors truncate">
