@@ -40,6 +40,7 @@ namespace TuneVault.API.Controllers
 
         // GET / Xem hồ sơ người khác
         [HttpGet("{id}/profile")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetProfileById(Guid id)
         {
             var query = new GetProfileQuery { UserId = id };

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
@@ -18,8 +18,7 @@ namespace TuneVault.Application.Features.Query
     {
         public string Keyword { get; set; } = string.Empty;
         public int PageNumber { get; set; } = 1;
-        
-        internal int PageSize { get; set; } = 10;
+        internal int PageSize { get; set; } = 50;
         public string? FilterType { get; set; }
     }
 }

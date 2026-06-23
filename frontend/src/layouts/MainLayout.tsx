@@ -828,10 +828,22 @@ export const MainLayout = () => {
             <div className="relative user-profile-menu-container">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-green-400 border border-zinc-700 hover:scale-105 active:scale-95 transition-transform cursor-pointer focus:outline-none"
+                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-green-400 border border-zinc-700 hover:scale-105 active:scale-95 transition-transform cursor-pointer focus:outline-none overflow-hidden"
                 title={user.fullName || "Tài khoản"}
               >
-                {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
+                {user.avatarUrl ? (
+                  <img
+                    src={mediaService.getImageUrl(user.avatarUrl)}
+                    alt={user.fullName || "Avatar"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || 'U')}&background=3f3f46&color=fff&size=256`;
+                    }}
+                  />
+                ) : (
+                  user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"
+                )}
               </button>
               
               {showUserMenu && (

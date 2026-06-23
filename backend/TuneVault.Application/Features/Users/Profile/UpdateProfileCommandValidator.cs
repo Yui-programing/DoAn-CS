@@ -11,7 +11,7 @@ public class UpdateProfileCommandValidator : AbstractValidator<UpdateProfileComm
             .MaximumLength(500).WithMessage("Tiểu sử (Bio) không được vượt quá 500 ký tự.");
 
         RuleFor(x => x.AvatarUrl)
-            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .Must(uri => Uri.TryCreate(uri, UriKind.RelativeOrAbsolute, out _))
             .When(x => !string.IsNullOrEmpty(x.AvatarUrl)) // Chỉ kiểm tra link nếu có nhập
             .WithMessage("Đường dẫn ảnh đại diện không hợp lệ.");
         RuleFor(x => x.FullName)
