@@ -10,9 +10,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +26,10 @@ jobs:
       - name: dotnet publish
         run: dotnet publish backend/TuneVault.API/TuneVault.API.csproj -c Release -o ./publish
 
-      # Login vào hệ thống Azure
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9DEFEB90FAC84F9BAA1A455227F3ABE6 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_790119198D15473BBE8AD914B782A9B4 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BC48E0D0C53B47D49E7E0A7D2BFE86B8 }}
-
-      # Chỉ định chính xác package là thư mục ./publish ở trên
+      # Deploy lên Azure Web App bằng Publish Profile
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'TuneVault'
-          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
           package: ./publish
