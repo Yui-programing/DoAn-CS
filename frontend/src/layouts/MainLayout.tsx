@@ -39,7 +39,7 @@ import { CreateAlbumModal } from "../components/CreateAlbumModal";
 import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 import { ShareModal } from "../components/ShareModal";
 import { useFavorite } from "../contexts/FavoriteContext";
-import { formatTime, formatDuration } from "../utils";
+import { formatTime, formatDuration, parseArtists } from "../utils";
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
@@ -1016,75 +1016,101 @@ export const MainLayout = () => {
 
           {/* Playlists List */}
           <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-zinc-800/80 pr-0.5">
-            {/* Liked Songs item */}
-            <div
-              onClick={() => navigate('/favorites')}
-              className={`flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/50 transition-colors cursor-pointer group ${
-                location.pathname === '/favorites' ? "bg-zinc-900" : ""
-              }`}
-              title="Bài hát đã thích"
-            >
-              {/* Liked Songs Cover */}
-              <div className={`${isSidebarCollapsed ? 'w-11 h-11' : 'w-12 h-12'} bg-gradient-to-br from-[#450e74] to-[#c3a0df] rounded flex items-center justify-center shrink-0 shadow`}>
-                <Heart className={`${isSidebarCollapsed ? 'w-5 h-5' : 'w-6 h-6'} text-white fill-current`} />
-              </div>
-              
-              {!isSidebarCollapsed && (
-                <div className="min-w-0">
-                  <h4 className={`text-sm font-bold truncate transition-colors ${
-                    location.pathname === '/favorites' ? "text-green-400" : "text-slate-200 group-hover:text-green-400"
-                  }`}>
-                    Bài hát đã thích
-                  </h4>
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                    <span className="text-green-500 font-bold text-[8px] shrink-0">📌</span>
-                    <span className="truncate">Danh sách phát • {user?.fullName || 'Yui'}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Other User Playlists */}
-            {sidebarPlaylists.map((playlist) => {
-              const isActive = location.pathname === `/playlist/${playlist.id}`;
-              return (
+            {isAuthenticated ? (
+              <>
+                {/* Liked Songs item */}
                 <div
-                  key={playlist.id}
-                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                  onClick={() => navigate('/favorites')}
                   className={`flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/50 transition-colors cursor-pointer group ${
-                    isActive ? "bg-zinc-900" : ""
+                    location.pathname === '/favorites' ? "bg-zinc-900" : ""
                   }`}
-                  title={playlist.title}
+                  title="Bài hát đã thích"
                 >
-                  <div className={`${isSidebarCollapsed ? 'w-11 h-11' : 'w-12 h-12'} bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center rounded shrink-0 shadow overflow-hidden`}>
-                    {playlist.coverUrl ? (
-                      <img
-                        src={mediaService.getImageUrl(playlist.coverUrl)}
-                        alt={playlist.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <svg viewBox="0 0 24 24" className={`${isSidebarCollapsed ? 'w-5 h-5' : 'w-6 h-6'} text-zinc-500 group-hover:text-green-400 transition-colors`}>
-                        <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                      </svg>
-                    )}
+                  {/* Liked Songs Cover */}
+                  <div className={`${isSidebarCollapsed ? 'w-11 h-11' : 'w-12 h-12'} bg-gradient-to-br from-[#450e74] to-[#c3a0df] rounded flex items-center justify-center shrink-0 shadow`}>
+                    <Heart className={`${isSidebarCollapsed ? 'w-5 h-5' : 'w-6 h-6'} text-white fill-current`} />
                   </div>
                   
                   {!isSidebarCollapsed && (
                     <div className="min-w-0">
-                      <h4 className={`text-sm font-bold truncate group-hover:text-green-400 transition-colors ${
-                        isActive ? "text-green-400" : "text-slate-200"
+                      <h4 className={`text-sm font-bold truncate transition-colors ${
+                        location.pathname === '/favorites' ? "text-green-400" : "text-slate-200 group-hover:text-green-400"
                       }`}>
-                        {playlist.title}
+                        Bài hát đã thích
                       </h4>
-                      <p className="text-xs text-zinc-400 mt-1 truncate">
-                        Danh sách phát • {user?.fullName || 'Yui'}
-                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                        <span className="text-green-500 font-bold text-[8px] shrink-0">📌</span>
+                        <span className="truncate">Danh sách phát • {user?.fullName || 'Yui'}</span>
+                      </div>
                     </div>
                   )}
                 </div>
-              );
-            })}
+
+                {/* Other User Playlists */}
+                {sidebarPlaylists.map((playlist) => {
+                  const isActive = location.pathname === `/playlist/${playlist.id}`;
+                  return (
+                    <div
+                      key={playlist.id}
+                      onClick={() => navigate(`/playlist/${playlist.id}`)}
+                      className={`flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-900/50 transition-colors cursor-pointer group ${
+                        isActive ? "bg-zinc-900" : ""
+                      }`}
+                      title={playlist.title}
+                    >
+                      <div className={`${isSidebarCollapsed ? 'w-11 h-11' : 'w-12 h-12'} bg-gradient-to-br from-green-500/10 to-zinc-900 flex items-center justify-center rounded shrink-0 shadow overflow-hidden`}>
+                        {playlist.coverUrl ? (
+                          <img
+                            src={mediaService.getImageUrl(playlist.coverUrl)}
+                            alt={playlist.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg viewBox="0 0 24 24" className={`${isSidebarCollapsed ? 'w-5 h-5' : 'w-6 h-6'} text-zinc-500 group-hover:text-green-400 transition-colors`}>
+                            <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                          </svg>
+                        )}
+                      </div>
+                      
+                      {!isSidebarCollapsed && (
+                        <div className="min-w-0">
+                          <h4 className={`text-sm font-bold truncate group-hover:text-green-400 transition-colors ${
+                            isActive ? "text-green-400" : "text-slate-200"
+                          }`}>
+                            {playlist.title}
+                          </h4>
+                          <p className="text-xs text-zinc-400 mt-1 truncate">
+                            Danh sách phát • {user?.fullName || 'Yui'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              /* Khung hiển thị kêu gọi Đăng nhập khi chưa đăng nhập */
+              isSidebarCollapsed ? (
+                <div 
+                  onClick={() => navigate('/login')}
+                  className="flex items-center justify-center p-3 text-zinc-500 hover:text-white hover:bg-zinc-900/50 rounded-lg transition-colors cursor-pointer mx-1.5"
+                  title="Đăng nhập để xem danh sách phát"
+                >
+                  <Plus className="w-5 h-5" />
+                </div>
+              ) : (
+                <div className="bg-zinc-900/40 p-4 rounded-xl space-y-3 mx-2 border border-zinc-800/40 shadow-md">
+                  <h5 className="font-bold text-sm text-white leading-snug">Tạo danh sách phát đầu tiên của bạn</h5>
+                  <p className="text-xs text-zinc-400 font-medium">Rất dễ dàng, chúng tôi sẽ giúp bạn</p>
+                  <button 
+                    onClick={() => navigate('/login')} 
+                    className="px-4 py-1.5 bg-white text-black text-xs font-black rounded-full hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow"
+                  >
+                    Tạo danh sách phát
+                  </button>
+                </div>
+              )
+            )}
           </div>
 
           {/* Admin link (if present) */}
@@ -1176,22 +1202,27 @@ export const MainLayout = () => {
               <span className="marquee-text">{currentTrack ? currentTrack.title : "Chưa có bài hát"}</span>
             </h4>
             {currentTrack ? (
-              currentTrack.artist && (currentTrack.artist.includes(' x ') || currentTrack.artist === 'Justatee x Phương Ly') ? (
-                <p className="text-xs text-zinc-400 truncate flex gap-1">
-                  <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777a')} className="hover:underline cursor-pointer">Justatee</span>
-                  <span>, </span>
-                  <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777b')} className="hover:underline cursor-pointer">Phương Ly</span>
-                </p>
-              ) : (
-                <p 
-                  onClick={handleArtistClick}
-                  className="text-xs text-zinc-400 truncate hover:underline cursor-pointer"
-                >
-                  {currentTrack.artist}
-                </p>
-              )
+              <p className="text-xs text-zinc-400 mt-0.5 marquee-on-hover" title={currentTrack.artist}>
+                <span className="marquee-text">
+                  {parseArtists(currentTrack.artist, currentTrack.artistId).map((artist, idx, arr) => (
+                    <span key={idx}>
+                      {artist.id ? (
+                        <span 
+                          onClick={() => navigate(`/user/${artist.id}`)} 
+                          className="hover:underline cursor-pointer"
+                        >
+                          {artist.name}
+                        </span>
+                      ) : (
+                        <span>{artist.name}</span>
+                      )}
+                      {idx < arr.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </span>
+              </p>
             ) : (
-              <p className="text-xs text-zinc-400 truncate">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Chọn một bài hát để nghe
               </p>
             )}

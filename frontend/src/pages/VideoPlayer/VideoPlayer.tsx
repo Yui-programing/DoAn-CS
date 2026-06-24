@@ -24,7 +24,7 @@ import { useFavorite } from '../../contexts/FavoriteContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
-import { formatTime } from '../../utils';
+import { formatTime, parseArtists } from '../../utils';
 import './VideoPlayer.css';
 
 export const VideoPlayer = () => {
@@ -76,6 +76,7 @@ export const VideoPlayer = () => {
         artist: string;
         coverUrl: string | null;
         filePath: string;
+        artistId?: string;
     } | null>(null);
 
     // BƯỚC 2: Gọi API lấy chi tiết video dựa trên ID ở URL và tải danh sách phát
@@ -103,7 +104,8 @@ export const VideoPlayer = () => {
                         title: response.data.title,
                         artist: artistName,
                         coverUrl: response.data.coverUrl || null,
-                        filePath: mediaService.getStreamUrl(id)
+                        filePath: mediaService.getStreamUrl(id),
+                        artistId: response.data.artistId
                     });
                     document.title = `TuneVault - Xem Video: ${response.data.title}`;
 
@@ -685,27 +687,37 @@ export const VideoPlayer = () => {
                             <h4 className="text-sm font-bold text-slate-100 hover:underline cursor-pointer marquee-on-hover" title={videoInfo.title}>
                                 <span className="marquee-text">{videoInfo.title}</span>
                             </h4>
-                            {videoInfo.artist && (videoInfo.artist.includes(' x ') || videoInfo.artist === 'Justatee x Phương Ly') ? (
-                                <p className="text-xs text-zinc-400 truncate font-medium mt-0.5 flex gap-1">
-                                    <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777a')} className="hover:underline cursor-pointer">Justatee</span>
-                                    <span>, </span>
-                                    <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777b')} className="hover:underline cursor-pointer">Phương Ly</span>
-                                </p>
-                            ) : (
-                                <p 
-                                    onClick={async () => {
-                                        if (id) {
-                                            const res = await mediaService.getMediaDetails(id);
-                                            if (res.success && res.data?.artistId) {
-                                                navigate(`/user/${res.data.artistId}`);
-                                            }
-                                        }
-                                    }}
-                                    className="text-xs text-zinc-400 truncate hover:underline cursor-pointer font-medium mt-0.5"
-                                >
-                                    {videoInfo.artist}
-                                </p>
-                            )}
+                            <p className="text-xs text-zinc-400 font-medium mt-0.5 marquee-on-hover w-full" title={videoInfo.artist}>
+                                <span className="marquee-text">
+                                    {parseArtists(videoInfo.artist, videoInfo.artistId).map((artist, idx, arr) => (
+                                        <span key={idx}>
+                                            {artist.id ? (
+                                                <span 
+                                                    onClick={() => navigate(`/user/${artist.id}`)} 
+                                                    className="hover:underline cursor-pointer"
+                                                >
+                                                    {artist.name}
+                                                </span>
+                                            ) : (
+                                                <span 
+                                                    onClick={async () => {
+                                                        if (id) {
+                                                            const res = await mediaService.getMediaDetails(id);
+                                                            if (res.success && res.data?.artistId) {
+                                                                navigate(`/user/${res.data.artistId}`);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="hover:underline cursor-pointer"
+                                                >
+                                                    {artist.name}
+                                                </span>
+                                            )}
+                                            {idx < arr.length - 1 ? ", " : ""}
+                                        </span>
+                                    ))}
+                                </span>
+                            </p>
                         </div>
                         
                         {/* Nút Thả tim & Nút thêm playlist - màu giống MainLayout */}

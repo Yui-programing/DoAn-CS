@@ -10,7 +10,7 @@ import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 import { ShareModal } from '../../components/ShareModal';
 import { useFavorite } from '../../contexts/FavoriteContext';
-import { formatDuration, formatViewCount } from '../../utils';
+import { formatDuration, formatViewCount, parseArtists } from '../../utils';
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -315,28 +315,41 @@ export const Home = () => {
                       }`} title={track.title}>
                         <span className="marquee-text">{track.title}</span>
                       </h4>
-                      {track.artist && (track.artist.includes(' x ') || track.artist === 'Justatee x Phương Ly') ? (
-                        <p className="text-xs text-zinc-400 truncate mt-1 flex gap-1">
-                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777a'); }} className="hover:underline cursor-pointer">Justatee</span>
-                          <span>, </span>
-                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777b'); }} className="hover:underline cursor-pointer">Phương Ly</span>
-                        </p>
-                      ) : (
-                        <p 
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (track.id) {
-                              const res = await mediaService.getMediaDetails(track.id);
-                              if (res.success && res.data?.artistId) {
-                                navigate(`/user/${res.data.artistId}`);
-                              }
-                            }
-                          }}
-                          className="text-xs text-zinc-400 truncate mt-1 hover:underline cursor-pointer"
-                        >
-                          {track.artist}
-                        </p>
-                      )}
+                      <p className="text-xs text-zinc-400 mt-1 marquee-on-hover" title={track.artist}>
+                        <span className="marquee-text">
+                          {parseArtists(track.artist, track.artistId).map((artist, idx, arr) => (
+                            <span key={idx}>
+                              {artist.id ? (
+                                <span 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    navigate(`/user/${artist.id}`);
+                                  }} 
+                                  className="hover:underline cursor-pointer"
+                                >
+                                  {artist.name}
+                                </span>
+                              ) : (
+                                <span 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (track.id) {
+                                      const res = await mediaService.getMediaDetails(track.id);
+                                      if (res.success && res.data?.artistId) {
+                                        navigate(`/user/${res.data.artistId}`);
+                                      }
+                                    }
+                                  }}
+                                  className="hover:underline cursor-pointer"
+                                >
+                                  {artist.name}
+                                </span>
+                              )}
+                              {idx < arr.length - 1 ? ", " : ""}
+                            </span>
+                          ))}
+                        </span>
+                      </p>
                       <span className="text-[10px] text-zinc-500 font-semibold block mt-1.5">{formatViewCount(track.viewCount)}</span>
                     </div>
                   </div>
@@ -382,30 +395,43 @@ export const Home = () => {
                     <h4 className="font-bold text-sm text-slate-200 group-hover:text-green-400 transition-colors marquee-on-hover" title={track.title}>
                       <span className="marquee-text">{track.title}</span>
                     </h4>
-                    <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
-                      {track.artist && (track.artist.includes(' x ') || track.artist === 'Justatee x Phương Ly') ? (
-                        <>
-                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777a'); }} className="hover:underline cursor-pointer">Justatee</span>
-                          <span>, </span>
-                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777b'); }} className="hover:underline cursor-pointer">Phương Ly</span>
-                        </>
-                      ) : (
-                        <span 
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (track.id) {
-                              const res = await mediaService.getMediaDetails(track.id);
-                              if (res.success && res.data?.artistId) {
-                                navigate(`/user/${res.data.artistId}`);
-                              }
-                            }
-                          }}
-                          className="hover:underline cursor-pointer"
-                        >
-                          {track.artist}
+                    <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1 w-full min-w-0">
+                      <span className="marquee-on-hover max-w-[65%] inline-block" title={track.artist}>
+                        <span className="marquee-text">
+                          {parseArtists(track.artist, track.artistId).map((artist, idx, arr) => (
+                            <span key={idx}>
+                              {artist.id ? (
+                                <span 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    navigate(`/user/${artist.id}`);
+                                  }} 
+                                  className="hover:underline cursor-pointer"
+                                >
+                                  {artist.name}
+                                </span>
+                              ) : (
+                                <span 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (track.id) {
+                                      const res = await mediaService.getMediaDetails(track.id);
+                                      if (res.success && res.data?.artistId) {
+                                        navigate(`/user/${res.data.artistId}`);
+                                      }
+                                    }
+                                  }}
+                                  className="hover:underline cursor-pointer"
+                                >
+                                  {artist.name}
+                                </span>
+                              )}
+                              {idx < arr.length - 1 ? ", " : ""}
+                            </span>
+                          ))}
                         </span>
-                      )}
-                      <span>• {formatViewCount(track.viewCount)}</span>
+                      </span>
+                      <span className="shrink-0">• {formatViewCount(track.viewCount)}</span>
                     </p>
                   </div>
                 </div>
@@ -454,11 +480,13 @@ export const Home = () => {
                           )}
                         </div>
                       </div>
-                      <div className="min-w-0">
-                        <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
-                          {track.title}
+                      <div className="min-w-0 flex-1">
+                        <h4 className={`text-sm font-bold transition-colors marquee-on-hover ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`} title={track.title}>
+                          <span className="marquee-text">{track.title}</span>
                         </h4>
-                        <p className="text-xs text-zinc-400 truncate mt-0.5">{track.artist || 'Không có tên ca sĩ'}</p>
+                        <p className="text-xs text-zinc-400 mt-0.5 marquee-on-hover" title={track.artist || 'Không có tên ca sĩ'}>
+                          <span className="marquee-text">{track.artist || 'Không có tên ca sĩ'}</span>
+                        </p>
                       </div>
                     </div>
 

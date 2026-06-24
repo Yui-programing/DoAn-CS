@@ -59,7 +59,8 @@ export const UserProfileView = () => {
       coverUrl: song.coverUrl,
       duration: song.durationInSeconds ? formatDuration(song.durationInSeconds) : '0:00',
       durationInSeconds: song.durationInSeconds,
-      filePath: mediaService.getStreamUrl(song.id)
+      filePath: mediaService.getStreamUrl(song.id),
+      artistId: song.artistId || id
     };
 
     const queueForPlayer = mediaList.map((s: any) => ({
@@ -69,7 +70,8 @@ export const UserProfileView = () => {
       coverUrl: s.coverUrl,
       duration: s.durationInSeconds ? formatDuration(s.durationInSeconds) : '0:00',
       durationInSeconds: s.durationInSeconds,
-      filePath: mediaService.getStreamUrl(s.id)
+      filePath: mediaService.getStreamUrl(s.id),
+      artistId: s.artistId || id
     }));
 
     if (currentTrack?.id === song.id) {
@@ -110,9 +112,55 @@ export const UserProfileView = () => {
           if (res.data.role === "Artist") {
             try {
               const songsRes = await mediaService.getArtistMedia(id);
-              if (songsRes.success) {
-                setMediaList(songsRes.data || []);
+              let officialMedia = songsRes.success ? (songsRes.data || []) : [];
+              
+              // Gọi API tìm kiếm theo tên đầy đủ của nghệ sĩ để lấy các tác phẩm song ca / liên quan
+              let searchMedia: any[] = [];
+              try {
+                setIsLoadingMvs(true);
+                const searchRes = await mediaService.searchSongs(res.data.fullName || '', 50);
+                if (searchRes.success && searchRes.data?.items) {
+                  searchMedia = searchRes.data.items;
+                }
+              } catch (searchErr) {
+                console.error("Lỗi khi tìm kiếm tác phẩm liên quan:", searchErr);
+              } finally {
+                setIsLoadingMvs(false);
               }
+
+              // Gộp và loại trùng lặp theo ID
+              const uniqueMediaMap = new Map<string, any>();
+              
+              // Đưa các tác phẩm chính thức vào map trước
+              officialMedia.forEach((item: any) => {
+                uniqueMediaMap.set(item.id, item);
+              });
+
+              // Đưa các tác phẩm tìm kiếm được vào map (map cấu trúc SearchItemDto về MediaItem)
+              searchMedia.forEach((item: any) => {
+                if (!uniqueMediaMap.has(item.id)) {
+                  uniqueMediaMap.set(item.id, {
+                    id: item.id,
+                    title: item.title || item.name || '',
+                    coverUrl: item.coverUrl,
+                    durationInSeconds: item.durationInSeconds || 0,
+                    mediaType: item.mediaType, // 0: Audio, 1: Video
+                    artistName: item.artistName || res.data.fullName,
+                    viewCount: item.viewCount || 0
+                  });
+                }
+              });
+
+              const allMediaList = Array.from(uniqueMediaMap.values());
+
+              // Phân loại:
+              // - Bài hát (Audio: mediaType === 0)
+              // - MV ca nhạc (Video: mediaType === 1)
+              const audioList = allMediaList.filter(item => item.mediaType === 0);
+              const videoList = allMediaList.filter(item => item.mediaType === 1);
+
+              setMediaList(audioList);
+              setMvs(videoList);
             } catch (err) {
               console.error("Lỗi khi tải danh sách tác phẩm nghệ sĩ:", err);
             }
@@ -127,23 +175,6 @@ export const UserProfileView = () => {
               console.error("Lỗi khi tải danh sách album nghệ sĩ:", err);
             } finally {
               setIsLoadingAlbums(false);
-            }
-
-            // Tải MV "Thằng điên" nếu nghệ sĩ là Phương Ly hoặc Justatee
-            if (id === "77777777-7777-7777-7777-77777777777b" || id === "77777777-7777-7777-7777-77777777777a") {
-              try {
-                setIsLoadingMvs(true);
-                const mvRes = await mediaService.getMediaDetails("B19B93F2-E96F-44DF-863F-1710E55F6164");
-                if (mvRes.success && mvRes.data) {
-                  setMvs([mvRes.data]);
-                }
-              } catch (err) {
-                console.error("Lỗi khi tải MV cho nghệ sĩ:", err);
-              } finally {
-                setIsLoadingMvs(false);
-              }
-            } else {
-              setMvs([]);
             }
           }
         } else {
@@ -339,8 +370,10 @@ export const UserProfileView = () => {
                         alt="Cover" 
                         className="w-12 h-12 rounded object-cover shadow-md" 
                       />
-                      <div>
-                        <h4 className={`text-sm font-semibold transition-colors ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`}>{song.title}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 className={`text-sm font-semibold transition-colors marquee-on-hover ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`} title={song.title}>
+                          <span className="marquee-text">{song.title}</span>
+                        </h4>
                       </div>
                     </div>
                     <span className="text-zinc-400 text-xs font-medium">{song.viewCount?.toLocaleString() || '0'} lượt nghe</span>

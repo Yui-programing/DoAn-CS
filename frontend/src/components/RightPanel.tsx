@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Music, Eye, Clock, Check } from 'lucide-react';
 import { mediaService, userService } from '../services';
-import { formatDuration, formatViewCount } from '../utils';
+import { formatDuration, formatViewCount, parseArtists } from '../utils';
 
 interface RightPanelProps {
   track: any;
@@ -120,20 +120,30 @@ export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist 
             <h3 className="text-xl font-bold text-slate-100 hover:text-green-400 cursor-pointer transition-colors marquee-on-hover" title={track.title}>
               <span className="marquee-text">{track.title}</span>
             </h3>
-            {track.artist && (track.artist.includes(' x ') || track.artist === 'Justatee x Phương Ly') ? (
-              <p className="text-sm text-zinc-400 mt-1 font-medium inline-block flex gap-1">
-                <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777a')} className="hover:underline cursor-pointer">Justatee</span>
-                <span>, </span>
-                <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777b')} className="hover:underline cursor-pointer">Phương Ly</span>
-              </p>
-            ) : (
-              <p 
-                onClick={() => details?.artistId && navigate(`/user/${details.artistId}`)}
-                className="text-sm text-zinc-400 mt-1 hover:underline cursor-pointer font-medium inline-block"
-              >
-                {track.artist}
-              </p>
-            )}
+            <p className="text-sm text-zinc-400 mt-1 font-medium marquee-on-hover w-full" title={track.artist}>
+              <span className="marquee-text">
+                {parseArtists(track.artist, track.artistId || details?.artistId).map((artist, idx, arr) => (
+                  <span key={idx}>
+                    {artist.id ? (
+                      <span 
+                        onClick={() => navigate(`/user/${artist.id}`)} 
+                        className="hover:underline cursor-pointer"
+                      >
+                        {artist.name}
+                      </span>
+                    ) : (
+                      <span 
+                        onClick={() => details?.artistId && navigate(`/user/${details.artistId}`)} 
+                        className="hover:underline cursor-pointer"
+                      >
+                        {artist.name}
+                      </span>
+                    )}
+                    {idx < arr.length - 1 ? ", " : ""}
+                  </span>
+                ))}
+              </span>
+            </p>
           </div>
           
           {onAddToPlaylist && (
