@@ -24,9 +24,9 @@ jobs:
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
-      # Publish thẳng ra một thư mục cố định
+      # Publish ra thư mục cục bộ tên là 'publish'
       - name: dotnet publish
-        run: dotnet publish -c Release -o ${{ github.workspace }}/myapp
+        run: dotnet publish -c Release -o ./publish
 
       # Login vào hệ thống Azure
       - name: Login to Azure
@@ -36,10 +36,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_790119198D15473BBE8AD914B782A9B4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BC48E0D0C53B47D49E7E0A7D2BFE86B8 }}
 
-      # Deploy trực tiếp bằng gói thư mục vừa tạo
+      # Chỉ định chính xác package là thư mục ./publish ở trên
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'TuneVault'
           slot-name: 'Production'
-          package: ${{ github.workspace }}/myapp
+          package: ./publish
