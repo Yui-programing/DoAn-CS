@@ -7,6 +7,10 @@ import type { UserProfile, MediaItem } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePlayer } from "../../contexts/PlayerContext";
 import { formatDuration } from "../../utils";
+import { MarqueeText } from "../../components/MarqueeText";
+import { ContextMenu } from "../../components/ContextMenu";
+import { AddToPlaylistModal } from "../../components/AddToPlaylistModal";
+import { ShareModal } from "../../components/ShareModal";
 
 export const UserProfileView = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +26,20 @@ export const UserProfileView = () => {
   const [mvs, setMvs] = useState<any[]>([]);
   const [isLoadingMvs, setIsLoadingMvs] = useState(false);
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; track: any } | null>(null);
+  const [selectedAddToPlaylistTrackId, setSelectedAddToPlaylistTrackId] = useState<string | null>(null);
+  const [sharingTrack, setSharingTrack] = useState<any | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, track: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      track
+    });
+  };
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -355,6 +373,7 @@ export const UserProfileView = () => {
                   <div 
                     key={song.id} 
                     onClick={() => playSong(song)}
+                    onContextMenu={(e) => handleContextMenu(e, { ...song, artist: song.artistName || profile?.fullName })}
                     className="group flex items-center justify-between p-3 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
@@ -371,8 +390,8 @@ export const UserProfileView = () => {
                         className="w-12 h-12 rounded object-cover shadow-md" 
                       />
                       <div className="min-w-0 flex-1">
-                        <h4 className={`text-sm font-semibold transition-colors marquee-on-hover ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`} title={song.title}>
-                          <span className="marquee-text">{song.title}</span>
+                        <h4 className={`text-sm font-semibold transition-colors ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`} title={song.title}>
+                          <MarqueeText text={song.title} />
                         </h4>
                       </div>
                     </div>
@@ -398,6 +417,7 @@ export const UserProfileView = () => {
                     <div
                       key={mv.id}
                       onClick={() => navigate(`/video/${mv.id}`)}
+                      onContextMenu={(e) => handleContextMenu(e, { ...mv, artist: mv.artistName || profile?.fullName })}
                       className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-2xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
                     >
                       {/* Bìa MV */}
@@ -423,8 +443,8 @@ export const UserProfileView = () => {
                       </div>
                       {/* Thông tin MV */}
                       <div className="min-w-0">
-                        <h4 className="font-bold text-sm text-slate-200 truncate group-hover:text-green-400 transition-colors" title={mv.title}>
-                          {mv.title}
+                        <h4 className="font-bold text-sm text-slate-200 group-hover:text-green-400 transition-colors" title={mv.title}>
+                          <MarqueeText text={mv.title} />
                         </h4>
                         <p className="text-[10px] text-zinc-500 mt-1 font-medium">
                           {mv.viewCount?.toLocaleString() || '0'} lượt nghe
@@ -489,6 +509,43 @@ export const UserProfileView = () => {
           )}
         </div>
       </div>
+
+      {/* Modal Add to Playlist */}
+      {selectedAddToPlaylistTrackId && (
+        <AddToPlaylistModal
+          isOpen={true}
+          onClose={() => setSelectedAddToPlaylistTrackId(null)}
+          mediaItemId={selectedAddToPlaylistTrackId}
+        />
+      )}
+
+      {/* Modal Share */}
+      {sharingTrack && (
+        <ShareModal 
+          isOpen={!!sharingTrack}
+          onClose={() => setSharingTrack(null)}
+          mediaItemId={sharingTrack.id}
+          title={`Bài hát: ${sharingTrack.title}`}
+        />
+      )}
+
+      {/* Context Menu chuột phải */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          isPlaylist={contextMenu.track.isPlaylist}
+          onAddToPlaylist={() => {
+            setSelectedAddToPlaylistTrackId(contextMenu.track.id);
+            setContextMenu(null);
+          }}
+          onShare={() => {
+            setSharingTrack(contextMenu.track);
+            setContextMenu(null);
+          }}
+        />
+      )}
     </div>
   );
 };

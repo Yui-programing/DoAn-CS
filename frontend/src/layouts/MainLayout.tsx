@@ -40,6 +40,7 @@ import { AddToPlaylistModal } from "../components/AddToPlaylistModal";
 import { ShareModal } from "../components/ShareModal";
 import { useFavorite } from "../contexts/FavoriteContext";
 import { formatTime, formatDuration, parseArtists } from "../utils";
+import { MarqueeText } from "../components/MarqueeText";
 
 export const MainLayout = () => {
   const { isAuthenticated, user, logoutState } = useAuth();
@@ -102,6 +103,8 @@ export const MainLayout = () => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [isTrackInPlaylist, setIsTrackInPlaylist] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [authTooltipTarget, setAuthTooltipTarget] = useState<'plus' | 'create-btn' | null>(null);
+  const [authTooltipCoords, setAuthTooltipCoords] = useState<{ top: number; left: number } | null>(null);
 
   // Lưu trạng thái thu gọn vào localStorage
   const handleToggleSidebar = (collapsed: boolean) => {
@@ -962,8 +965,19 @@ export const MainLayout = () => {
               <div className="flex items-center gap-1.5">
 
                 <div className="relative">
-                  <button 
-                    onClick={() => setShowAddMenu(!showAddMenu)} 
+                   <button 
+                    onClick={(e) => {
+                      if (!isAuthenticated) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setAuthTooltipCoords({
+                          top: rect.top + rect.height / 2,
+                          left: rect.left + rect.width + 12
+                        });
+                        setAuthTooltipTarget(authTooltipTarget === 'plus' ? null : 'plus');
+                      } else {
+                        setShowAddMenu(!showAddMenu);
+                      }
+                    }} 
                     className="w-7 h-7 rounded-full hover:bg-zinc-900 flex items-center justify-center hover:text-white transition-colors cursor-pointer" 
                     title="Tạo mới"
                   >
@@ -1103,7 +1117,14 @@ export const MainLayout = () => {
                   <h5 className="font-bold text-sm text-white leading-snug">Tạo danh sách phát đầu tiên của bạn</h5>
                   <p className="text-xs text-zinc-400 font-medium">Rất dễ dàng, chúng tôi sẽ giúp bạn</p>
                   <button 
-                    onClick={() => navigate('/login')} 
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setAuthTooltipCoords({
+                        top: rect.top + rect.height / 2,
+                        left: rect.left + rect.width + 12
+                      });
+                      setAuthTooltipTarget(authTooltipTarget === 'create-btn' ? null : 'create-btn');
+                    }}
                     className="px-4 py-1.5 bg-white text-black text-xs font-black rounded-full hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow"
                   >
                     Tạo danh sách phát
@@ -1197,13 +1218,14 @@ export const MainLayout = () => {
               <Music className="w-6 h-6 text-zinc-600" />
             )}
           </div>
-          <div className="min-w-0">
-            <h4 className="text-sm font-bold hover:underline cursor-pointer marquee-on-hover" title={currentTrack ? currentTrack.title : "Chưa có bài hát"}>
-              <span className="marquee-text">{currentTrack ? currentTrack.title : "Chưa có bài hát"}</span>
-            </h4>
-            {currentTrack ? (
-              <p className="text-xs text-zinc-400 mt-0.5 marquee-on-hover" title={currentTrack.artist}>
-                <span className="marquee-text">
+          <div className="min-w-0 flex-1 flex items-center justify-start gap-2">
+            <div className="min-w-0">
+              <MarqueeText 
+                text={currentTrack ? currentTrack.title : "Chưa có bài hát"} 
+                className="text-sm font-bold hover:underline cursor-pointer"
+              />
+              {currentTrack ? (
+                <MarqueeText text={currentTrack.artist} className="text-xs text-zinc-400 mt-0.5">
                   {parseArtists(currentTrack.artist, currentTrack.artistId).map((artist, idx, arr) => (
                     <span key={idx}>
                       {artist.id ? (
@@ -1219,56 +1241,56 @@ export const MainLayout = () => {
                       {idx < arr.length - 1 ? ", " : ""}
                     </span>
                   ))}
-                </span>
-              </p>
-            ) : (
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Chọn một bài hát để nghe
-              </p>
+                </MarqueeText>
+              ) : (
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Chọn một bài hát để nghe
+                </p>
+              )}
+            </div>
+            {currentTrack && (
+              <div className="flex items-center gap-1 ml-2 shrink-0">
+                <button 
+                  onClick={() => toggleFavorite(currentTrack.id)}
+                  className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
+                    isFavorite(currentTrack.id) ? "text-green-400" : "text-zinc-450 hover:text-green-400"
+                  }`} 
+                  title={isFavorite(currentTrack.id) ? "Bỏ thích" : "Thích"}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`} />
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setAddToPlaylistTrackId(currentTrack.id);
+                    setPlaylistModalPlacement('player');
+                  }}
+                  className="text-zinc-450 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                  title="Lưu vào danh sách phát"
+                >
+                  {isTrackInPlaylist ? (
+                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-black">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="16" />
+                      <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="text-zinc-450 hover:text-green-400 transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                  title="Chia sẻ bài hát"
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
             )}
           </div>
-          {currentTrack && (
-            <div className="flex items-center gap-1 ml-2 shrink-0">
-              <button 
-                onClick={() => toggleFavorite(currentTrack.id)}
-                className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
-                  isFavorite(currentTrack.id) ? "text-green-400" : "text-zinc-450 hover:text-green-400"
-                }`} 
-                title={isFavorite(currentTrack.id) ? "Bỏ thích" : "Thích"}
-              >
-                <Heart className={`w-5 h-5 ${isFavorite(currentTrack.id) ? "fill-current" : ""}`} />
-              </button>
-              
-              <button 
-                onClick={() => {
-                  setAddToPlaylistTrackId(currentTrack.id);
-                  setPlaylistModalPlacement('player');
-                }}
-                className="text-zinc-450 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
-                title="Lưu vào danh sách phát"
-              >
-                {isTrackInPlaylist ? (
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-black">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                ) : (
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="16" />
-                    <line x1="8" y1="12" x2="16" y2="12" />
-                  </svg>
-                )}
-              </button>
-              
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="text-zinc-450 hover:text-green-400 transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
-                title="Chia sẻ bài hát"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          )}
         </div>
         {/* Ở giữa: Các nút điều khiển nhạc & Thanh tiến trình */}
         <div className="flex flex-col items-center gap-2 w-1/3 max-w-xl">
@@ -1486,6 +1508,58 @@ export const MainLayout = () => {
           mediaItemId={currentTrack.id}
           title={`Bài hát: ${currentTrack.title}`}
         />
+      )}
+
+      {/* POPUP YÊU CẦU ĐĂNG NHẬP (DÙNG FIXED ĐỂ TRÁNH BỊ CLIP BỞI OVERFLOW CỦA SIDEBAR) */}
+      {authTooltipTarget && authTooltipCoords && (
+        <>
+          <div 
+            className="fixed inset-0 z-[9998]" 
+            onClick={() => {
+              setAuthTooltipTarget(null);
+              setAuthTooltipCoords(null);
+            }}
+          />
+          <div 
+            style={{ 
+              position: 'fixed', 
+              top: `${authTooltipCoords.top}px`, 
+              left: `${authTooltipCoords.left}px`,
+              transform: 'translateY(-50%)'
+            }}
+            className="w-[300px] bg-[#0d72ea] text-white p-4 rounded-lg shadow-2xl z-[9999] animate-fadeIn flex flex-col pointer-events-auto"
+          >
+            {/* Mũi tên trỏ sang trái */}
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-[8px] border-transparent border-r-[#0d72ea]" />
+            <h4 className="font-bold text-sm text-white">Tạo danh sách phát</h4>
+            <p className="text-xs text-blue-100 mt-1.5 mb-4 leading-normal">
+              Đăng nhập để tạo và chia sẻ playlist.
+            </p>
+            <div className="flex justify-end items-center gap-4">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAuthTooltipTarget(null);
+                  setAuthTooltipCoords(null);
+                }}
+                className="text-xs font-bold text-blue-100 hover:text-white cursor-pointer transition-colors bg-transparent border-0 outline-none p-0"
+              >
+                Để sau
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAuthTooltipTarget(null);
+                  setAuthTooltipCoords(null);
+                  navigate('/login');
+                }}
+                className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full hover:scale-105 active:scale-95 transition-all shadow cursor-pointer border-0 outline-none"
+              >
+                Đăng nhập
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -56,12 +56,18 @@
   display: block;
 }
 
-.marquee-on-hover:hover {
+.marquee-on-hover .marquee-text {
+  display: inline-block;
+}
+
+.marquee-on-hover.overflowing .marquee-text {
+  padding-right: 24px;
+}
+
+.marquee-on-hover.overflowing:hover {
   text-overflow: clip;
 }
 
-.marquee-on-hover:hover .marquee-text {
-  display: inline-block;
+.marquee-on-hover.overflowing:hover .marquee-text {
   animation: marquee-effect 6s linear infinite alternate;
-  padding-right: 20px;
 }
