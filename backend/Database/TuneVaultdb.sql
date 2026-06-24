@@ -236,7 +236,8 @@ DECLARE @U1 UNIQUEIDENTIFIER = '11111111-1111-1111-1111-111111111111',
         @U13 UNIQUEIDENTIFIER = 'dddddddd-dddd-dddd-dddd-dddddddddddd',
         @U14 UNIQUEIDENTIFIER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
         @U15 UNIQUEIDENTIFIER = 'ffffffff-ffff-ffff-ffff-ffffffffffff',
-        @U16 UNIQUEIDENTIFIER = '8a8a8a8a-8a8a-8a8a-8a8a-8a8a8a8a8a8a';
+        @U16 UNIQUEIDENTIFIER = '8a8a8a8a-8a8a-8a8a-8a8a-8a8a8a8a8a8a',
+        @U17 UNIQUEIDENTIFIER = '88888888-8888-8888-8888-888888888889';
 
 -- Insert tài khoản Đăng nhập vào bảng [User] (Mật khẩu: 123456)
 INSERT INTO [User]
@@ -257,7 +258,8 @@ VALUES
     (@U13, 'longcao@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
     (@U14, 'honeyworks@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
     (@U15, 'hoyomix@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
-    (@U16, 'michaeljackson@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
+    (@U16, 'michaeljackson@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist'),
+    (@U17, 'mada@tunevault.com', '$2a$11$vHzlViMHJXe6nT3OS6q.0O82CEKdUak5pUTArV3bgkOwe8CAGBNrq', 'Artist');
 
 -- Insert UserProfile
 INSERT INTO UserProfile
@@ -279,7 +281,8 @@ VALUES
     (@U13, N'Long Cao', '/images/longcao.jpg', N'Ngày mai rồi cũng sẽ đến'),
     (@U14, N'Honey Works', '/images/honeyworks.jpg', N'HoneyWorks(通称: ハニワ)は、動画投稿サイトで活動するクリエイターユニット。'),
     (@U15, N'HOYO-MiX', '/images/hoyomix.jpg', N'MiHoYo''s in-house music producer team.'),
-    (@U16, N'Michael Jackson', '/images/michaeljackson.jpg', N'The King of Pop.');
+    (@U16, N'Michael Jackson', '/images/michaeljackson.jpg', N'The King of Pop.'),
+    (@U17, N'Mã Dã', '/images/user8.jpg', N'Ca sĩ Mã Dã');
 
 -- Insert Tags
 INSERT INTO Tag
@@ -307,7 +310,8 @@ VALUES
     (@U13, N'Long Cao', N'Ngày mai rồi cũng sẽ đến', '/images/longcao.jpg', N'Pop, Ballad', '/images/banner/longcao-banner.jpg', GETUTCDATE()),
     (@U14, N'Honey Works', N'HoneyWorks(通称: ハニワ)は、動画投稿サイトで活動するクリエイターユニット。', '/images/honeyworks.jpg', N'Pop, Ballad', '/images/banner/honeyworks-banner.jpg', GETUTCDATE()),
     (@U15, N'HOYO-MiX', N'MiHoYo''s in-house music producer team.', '/images/hoyomix.jpg', N'Gaming, EDM, Orchestral', '/images/banner/hoyomix-banner.jpg', GETUTCDATE()),
-    (@U16, N'Michael Jackson', N'The King of Pop.', '/images/michael-jackson.jpg', N'Pop, Dance, Soul', '/images/banner/michael-banner.jpg', GETUTCDATE());
+    (@U16, N'Michael Jackson', N'The King of Pop.', '/images/michael-jackson.jpg', N'Pop, Dance, Soul', '/images/banner/michael-banner.jpg', GETUTCDATE()),
+    (@U17, N'Mã Dã', N'Ca sĩ Mã Dã', '/images/user8.jpg', N'Pop, Ballad', NULL, GETUTCDATE());
 
 DECLARE @Album1Id UNIQUEIDENTIFIER = '98765432-9876-9876-9876-987654321098';
 
@@ -351,7 +355,7 @@ VALUES
     (@M5, N'Billy Mode', '/media/Billy-mode.mp3', '/images/billy-mode.png', 192, 0, NULL, @U15, 0, 'Approved', 280000),
     (@M6, N'Come Alive', '/media/Come-Alive.mp3', '/images/come-alive.png', 243, 0, NULL, @U15, 0, 'Approved', 280000),
     (@M7, N'Come My Way', '/media/CMW.mp3', '/images/cmw.png', 258, 0, NULL, @U4, 0, 'Approved', 150000),
-    (@M8, N'Biển,Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, NULL, @U8, 0, 'Approved', 150000),
+    (@M8, N'Biển, Đảo và Em', '/media/Bien-dao-va-em.mp3', '/images/biendaovaem.png', 296, 0, NULL, @U17, 0, 'Approved', 150000),
     (@M9, N'Thằng Điên', '/media/thangdien.mp4', '/images/Thang-dien.png', 286, 1, NULL, @U7, 0, 'Approved', 950000),
     (@M10, N'MV Đừng làm trái tim anh đau', '/media/dunglamtraitimanhdau.mp4', '/images/dunglamtraitimanhdau.png', 325, 1, NULL, @U4, 0, 'Approved', 950000),
     (@M11, N'Rise', '/media/rise.mp3', '/images/rise.png', 180, 0, NULL, @U9, 0, 'Approved', 200000),

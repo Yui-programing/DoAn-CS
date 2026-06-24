@@ -55,7 +55,7 @@ export const Library = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ListMusic className="w-6 h-6 text-green-400" />
-          <h2 className="text-2xl font-bold tracking-tight">Thư viện của bạn (Từ API)</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Thư viện của bạn</h2>
         </div>
 
         {/* Nút thêm Playlist */}

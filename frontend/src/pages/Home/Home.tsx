@@ -249,7 +249,7 @@ export const Home = () => {
       {(activeFilter === 'all' || activeFilter === 'music') && (
         <section className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay (Dữ liệu thật)</h3>
+            <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay</h3>
           </div>
 
           {audioTracks.length === 0 ? (
@@ -310,12 +310,33 @@ export const Home = () => {
                     </div>
                     {/* Thông tin bài hát */}
                     <div className="min-w-0">
-                      <h4 className={`font-bold text-sm truncate transition-colors ${
+                      <h4 className={`font-bold text-sm transition-colors marquee-on-hover ${
                         isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'
                       }`} title={track.title}>
-                        {track.title}
+                        <span className="marquee-text">{track.title}</span>
                       </h4>
-                      <p className="text-xs text-zinc-400 truncate mt-1">{track.artist}</p>
+                      {track.artist && (track.artist.includes(' x ') || track.artist === 'Justatee x Phương Ly') ? (
+                        <p className="text-xs text-zinc-400 truncate mt-1 flex gap-1">
+                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777a'); }} className="hover:underline cursor-pointer">Justatee</span>
+                          <span>, </span>
+                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777b'); }} className="hover:underline cursor-pointer">Phương Ly</span>
+                        </p>
+                      ) : (
+                        <p 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (track.id) {
+                              const res = await mediaService.getMediaDetails(track.id);
+                              if (res.success && res.data?.artistId) {
+                                navigate(`/user/${res.data.artistId}`);
+                              }
+                            }
+                          }}
+                          className="text-xs text-zinc-400 truncate mt-1 hover:underline cursor-pointer"
+                        >
+                          {track.artist}
+                        </p>
+                      )}
                       <span className="text-[10px] text-zinc-500 font-semibold block mt-1.5">{formatViewCount(track.viewCount)}</span>
                     </div>
                   </div>
@@ -332,7 +353,7 @@ export const Home = () => {
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-green-400" />
-              MV ca nhạc gợi ý (Dữ liệu thật)
+              MV ca nhạc gợi ý
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -358,10 +379,34 @@ export const Home = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-slate-200 line-clamp-1 group-hover:text-green-400 transition-colors">
-                      {track.title}
+                    <h4 className="font-bold text-sm text-slate-200 group-hover:text-green-400 transition-colors marquee-on-hover" title={track.title}>
+                      <span className="marquee-text">{track.title}</span>
                     </h4>
-                    <p className="text-xs text-zinc-400 mt-1">{track.artist} • {formatViewCount(track.viewCount)}</p>
+                    <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
+                      {track.artist && (track.artist.includes(' x ') || track.artist === 'Justatee x Phương Ly') ? (
+                        <>
+                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777a'); }} className="hover:underline cursor-pointer">Justatee</span>
+                          <span>, </span>
+                          <span onClick={(e) => { e.stopPropagation(); navigate('/user/77777777-7777-7777-7777-77777777777b'); }} className="hover:underline cursor-pointer">Phương Ly</span>
+                        </>
+                      ) : (
+                        <span 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (track.id) {
+                              const res = await mediaService.getMediaDetails(track.id);
+                              if (res.success && res.data?.artistId) {
+                                navigate(`/user/${res.data.artistId}`);
+                              }
+                            }
+                          }}
+                          className="hover:underline cursor-pointer"
+                        >
+                          {track.artist}
+                        </span>
+                      )}
+                      <span>• {formatViewCount(track.viewCount)}</span>
+                    </p>
                   </div>
                 </div>
               );
@@ -374,7 +419,7 @@ export const Home = () => {
       {isAuthenticated && (activeFilter === 'all' || activeFilter === 'music') && (
         <section className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây (Dữ liệu thật)</h3>
+            <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây</h3>
             <button className="text-xs text-green-400 hover:underline font-bold">Xem tất cả</button>
           </div>
 

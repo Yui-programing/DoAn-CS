@@ -246,7 +246,7 @@ export const Profile = () => {
     <div className="space-y-8 animate-fadeIn">
       {/* Register as Artist button */}
       {user?.role !== "Artist" && (
-        <div className="flex justify-end">
+        <div className="flex justify-end -mb-4">
           <button
             onClick={() => setShowRegisterModal(true)}
             className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-green-400 text-xs font-bold rounded-full border border-zinc-800"
@@ -367,7 +367,7 @@ export const Profile = () => {
         /* --- LAYOUT DÀNH CHO USER BÌNH THƯỜNG --- */
         <>
           {/* Thông tin hồ sơ Header */}
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900 relative z-10 pt-4">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900 relative z-10 pt-0">
             {/* Avatar */}
             <div className="relative group shrink-0">
               <div className="w-36 h-36 rounded-full bg-zinc-800 border-2 border-green-500/50 flex items-center justify-center font-black text-4xl text-green-400 shadow-2xl relative overflow-hidden">

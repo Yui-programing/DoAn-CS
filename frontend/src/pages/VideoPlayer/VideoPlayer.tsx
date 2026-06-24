@@ -19,7 +19,7 @@ import {
     Shuffle
 } from 'lucide-react';
 // Import dịch vụ API để gọi dữ liệu thật
-import { mediaService } from '../../services';
+import { mediaService, userService } from '../../services';
 import { useFavorite } from '../../contexts/FavoriteContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayer } from '../../contexts/PlayerContext';
@@ -87,48 +87,60 @@ export const VideoPlayer = () => {
                 // Gọi API lấy Meta Data của Video
                 const response = await mediaService.getMediaDetails(id);
                 if (response.success && response.data) {
+                    let artistName = 'Nghệ sĩ tự do';
+                    if (response.data.artistId) {
+                        try {
+                            const artistRes = await userService.getUserProfile(response.data.artistId);
+                            if (artistRes.success && artistRes.data) {
+                                artistName = artistRes.data.fullName || 'Nghệ sĩ tự do';
+                            }
+                        } catch (err) {
+                            console.error("Lỗi khi tải thông tin nghệ sĩ:", err);
+                        }
+                    }
+
                     setVideoInfo({
                         title: response.data.title,
-                        artist: response.data.artistName || 'Nghệ sĩ tự do',
+                        artist: artistName,
                         coverUrl: response.data.coverUrl || null,
-                        filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
+                        filePath: mediaService.getStreamUrl(id)
                     });
                     document.title = `TuneVault - Xem Video: ${response.data.title}`;
-                }
 
-                // Gọi API lấy danh sách bài hát/video (tối đa 50 bài) để làm hàng đợi video
-                const searchRes = await mediaService.searchSongs('%', 50);
-                if (searchRes.success && searchRes.data && searchRes.data.items) {
-                    // Lọc ra các video (mediaType === 1 hoặc file path kết thúc bằng .mp4, .mkv)
-                    const videos = searchRes.data.items.filter((item: any) => 
-                        item.mediaType === 1 || 
-                        item.filePath?.toLowerCase().endsWith('.mp4') || 
-                        item.filePath?.toLowerCase().endsWith('.mkv')
-                    ).map((item: any) => ({
-                        id: item.id,
-                        title: item.name,
-                        artist: item.artistName || 'Nghệ sĩ tự do',
-                        coverUrl: item.coverUrl,
-                        filePath: mediaService.getStreamUrl(item.id)
-                    }));
+                    // Gọi API lấy danh sách bài hát/video (tối đa 50 bài) để làm hàng đợi video
+                    const searchRes = await mediaService.searchSongs('%', 50);
+                    if (searchRes.success && searchRes.data && searchRes.data.items) {
+                        // Lọc ra các video
+                        const videos = searchRes.data.items.filter((item: any) => 
+                            item.mediaType === 1 || 
+                            item.filePath?.toLowerCase().endsWith('.mp4') || 
+                            item.filePath?.toLowerCase().endsWith('.mkv')
+                        ).map((item: any) => ({
+                            id: item.id,
+                            title: item.name,
+                            artist: item.artistName || 'Nghệ sĩ tự do',
+                            coverUrl: item.coverUrl,
+                            filePath: mediaService.getStreamUrl(item.id)
+                        }));
 
-                    setVideoQueue(videos);
+                        setVideoQueue(videos);
 
-                    // Tìm vị trí của video hiện tại trong queue
-                    const idx = videos.findIndex((v: any) => v.id === id);
-                    if (idx !== -1) {
-                        setCurrentQueueIndex(idx);
-                    } else if (response.data) {
-                        // Nếu không tìm thấy, chèn video hiện tại vào đầu hàng đợi
-                        const currentVideoItem = {
-                            id: response.data.id,
-                            title: response.data.title,
-                            artist: response.data.artistName || 'Nghệ sĩ tự do',
-                            coverUrl: response.data.coverUrl || null,
-                            filePath: mediaService.getStreamUrl(response.data.id)
-                        };
-                        setVideoQueue([currentVideoItem, ...videos]);
-                        setCurrentQueueIndex(0);
+                        // Tìm vị trí của video hiện tại trong queue
+                        const idx = videos.findIndex((v: any) => v.id === id);
+                        if (idx !== -1) {
+                            setCurrentQueueIndex(idx);
+                        } else {
+                            // Nếu không tìm thấy, chèn video hiện tại vào đầu hàng đợi
+                            const currentVideoItem = {
+                                id: response.data.id,
+                                title: response.data.title,
+                                artist: artistName,
+                                coverUrl: response.data.coverUrl || null,
+                                filePath: mediaService.getStreamUrl(response.data.id)
+                            };
+                            setVideoQueue([currentVideoItem, ...videos]);
+                            setCurrentQueueIndex(0);
+                        }
                     }
                 }
             } catch (error) {
@@ -670,12 +682,30 @@ export const VideoPlayer = () => {
                         </div>
                         {/* Tên bài hát & Nghệ sĩ */}
                         <div className="min-w-0">
-                            <h4 className="text-sm font-bold text-slate-100 truncate hover:underline cursor-pointer" title={videoInfo.title}>
-                                {videoInfo.title}
+                            <h4 className="text-sm font-bold text-slate-100 hover:underline cursor-pointer marquee-on-hover" title={videoInfo.title}>
+                                <span className="marquee-text">{videoInfo.title}</span>
                             </h4>
-                            <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer font-medium mt-0.5">
-                                {videoInfo.artist}
-                            </p>
+                            {videoInfo.artist && (videoInfo.artist.includes(' x ') || videoInfo.artist === 'Justatee x Phương Ly') ? (
+                                <p className="text-xs text-zinc-400 truncate font-medium mt-0.5 flex gap-1">
+                                    <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777a')} className="hover:underline cursor-pointer">Justatee</span>
+                                    <span>, </span>
+                                    <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777b')} className="hover:underline cursor-pointer">Phương Ly</span>
+                                </p>
+                            ) : (
+                                <p 
+                                    onClick={async () => {
+                                        if (id) {
+                                            const res = await mediaService.getMediaDetails(id);
+                                            if (res.success && res.data?.artistId) {
+                                                navigate(`/user/${res.data.artistId}`);
+                                            }
+                                        }
+                                    }}
+                                    className="text-xs text-zinc-400 truncate hover:underline cursor-pointer font-medium mt-0.5"
+                                >
+                                    {videoInfo.artist}
+                                </p>
+                            )}
                         </div>
                         
                         {/* Nút Thả tim & Nút thêm playlist - màu giống MainLayout */}

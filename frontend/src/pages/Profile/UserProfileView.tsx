@@ -19,6 +19,8 @@ export const UserProfileView = () => {
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
+  const [mvs, setMvs] = useState<any[]>([]);
+  const [isLoadingMvs, setIsLoadingMvs] = useState(false);
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
 
   const [isFollowing, setIsFollowing] = useState(false);
@@ -125,6 +127,23 @@ export const UserProfileView = () => {
               console.error("Lỗi khi tải danh sách album nghệ sĩ:", err);
             } finally {
               setIsLoadingAlbums(false);
+            }
+
+            // Tải MV "Thằng điên" nếu nghệ sĩ là Phương Ly hoặc Justatee
+            if (id === "77777777-7777-7777-7777-77777777777b" || id === "77777777-7777-7777-7777-77777777777a") {
+              try {
+                setIsLoadingMvs(true);
+                const mvRes = await mediaService.getMediaDetails("B19B93F2-E96F-44DF-863F-1710E55F6164");
+                if (mvRes.success && mvRes.data) {
+                  setMvs([mvRes.data]);
+                }
+              } catch (err) {
+                console.error("Lỗi khi tải MV cho nghệ sĩ:", err);
+              } finally {
+                setIsLoadingMvs(false);
+              }
+            } else {
+              setMvs([]);
             }
           }
         } else {
@@ -328,6 +347,60 @@ export const UserProfileView = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* MV của Nghệ sĩ */}
+          {isArtist && (mvs.length > 0 || isLoadingMvs) && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-white mb-6">MV ca nhạc</h2>
+              {isLoadingMvs ? (
+                <div className="flex items-center justify-center py-12 text-zinc-500 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+                  <p className="text-xs font-medium">Đang tải danh sách MV...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {mvs.map((mv) => (
+                    <div
+                      key={mv.id}
+                      onClick={() => navigate(`/video/${mv.id}`)}
+                      className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-2xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
+                    >
+                      {/* Bìa MV */}
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors shadow-inner">
+                        {mv.coverUrl ? (
+                          <img
+                            src={mediaService.getImageUrl(mv.coverUrl)}
+                            alt={mv.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                            <Music className="w-8 h-8 text-zinc-650" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-black transform scale-90 group-hover:scale-100 transition-transform duration-300 hover:scale-110 shadow-lg">
+                            <svg className="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" fill="currentColor" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Thông tin MV */}
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-sm text-slate-200 truncate group-hover:text-green-400 transition-colors" title={mv.title}>
+                          {mv.title}
+                        </h4>
+                        <p className="text-[10px] text-zinc-500 mt-1 font-medium">
+                          {mv.viewCount?.toLocaleString() || '0'} lượt nghe
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

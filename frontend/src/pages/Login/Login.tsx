@@ -58,7 +58,7 @@ export const Login = () => {
         <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20 mb-4">
           <Music className="w-8 h-8 text-black stroke-[2.5]" />
         </div>
-        <h1 className="text-2xl font-black tracking-tight text-slate-100">Chào mừng trở lại!</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-100">Chào mừng</h1>
         <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mt-1 mb-8">
           Đăng nhập vào hệ thống TuneVault
         </p>

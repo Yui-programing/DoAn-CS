@@ -41,3 +41,27 @@
   scrollbar-width: thin !important;
   scrollbar-color: #3f3f46 transparent !important;
 }
+
+/* Hiệu ứng chữ chạy sang trái khi hover dành cho tên bài hát/nghệ sĩ dài */
+@keyframes marquee-effect {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-40%); }
+}
+
+.marquee-on-hover {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
+}
+
+.marquee-on-hover:hover {
+  text-overflow: clip;
+}
+
+.marquee-on-hover:hover .marquee-text {
+  display: inline-block;
+  animation: marquee-effect 6s linear infinite alternate;
+  padding-right: 20px;
+}

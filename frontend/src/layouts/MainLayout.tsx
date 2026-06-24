@@ -243,6 +243,18 @@ export const MainLayout = () => {
     };
   }, [togglePlay, seek, location.pathname]);
 
+  const handleArtistClick = async () => {
+    if (!currentTrack) return;
+    try {
+      const res = await mediaService.getMediaDetails(currentTrack.id);
+      if (res.success && res.data?.artistId) {
+        navigate(`/user/${res.data.artistId}`);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải thông tin nghệ sĩ:", error);
+    }
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchValue(val);
@@ -916,9 +928,6 @@ export const MainLayout = () => {
                 <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
                   TuneVault
                 </h1>
-                <span className="text-[10px] text-zinc-500 font-bold tracking-wider uppercase">
-                  Spotify Clone
-                </span>
               </div>
             </div>
           )}
@@ -1163,12 +1172,29 @@ export const MainLayout = () => {
             )}
           </div>
           <div className="min-w-0">
-            <h4 className="text-sm font-bold truncate hover:underline cursor-pointer">
-              {currentTrack ? currentTrack.title : "Chưa có bài hát"}
+            <h4 className="text-sm font-bold hover:underline cursor-pointer marquee-on-hover" title={currentTrack ? currentTrack.title : "Chưa có bài hát"}>
+              <span className="marquee-text">{currentTrack ? currentTrack.title : "Chưa có bài hát"}</span>
             </h4>
-            <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer">
-              {currentTrack ? currentTrack.artist : "Chọn một bài hát để nghe"}
-            </p>
+            {currentTrack ? (
+              currentTrack.artist && (currentTrack.artist.includes(' x ') || currentTrack.artist === 'Justatee x Phương Ly') ? (
+                <p className="text-xs text-zinc-400 truncate flex gap-1">
+                  <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777a')} className="hover:underline cursor-pointer">Justatee</span>
+                  <span>, </span>
+                  <span onClick={() => navigate('/user/77777777-7777-7777-7777-77777777777b')} className="hover:underline cursor-pointer">Phương Ly</span>
+                </p>
+              ) : (
+                <p 
+                  onClick={handleArtistClick}
+                  className="text-xs text-zinc-400 truncate hover:underline cursor-pointer"
+                >
+                  {currentTrack.artist}
+                </p>
+              )
+            ) : (
+              <p className="text-xs text-zinc-400 truncate">
+                Chọn một bài hát để nghe
+              </p>
+            )}
           </div>
           {currentTrack && (
             <div className="flex items-center gap-1 ml-2 shrink-0">
