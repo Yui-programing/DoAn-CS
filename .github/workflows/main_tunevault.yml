@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy ASP.Net Core app to Azure Web App - TuneVault
 
 on:
@@ -10,9 +7,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
 
     steps:
@@ -26,30 +24,11 @@ jobs:
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
+      # Publish thẳng ra một thư mục cố định
       - name: dotnet publish
-      
-        run: dotnet publish -c Release -o ./publish
+        run: dotnet publish -c Release -o ${{ github.workspace }}/myapp
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: net-app
-          path: ./publish 
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: net-app
-          path: ./publish 
-        
+      # Login vào hệ thống Azure
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -57,10 +36,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_790119198D15473BBE8AD914B782A9B4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BC48E0D0C53B47D49E7E0A7D2BFE86B8 }}
 
+      # Deploy trực tiếp bằng gói thư mục vừa tạo
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'TuneVault'
           slot-name: 'Production'
-          package: ./publish
+          package: ${{ github.workspace }}/myapp
