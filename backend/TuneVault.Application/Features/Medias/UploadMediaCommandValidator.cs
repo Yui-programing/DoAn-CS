@@ -10,8 +10,8 @@ public class UploadMediaCommandValidator : AbstractValidator<UploadMediaCommand>
             .NotEmpty().WithMessage("Tiêu đề không được để trống.")
             .MaximumLength(255).WithMessage("Tiêu đề không được vượt quá 255 ký tự.");
 
-        RuleFor(x => x.FilePath)
-            .NotEmpty().WithMessage("Đường dẫn file media không được để trống.");
+        RuleFor(x => x.MediaFileName)
+            .NotEmpty().WithMessage("Tên file media không được để trống.");
 
         RuleFor(x => x.ArtistId)
             .NotEmpty().WithMessage("ID nghệ sĩ không được để trống.");
