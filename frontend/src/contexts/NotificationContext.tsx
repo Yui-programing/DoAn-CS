@@ -52,8 +52,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Khởi tạo SignalR
         const token = getCookie('token');
+        const hubUrl = import.meta.env.VITE_SIGNALR_HUB_URL || 'http://localhost:5000/hubs/notifications';
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl('http://localhost:5000/hubs/notifications', {
+            .withUrl(hubUrl, {
                 accessTokenFactory: () => token || ''
             })
             .withAutomaticReconnect()
