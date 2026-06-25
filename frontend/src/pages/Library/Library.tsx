@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Playlist } from '../../types';
 import { NavLink } from 'react-router-dom';
 import { ListMusic, Plus, Loader2 } from 'lucide-react';
 import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';
@@ -7,7 +8,7 @@ import { playlistService, mediaService } from '../../services';
 
 export const Library = () => {
   // BƯỚC 1: Khai báo State
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 

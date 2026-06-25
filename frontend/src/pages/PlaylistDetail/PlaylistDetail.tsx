@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Playlist } from '../../types';
 import { useParams, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Thêm icon Loader2
@@ -23,7 +24,7 @@ export const PlaylistDetail = () => {
   const isAlbumPage = location.pathname.startsWith('/album');
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
-  const [playlistInfo, setPlaylistInfo] = useState<any>(null); // Chứa Tên, Mô tả
+  const [playlistInfo, setPlaylistInfo] = useState<Playlist | null>(null); // Chứa Tên, Mô tả
   const [tracks, setTracks] = useState<any[]>([]);             // Chứa danh sách bài hát
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
