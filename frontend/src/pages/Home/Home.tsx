@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Playlist } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Import thêm Loader2 để làm icon xoay vòng lúc chờ mạng
@@ -21,7 +22,7 @@ export const Home = () => {
   const { isFavorite, toggleFavorite } = useFavorite();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [recentTracks, setRecentTracks] = useState<any[]>([]);
   const [suggestedTracks, setSuggestedTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
