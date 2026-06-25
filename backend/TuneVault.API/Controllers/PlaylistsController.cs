@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -158,20 +158,33 @@ public class PlaylistsController : ControllerBase
     {
         var query = new TuneVault.Application.Features.Playlists.Queries.GetPlaylistById.GetPlaylistByIdQuery { PlaylistId = id, UserId = GetUserIdFromJwt() };
         var playlist = await _mediator.Send(query);
-        if (playlist == null) return NotFound(ApiResponse<object>.SetFailure(message: "Khong tim thay playlist"));
-        return Ok(ApiResponse<MyPlaylistDto>.SetSuccess(playlist, "Lay playlist thanh cong!"));
+        if (playlist == null) return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy playlist."));
+        return Ok(ApiResponse<MyPlaylistDto>.SetSuccess(playlist, "Lấy playlist thành công!"));
     }
+
+    /// <summary>
+    /// Lấy danh sách playlist công khai của một user bất kỳ (dùng cho trang hồ sơ người dùng)
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("user/{userId:guid}")]
+    public async Task<IActionResult> GetPublicPlaylistsByUser(Guid userId)
+    {
+        var query = new TuneVault.Application.Features.Playlists.Queries.GetPublicPlaylistsByUser.GetPublicPlaylistsByUserQuery
+        {
+            UserId = userId
+        };
+        var playlists = await _mediator.Send(query);
+        return Ok(ApiResponse<IEnumerable<MyPlaylistDto>>.SetSuccess(playlists, "Lấy danh sách playlist công khai thành công!"));
+    }
+
     [HttpGet("{id:guid}/tracks")]
     public async Task<IActionResult> GetPlaylistTracks(Guid id)
     {
         var query = new GetPlaylistTracksQuery { PlaylistId = id, UserId = GetUserIdFromJwt() };
 
-        var PlaylistTracks = await _mediator.Send(query);
+        var playlistTracks = await _mediator.Send(query);
 
-        // Tr? v? danh s�ch b�i h�t
-        return Ok(ApiResponse<IEnumerable<PlaylistTrackDto>>.SetSuccess(PlaylistTracks, "L?y danh s�ch b�i h�t th�nh c�ng!"));
+        // Trả về danh sách bài hát
+        return Ok(ApiResponse<IEnumerable<PlaylistTrackDto>>.SetSuccess(playlistTracks, "Lấy danh sách bài hát thành công!"));
     }
 }
-
-
-
