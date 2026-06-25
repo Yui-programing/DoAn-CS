@@ -1,58 +1,123 @@
-# TuneVault - Giao diện người dùng (React Frontend)
+# TuneVault — Giao diện Người dùng (React Frontend)
 
-Thư mục này chứa toàn bộ mã nguồn giao diện người dùng của ứng dụng **TuneVault** (Spotify Clone), được xây dựng bằng các công nghệ hiện đại nhằm tối ưu trải nghiệm nghe nhạc và xem MV trực tuyến.
+Thư mục này chứa toàn bộ mã nguồn giao diện người dùng của **TuneVault**, nền tảng nghe nhạc và xem MV trực tuyến, xây dựng bằng các công nghệ hiện đại.
 
-## 🛠️ Công nghệ sử dụng (Tech Stack)
+---
 
-* **React 19 & TypeScript**: Framework mạnh mẽ giúp xây dựng UI động, kiểu an toàn và tối ưu hóa render.
-* **Vite**: Bộ công cụ xây dựng (build tool) thế hệ mới siêu nhanh.
-* **Tailwind CSS v4 & Vanilla CSS**: Cung cấp giao diện tối giản, linh hoạt, responsive tốt và hỗ trợ dark mode/glassmorphism cực kỳ đẹp mắt.
-* **React Router v7**: Điều hướng trang mượt mà không cần tải lại trang.
-* **SignalR Client (.NET)**: Nhận thông báo thời gian thực từ server.
-* **Lucide Icons**: Bộ icon hiện đại, đồng bộ phong cách tối giản.
+## 🛠️ Công nghệ Sử dụng (Tech Stack)
 
-## 📁 Cấu trúc thư mục chính
+| Công nghệ | Phiên bản | Mục đích |
+|---|---|---|
+| **React** | 19 | Framework UI |
+| **TypeScript** | 5+ | Kiểu dữ liệu an toàn |
+| **Vite** | 8+ | Build tool siêu nhanh |
+| **Tailwind CSS** | v4 | Styling utility-first |
+| **React Router** | v7 | Điều hướng SPA |
+| **Axios** | latest | HTTP client gọi API |
+| **SignalR Client** | @microsoft/signalr | Thông báo real-time |
+| **Lucide React** | latest | Bộ icon hiện đại |
 
-Cấu trúc thư mục được thiết kế rõ ràng theo mô hình module:
+---
 
-* `src/assets/`: Chứa các tài nguyên tĩnh như hình ảnh, SVG logo, fonts...
-* `src/components/`: Các component dùng chung cho toàn bộ dự án (Button, Modal, Table danh sách bài hát...).
-* `src/contexts/`: Quản lý trạng thái toàn cục (Global State) qua React Context:
-  * `AuthContext`: Quản lý đăng nhập, đăng ký, thông tin người dùng.
-  * `PlayerContext`: Quản lý trình phát nhạc toàn cục (bài hát hiện tại, hàng đợi phát, chế độ shuffle/repeat, âm lượng, tiến trình phát).
-  * `FavoriteContext`: Trạng thái yêu thích/thả tim các bài hát.
-  * `NotificationContext`: Lắng nghe và hiển thị thông báo thời gian thực qua SignalR.
-* `src/layouts/`: Các khung giao diện dùng chung.
-  * `MainLayout`: Giao diện chính chứa Sidebar, Header và thanh điều khiển nhạc bên dưới.
-* `src/pages/`: Các trang nghiệp vụ chính (Home, Search, Library, VideoPlayer, Login, Register, Profile, Admin...).
-* `src/services/`: Quản lý các cuộc gọi API qua Axios client được cấu hình sẵn.
-* `src/routes/`: Cấu hình định tuyến Route của dự án.
+## 📁 Cấu trúc Thư mục
+
+```
+frontend/
+├── index.html              # Entry HTML, chứa <div id="root">
+├── vite.config.ts          # Cấu hình Vite (proxy API, alias...)
+├── tailwind.config.ts      # Cấu hình Tailwind CSS
+├── Dockerfile              # Multi-stage build: Node (build) → Nginx (serve)
+├── nginx.conf              # Cấu hình Nginx phục vụ SPA
+└── src/
+    ├── App.tsx             # Root component, bọc tất cả Providers
+    ├── main.tsx            # Mount React vào #root
+    ├── App.css             # CSS global (font, scrollbar tùy chỉnh...)
+    ├── index.css           # Tailwind directives
+    │
+    ├── assets/             # Tài nguyên tĩnh (logo, favicon, hình ảnh)
+    ├── components/         # Components dùng CHUNG toàn dự án
+    ├── contexts/           # Global State (Auth, Player, Favorites, Notifications)
+    ├── hooks/              # Custom React Hooks
+    ├── layouts/            # Layout khung (MainLayout)
+    ├── pages/              # Các trang chính
+    ├── routes/             # Cấu hình routing + Route Guards
+    ├── services/           # API calls (axios)
+    ├── types/              # TypeScript interfaces/types dùng chung
+    └── utils/              # Hàm helper (formatDuration, formatDate...)
+```
 
 > [!NOTE]
-> Bạn có thể đọc chi tiết giải thích cấu trúc từng thư mục con tại file [GiaiThich.md](file:///d:/VSCode/Spotify/DoAn-CS/frontend/src/GiaiThich.md).
+> Xem chi tiết giải thích từng thư mục tại [GiaiThich.md](./src/GiaiThich.md).
 
-## 🚀 Thiết lập & Khởi chạy ở Local (Không qua Docker)
+---
 
-Nếu bạn muốn chỉnh sửa code frontend nhanh chóng với cơ chế Hot Reload nhanh nhất mà không cần chạy qua Docker container, hãy thực hiện theo các bước sau:
+## 📄 Các Trang (Pages)
 
-**1. Di chuyển vào thư mục frontend:**
+| Trang | Đường dẫn | Mô tả |
+|---|---|---|
+| Home | `/` | Trang chủ — danh sách nhạc mới, nghệ sĩ nổi bật |
+| Search | `/search` | Tìm kiếm bài hát, nghệ sĩ, album |
+| Library | `/library` | Thư viện cá nhân |
+| Favorites | `/favorites` | Danh sách bài hát đã thả tim |
+| Playlist Detail | `/playlist/:id` | Chi tiết playlist |
+| Video Player | `/video/:id` | Xem MV toàn màn hình |
+| Profile | `/profile` | Hồ sơ của mình |
+| User Profile | `/profile/:id` | Hồ sơ của người dùng khác |
+| Share Inbox | `/inbox` | Hộp thư nhận nhạc được chia sẻ |
+| Notifications | `/notifications` | Danh sách thông báo |
+| Login | `/login` | Đăng nhập |
+| Register | `/register` | Đăng ký tài khoản + OTP |
+| Forgot Password | `/forgot-password` | Quên mật khẩu + OTP reset |
+| Admin | `/admin` | Quản trị hệ thống (chỉ Admin) |
+
+---
+
+## 🚀 Khởi chạy Local (Không qua Docker)
+
+Dùng khi muốn phát triển frontend nhanh với **Hot Module Replacement**:
+
 ```bash
+# Di chuyển vào thư mục frontend
 cd frontend
-```
 
-**2. Cài đặt các thư viện phụ thuộc (node_modules):**
-```bash
+# Cài đặt dependencies
 npm install
-```
 
-**3. Khởi chạy Development Server:**
-```bash
+# Chạy dev server
 npm run dev
 ```
-Trình duyệt sẽ tự động mở hoặc bạn có thể truy cập thủ công vào địa chỉ: `http://localhost:5173`.
 
-## ⚙️ Cấu hình API Endpoint
+Truy cập: `http://localhost:5173`
 
-Địa chỉ kết nối đến Backend API được cấu hình thông qua các biến môi trường trong file cấu hình build Docker hoặc cấu hình Vite.
-* `VITE_API_BASE_URL`: API Server (Ví dụ: `http://localhost:5000/api`)
-* `VITE_SIGNALR_HUB_URL`: SignalR Hub (Ví dụ: `http://localhost:5000/hubs/notification`)
+> ⚠️ Khi chạy standalone, cần backend đang chạy riêng tại `http://localhost:5000` hoặc qua Docker. Xem file `vite.config.ts` để cấu hình proxy.
+
+---
+
+## 🐳 Build qua Docker
+
+```bash
+# Build và chạy chỉ frontend container
+docker compose up -d --no-deps --build tunevault-frontend
+```
+
+Truy cập: `http://localhost:3000` (Nginx phục vụ SPA)
+
+---
+
+## ⚙️ Biến Môi trường
+
+Cấu hình trong `vite.config.ts` hoặc file `.env`:
+
+| Biến | Ví dụ | Mô tả |
+|---|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:5000/api` | URL backend API |
+| `VITE_SIGNALR_HUB_URL` | `http://localhost:5000/hubs/notification` | URL SignalR Hub |
+
+---
+
+## 🔐 Xác thực
+
+- JWT Token được backend lưu vào **HttpOnly Cookie** (tên `token`) sau khi đăng nhập
+- Axios tự động gửi cookie theo mỗi request (`withCredentials: true`)
+- Route Guards tự động redirect về `/login` nếu chưa đăng nhập
+- Route `/admin` chỉ cho phép user có role `Admin`

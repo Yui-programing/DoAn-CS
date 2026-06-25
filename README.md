@@ -1,102 +1,176 @@
+# 🎵 TuneVault — Nền tảng nghe nhạc & xem MV trực tuyến
+
+TuneVault là ứng dụng web nghe nhạc và xem MV trực tuyến lấy cảm hứng từ Spotify, xây dựng bằng **React + TypeScript** (Frontend) và **.NET 10 Clean Architecture** (Backend), triển khai hoàn toàn qua **Docker**.
+
+---
+
 ## 🚀 Hướng dẫn Thiết lập & Khởi chạy Nhanh (Local Setup)
 
-Dự án này đã được đóng gói hoàn chỉnh bằng Docker. Bạn không cần cài đặt .NET hay Node.js trên máy tính cá nhân để chạy dự án.
+Dự án này đã được đóng gói hoàn chỉnh bằng Docker. Bạn **không cần** cài đặt .NET hay Node.js trên máy tính cá nhân để chạy dự án.
 
-**1. Yêu cầu Hệ thống (Prerequisites)**
-* **Git:** Dùng để tải mã nguồn.
-* **Docker Desktop:** Đảm bảo phần mềm Docker đã được cài đặt và đang chạy ngầm trên máy.
+### Yêu cầu Hệ thống (Prerequisites)
+- **Git** — Dùng để tải mã nguồn
+- **Docker Desktop** — Đảm bảo phần mềm Docker đã được cài đặt và đang chạy
 
-**2. Tải mã nguồn về máy (Clone)**
-Mở Terminal (hoặc Command Prompt/PowerShell), di chuyển đến thư mục bạn muốn lưu code và chạy lệnh:
-`git clone https://github.com/TEN_GITHUB_CUA_BAN/DoAn-CS.git`
-`cd DoAn-CS`
+### Các bước khởi chạy
 
-**3. Khởi chạy toàn bộ hệ thống (Run with Docker)**
-Tại thư mục gốc `DoAn-CS` (nơi chứa file `docker-compose.yml`), thực thi câu lệnh dưới đây để tự động cài đặt và chạy toàn bộ hệ thống:
-`docker compose up -d --build`
-*(Lưu ý: Lần chạy đầu tiên sẽ mất vài phút để Docker tải SQL Server, .NET 10 và Node 24 về máy).*
+**1. Tải mã nguồn về máy (Clone)**
+```bash
+git clone https://github.com/Yui-programing/DoAn-CS.git
+cd DoAn-CS
+```
 
-**4. Kiểm tra và Truy cập Hệ thống**
-Sau khi lệnh chạy xong và không báo lỗi, bạn mở trình duyệt web lên và truy cập vào:
-* **Giao diện người dùng (React Frontend):** http://localhost:3000
-* **Tài liệu API (Swagger Backend):** http://localhost:5000/swagger
+**2. Khởi chạy toàn bộ hệ thống**
+```bash
+docker compose up -d --build
+```
+> ⚠️ Lần chạy đầu tiên sẽ mất vài phút để Docker tải SQL Server, .NET 10 và Node 24 về máy.
+
+**3. Truy cập Hệ thống**
+
+| Dịch vụ | URL |
+|---|---|
+| 🌐 Giao diện React Frontend | http://localhost:3000 |
+| 📖 Tài liệu API (Swagger) | http://localhost:5000/swagger |
 
 ---
 
-## 📁 Cấu trúc Thư mục Backend
+## 📁 Cấu trúc Thư mục
 
 ```
-backend/
-├── 📄 API_Contract.md              # Tài liệu định nghĩa API contracts
-├── 📄 TuneVault.slnx               # Solution file (.NET)
+DoAn-CS/
+├── 📄 docker-compose.yml           # Orchestration toàn bộ services
+├── 📄 README.md                    # Tài liệu dự án (file này)
 │
-├── 📁 TuneVault.API/               # 🎯 API Layer (Main Entry Point)
-│   ├── 📄 Program.cs               # Cấu hình ứng dụng chính
-│   ├── 📄 TuneVault.API.csproj    # Project file
-│   ├── 📄 TuneVault.API.http       # HTTP request definitions
-│   ├── 📄 appsettings.json         # Cấu hình production
-│   ├── 📄 appsettings.Development.json  # Cấu hình development
-│   ├── 📄 Dockerfile               # Docker image configuration
-│   ├── 📁 Controllers/             # API endpoints
-│   ├── 📁 Middlewares/             # Custom middleware components
-│   ├── 📁 Common/                  # Utilities & helpers
-│   ├── 📁 Properties/              # Project properties
-│   ├── 📁 bin/                     # Compiled binaries
-│   └── 📁 obj/                     # Build artifacts
+├── 📁 backend/                     # .NET 10 Clean Architecture API
+│   ├── 📄 API_Contract.md          # Định nghĩa API contract
+│   ├── 📄 PROJECT_STRUCTURE.md     # Chi tiết kiến trúc backend
+│   ├── 📁 TuneVault.API/           # Presentation layer (Controllers, Middlewares)
+│   ├── 📁 TuneVault.Application/   # Business logic layer (Features, Handlers)
+│   ├── 📁 TuneVault.Domain/        # Domain layer (Entities, Enums)
+│   └── 📁 TuneVault.Infrastructure/# Data access layer (Repositories, Services)
 │
-├── 📁 TuneVault.Application/       # 📋 Business Logic Layer
-│   ├── 📄 DependencyInjection.cs   # Dependency injection setup
-│   ├── 📄 TuneVault.Application.csproj
-│   ├── 📁 Features/                # Business logic & use cases
-│   ├── 📁 Models/                  # DTOs & application models
-│   ├── 📁 Repositories/            # Repository interfaces
-│   ├── 📁 Common/                  # Shared application utilities
-│   ├── 📁 bin/                     # Compiled binaries
-│   └── 📁 obj/                     # Build artifacts
-│
-├── 📁 TuneVault.Domain/            # 🏛️ Domain Layer (Business Objects)
-│   ├── 📄 TuneVault.Domain.csproj
-│   ├── 📁 Entities/                # Core business entities
-│   ├── 📁 Enums/                   # Enumeration definitions
-│   ├── 📁 bin/                     # Compiled binaries
-│   └── 📁 obj/                     # Build artifacts
-│
-└── 📁 TuneVault.Infrastructure/    # 🔧 Infrastructure Layer (Data Access)
-    ├── 📄 DependencyInjection.cs   # Infrastructure IoC configuration
-    ├── 📄 TuneVault.Infrastructure.csproj
-    ├── 📁 Repositories/            # Data access implementations
-    ├── 📁 bin/                     # Compiled binaries
-    └── 📁 obj/                     # Build artifacts
+└── 📁 frontend/                    # React 19 + TypeScript + TailwindCSS
+    └── 📁 src/
+        ├── 📁 components/          # Components dùng chung
+        ├── 📁 contexts/            # React Context (Auth, Player, Favorites...)
+        ├── 📁 hooks/               # Custom hooks
+        ├── 📁 layouts/             # Layout chính (MainLayout)
+        ├── 📁 pages/               # Các trang của ứng dụng
+        ├── 📁 routes/              # Cấu hình routing
+        ├── 📁 services/            # API service layer (axios)
+        ├── 📁 types/               # TypeScript interfaces/types
+        └── 📁 utils/               # Hàm helper dùng chung
 ```
 
-### 🏗️ Kiến trúc tầng (Layered Architecture)
+---
 
-| **API Layer** | `TuneVault.API` | HTTP endpoints, middleware, request handling |
-| **Application Layer** | `TuneVault.Application` | Business logic, use cases, DTOs |
+## 🏗️ Kiến trúc Tầng Backend (Layered Architecture)
+
+| Tầng | Project | Trách nhiệm |
+|---|---|---|
+| **API Layer** | `TuneVault.API` | HTTP endpoints, middleware, xử lý request/response |
+| **Application Layer** | `TuneVault.Application` | Business logic, use cases, validation (MediatR + FluentValidation) |
 | **Domain Layer** | `TuneVault.Domain` | Core entities, business rules, enums |
-| **Infrastructure Layer** | `TuneVault.Infrastructure` | Database, repositories, external services |
+| **Infrastructure Layer** | `TuneVault.Infrastructure` | Database (Dapper), Cloudinary, SignalR Hubs |
 
 ---
 
-## 🎹 Các Tính năng Đặc trưng & Phím tắt (Hotkeys)
+## ✨ Tính năng Chính
 
-### 🎨 Giao diện & Trải nghiệm người dùng (UX)
-* **Favicon & Logo đồng bộ**: Sử dụng logo TuneVault chính thức (nốt nhạc kép màu đen trên nền gradient xanh emerald bo góc) làm favicon cho toàn bộ trang web.
-* **Tiêu đề trang động (Dynamic Title Tag)**: Tiêu đề trình duyệt tự động thay đổi theo trang hiện tại (ví dụ: `TuneVault - Trang chủ`, `TuneVault - Tìm kiếm`) và tự động hiển thị tên bài hát/video thực tế khi bạn mở chi tiết danh sách phát hoặc xem video.
+### 🎶 Nghe nhạc & Xem MV
+- Phát nhạc liên tục với player bar cố định ở dưới màn hình
+- Xem MV với Video Player toàn màn hình tách biệt
+- Streaming audio/video trực tiếp từ Cloudinary
 
-### ⌨️ Phím tắt Điều khiển nhanh (Hotkeys)
+### 📋 Playlist & Thư viện
+- Tạo, sửa, xóa playlist cá nhân
+- Thêm/xóa bài hát khỏi playlist
+- Sidebar thư viện với danh sách playlist của mình
+- Right-click context menu trên từng bài hát
 
-Để tối ưu hóa trải nghiệm nghe nhạc và xem MV, TuneVault hỗ trợ hệ thống phím tắt điều khiển nhanh cực kỳ tiện lợi:
+### 🔍 Tìm kiếm
+- Tìm kiếm bài hát, nghệ sĩ, album theo từ khóa
+- Kết quả hiển thị theo grid với ảnh thumbnail
 
-#### 1. Đối với Trình phát nhạc bên ngoài (Main Layout)
-* **Phím `Space` (Khoảng trắng) hoặc `Enter`**: Phát / Tạm dừng nhạc (Tự động bỏ qua nếu bạn đang nhập văn bản hoặc đang focus vào các nút điều khiển để tránh bị trùng lặp sự kiện).
-* **Phím `Mũi tên Trái` (`ArrowLeft`)**: Tua lùi bài nhạc về trước 5 giây.
-* **Phím `Mũi tên Phải` (`ArrowRight`)**: Tua nhanh bài nhạc lên trước 5 giây.
+### ❤️ Yêu thích & Theo dõi
+- Thả tim bài hát — tự động vào danh sách Favorites
+- Follow / Unfollow nghệ sĩ
+- Trang xem Favorites riêng
 
-#### 2. Đối với Trình phát video (Video Player)
-* **Phím `Space` (Khoảng trắng) hoặc `Enter`**: Phát / Tạm dừng video.
-* **Phím `F` hoặc `f`**: Bật / Tắt chế độ xem toàn màn hình (Fullscreen).
-* **Phím `Mũi tên Trái` (`ArrowLeft`)**: Tua lùi video về trước 5 giây.
-* **Phím `Mũi tên Phải` (`ArrowRight`)**: Tua nhanh video lên trước 5 giây.
+### 👤 Hồ sơ Người dùng
+- Xem & chỉnh sửa thông tin cá nhân (tên, bio, avatar)
+- Xem hồ sơ của người dùng khác
+- Đăng ký trở thành Artist (có form upload thông tin)
 
+### 📤 Chia sẻ & Inbox
+- Chia sẻ bài hát/playlist/album cho người dùng khác
+- Hộp thư đến nhận nhạc được share
+- Chat history theo từng người gửi
 
+### 🔔 Thông báo Real-time
+- Nhận thông báo qua SignalR (kết nối WebSocket)
+- Đánh dấu đã đọc từng thông báo
+
+### 🛠️ Quản trị (Admin)
+- Trang Admin quản lý users, media, nội dung
+- Kích hoạt/vô hiệu hóa tài khoản
+- Phân quyền User/Artist/Admin
+
+---
+
+## ⌨️ Phím tắt Điều khiển (Hotkeys)
+
+### Player Bar (Main Layout)
+| Phím | Chức năng |
+|---|---|
+| `Space` / `Enter` | Phát / Tạm dừng nhạc |
+| `ArrowLeft` | Tua lùi 5 giây |
+| `ArrowRight` | Tua nhanh 5 giây |
+
+### Video Player
+| Phím | Chức năng |
+|---|---|
+| `Space` / `Enter` | Phát / Tạm dừng video |
+| `F` / `f` | Bật/Tắt toàn màn hình |
+| `ArrowLeft` | Tua lùi 5 giây |
+| `ArrowRight` | Tua nhanh 5 giây |
+
+---
+
+## 🔐 Xác thực & Bảo mật
+
+- Đăng ký qua **OTP Email** (tránh email rác)
+- Đăng nhập trả về **JWT Token** lưu trong **HttpOnly Cookie** (chống XSS)
+- `SameSite=Strict` trên cookie (chống CSRF)
+- Route bảo vệ: trang cần đăng nhập sẽ redirect về `/login`
+- Route Admin: chỉ user có role `Admin` mới truy cập được
+
+---
+
+## 🛠️ Công nghệ Sử dụng
+
+### Frontend
+- **React 19** + **TypeScript**
+- **Vite** (build tool)
+- **TailwindCSS** (styling)
+- **React Router v7** (routing)
+- **Axios** (HTTP client)
+- **Lucide React** (icons)
+- **SignalR Client** (real-time notifications)
+
+### Backend
+- **.NET 10** + **C#**
+- **MediatR** (CQRS pattern)
+- **FluentValidation** (request validation)
+- **Dapper** (micro ORM, kết nối SQL Server)
+- **BCrypt.Net** (mã hoá mật khẩu)
+- **JWT Bearer** (xác thực token)
+- **Cloudinary SDK** (lưu trữ media)
+- **SignalR** (real-time WebSocket)
+
+### Database & Infrastructure
+- **SQL Server 2022** (database)
+- **Cloudinary** (media storage — audio, video, image)
+- **Docker & Docker Compose** (containerization)
+- **Nginx** (reverse proxy cho frontend)
