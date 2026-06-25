@@ -93,8 +93,7 @@ src/
 
 ```
 pages/Home/
-├── Home.tsx            # UI chính của trang (JSX)
-├── useHome.ts          # Custom hook chứa toàn bộ logic & state của trang
+├── Home.tsx            # UI chính & Logic của trang
 └── components/         # Components chỉ dùng riêng cho trang Home
     └── HomeSection.tsx
 ```
@@ -103,7 +102,7 @@ pages/Home/
 
 | Quy tắc | Chi tiết |
 |---|---|
-| **Tách logic khỏi UI** | Logic nặng để trong `usePageName.ts`, UI clean trong `Page.tsx` |
+| **Gộp chung logic & UI** | State và Logic được xử lý trực tiếp bên trong file `Page.tsx` |
 | **Component dùng lại** | Bỏ vào `/components/`, export qua `index.ts` |
 | **Component dùng 1 trang** | Bỏ vào `pages/PageName/components/` |
 | **Global state** | Dùng Context API trong `/contexts/` |
@@ -117,7 +116,7 @@ pages/Home/
 ```
 User Action (click/input)
     ↓
-Component (Page.tsx) → gọi hàm từ usePageName.ts
+Component (Page.tsx) xử lý logic trực tiếp
     ↓
 Service (services/xxxService.ts) → axios.get/post...
     ↓
