@@ -104,16 +104,21 @@ Truy cập: `http://localhost:3000` (Nginx phục vụ SPA)
 
 ---
 
-## ⚙️ Biến Môi trường
+## ⚙️ Hướng dẫn Cấu hình & Biến Môi trường
 
-Cấu hình trong `vite.config.ts` hoặc file `.env`:
+Cấu hình API base URL và các tham số khác nằm trong file `.env` (nếu chạy local ngoài Docker) hoặc trong cấu hình của Vite.
 
-| Biến | Ví dụ | Mô tả |
+| Biến (Prefix `VITE_`) | Ví dụ | Mô tả |
 |---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:5000/api` | URL backend API |
-| `VITE_SIGNALR_HUB_URL` | `http://localhost:5000/hubs/notification` | URL SignalR Hub |
+| `VITE_API_BASE_URL` | `http://localhost:5000/api` | URL kết nối tới RESTful API Backend |
+| `VITE_SIGNALR_HUB_URL` | `http://localhost:5000/hubs/notification` | URL kết nối WebSocket SignalR |
 
----
+### Khi Deploy Production (ví dụ Vercel)
+Khi deploy frontend lên Vercel, bạn cần cấu hình trực tiếp các biến môi trường này trong dashboard của Vercel (phần Settings > Environment Variables):
+- Đổi `VITE_API_BASE_URL` trỏ tới Domain Backend Production (ví dụ `https://api.tunevault.com/api`).
+- Đổi `VITE_SIGNALR_HUB_URL` trỏ tới Domain Backend Hub Production.
+
+Lưu ý: Không đưa `DATABASE_URL` hoặc secret keys của backend vào frontend. Vite chỉ đọc các biến có tiền tố `VITE_`.
 
 ## 🔐 Xác thực
 
