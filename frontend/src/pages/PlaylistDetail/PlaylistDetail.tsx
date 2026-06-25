@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Playlist } from '../../types';
+import type { Playlist } from '../../types';
 import { useParams, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Thêm icon Loader2

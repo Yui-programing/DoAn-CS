@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Playlist } from '../../types';
+import type { Playlist } from '../../types';
 import { NavLink } from 'react-router-dom';
 import { ListMusic, Plus, Loader2 } from 'lucide-react';
 import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';

@@ -28,7 +28,7 @@ import { ShareModal } from '../../components/ShareModal';
 import { formatTime, parseArtists } from '../../utils';
 import { MarqueeText } from '../../components/MarqueeText';
 import { ContextMenu } from '../../components/ContextMenu';
-import './VideoPlayer.css';
+
 
 export const VideoPlayer = () => {
     const { id } = useParams<{ id: string }>();

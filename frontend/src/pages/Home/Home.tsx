@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Playlist } from '../../types';
+import type { Playlist } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Import thêm Loader2 để làm icon xoay vòng lúc chờ mạng
