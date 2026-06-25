@@ -1,4 +1,3 @@
-Dưới đây là toàn bộ nội dung tài liệu của bạn đã được chuyển đổi sang định dạng Markdown (`.md`) một cách tường minh, dễ nhìn, giữ cấu trúc phân cấp rõ ràng và **tuyệt đối không thay đổi bất kỳ nội dung nào bên trong**.
 
 ---
 
