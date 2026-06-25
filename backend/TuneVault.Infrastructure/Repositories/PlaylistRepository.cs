@@ -206,6 +206,22 @@ public class PlaylistRepository : IPlaylistRepository
         return await db.QueryAsync<MyPlaylistDto>(sql, new { UserId = userId });
     }
 
+    /// <summary>
+    /// Lấy danh sách playlist công khai (IsPublic = true) của một user bất kỳ
+    /// Dùng cho trang hồ sơ người dùng khác
+    /// </summary>
+    public async Task<IEnumerable<MyPlaylistDto>> GetPublicByUserIdAsync(Guid userId)
+    {
+        const string sql = @"
+        SELECT Id, Title, Description, IsPublic, OwnerId, CreatedAt, TracksCount, TotalDuration
+        FROM Playlist 
+        WHERE OwnerId = @UserId AND IsPublic = 1
+        ORDER BY CreatedAt DESC";
+
+        using IDbConnection db = new SqlConnection(_connectionString);
+        return await db.QueryAsync<MyPlaylistDto>(sql, new { UserId = userId });
+    }
+
     public async Task<MyPlaylistDto?> GetByIdAsync(Guid playlistId)
     {
         const string sql = @"

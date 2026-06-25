@@ -34,6 +34,8 @@ namespace TuneVault.Application.Repositories
 
         Task<IEnumerable<MyPlaylistDto>> GetByOwnerIdAsync(Guid userId);
 
+        Task<IEnumerable<MyPlaylistDto>> GetPublicByUserIdAsync(Guid userId);
+
         Task<MyPlaylistDto?> GetByIdAsync(Guid playlistId);
 
         Task<IEnumerable<PlaylistTrackDto>> GetTracksByPlaylistIdAsync(Guid playlistId);
