@@ -24,21 +24,21 @@ namespace TuneVault.Application.Features.Auth.Commands.Login
 
         public async Task<string> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            // 1. T�m User theo Email du?i DB
+            // 1. Tìm User theo Email dưới DB
             var user = await _userRepository.GetByEmailAsync(request.Email);
             if (user == null)
             {
-                throw new FluentValidation.ValidationException("Email ho?c m?t kh?u kh�ng ch�nh x�c.");
+                throw new FluentValidation.ValidationException("Email hoặc mật khẩu không chính xác.");
             }
 
-            // 2. Ki?m tra m?t kh?u th� v?i m?t kh?u d� bam
+            // 2. Kiểm tra mật khẩu đã băm
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
             if (!isPasswordValid)
             {
-                throw new FluentValidation.ValidationException("Email ho?c m?t kh?u kh�ng ch�nh x�c.");
+                throw new FluentValidation.ValidationException("Email hoặc mật khẩu không chính xác.");
             }
 
-            // 3. ��ng h?t th� k� sinh JWT Token tr? v?
+            // 3. Ứng dụng sẽ sinh JWT Token trả về.
             return GenerateJwtToken(user.Id, user.Email, user.Role);
         }
 

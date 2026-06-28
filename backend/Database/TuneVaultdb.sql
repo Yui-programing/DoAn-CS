@@ -2,8 +2,7 @@
 -- 1. DROP TABLES (Xóa bảng theo thứ tự từ con đến cha)
 ---------------------------------------------------------
 IF OBJECT_ID('OtpVerification', 'U') IS NOT NULL DROP TABLE OtpVerification;
-IF OBJECT_ID('MediaTag', 'U') IS NOT NULL DROP TABLE MediaTag;
-IF OBJECT_ID('Tag', 'U') IS NOT NULL DROP TABLE Tag;
+
 IF OBJECT_ID('PlaylistTrack', 'U') IS NOT NULL DROP TABLE PlaylistTrack;
 IF OBJECT_ID('Favorite', 'U') IS NOT NULL DROP TABLE Favorite;
 IF OBJECT_ID('PlayHistory', 'U') IS NOT NULL DROP TABLE PlayHistory;
@@ -80,13 +79,6 @@ CREATE TABLE Album
     FOREIGN KEY (ArtistId) REFERENCES Artist(Id) ON DELETE SET NULL
 );
 
-CREATE TABLE Tag
-(
-    Id NVARCHAR(50) PRIMARY KEY,
-    [Name] NVARCHAR(100) NOT NULL UNIQUE,
-    [description] NVARCHAR(255) NULL
-);
-
 -- Bảng MediaItem (MediaType: 0 = Audio, 1 = Video)
 CREATE TABLE MediaItem
 (
@@ -129,16 +121,6 @@ CREATE TABLE PlaylistTrack
     PRIMARY KEY (PlaylistId, MediaItemId),
     FOREIGN KEY (PlaylistId) REFERENCES Playlist(Id) ON DELETE CASCADE,
     FOREIGN KEY (MediaItemId) REFERENCES MediaItem(Id) ON DELETE NO ACTION
-);
-
-CREATE TABLE MediaTag
-(
-    MediaItemId UNIQUEIDENTIFIER NOT NULL,
-    TagId NVARCHAR(50) NOT NULL,
-    TaggedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-    PRIMARY KEY (MediaItemId, TagId),
-    FOREIGN KEY (MediaItemId) REFERENCES MediaItem(Id) ON DELETE CASCADE,
-    FOREIGN KEY (TagId) REFERENCES Tag(Id) ON DELETE CASCADE
 );
 
 CREATE TABLE Favorite
@@ -284,15 +266,6 @@ VALUES
     (@U16, N'Michael Jackson', '/images/michaeljackson.jpg', N'The King of Pop.'),
     (@U17, N'Mã Dã', '/images/user8.jpg', N'Ca sĩ Mã Dã');
 
--- Insert Tags
-INSERT INTO Tag
-    (Id, Name)
-VALUES
-    ('T1', N'Indie'),
-    ('T2', N'Pop'),
-    ('T3', N'Gaming'),
-    ('T4', N'Chill');
-
 -- Insert Artist
 INSERT INTO Artist
     (Id, Name, Bio, AvatarUrl, Genres, BannerUrl, VerifiedAt)
@@ -369,18 +342,6 @@ VALUES
     (@M19, N'Thiên Hoàng Địa Lão', '/media/thien-hoang-dia-lao.mp3', '/images/thien-hoang-dia-lao.png', 240, 0, NULL, @U8, 0, 'Approved', 150000),
     (@M20, N'Beat It', '/media/beat-it.mp3', '/images/beat-it.png', 294, 0, NULL, @U16, 0, 'Approved', 2000000);
     
--- Map Tags to MediaItems
-INSERT INTO MediaTag
-    (MediaItemId, TagId)
-VALUES
-    (@M1, 'T1'),
-    (@M2, 'T1'),
-    (@M3, 'T3'),
-    (@M4, 'T3'),
-    (@M5, 'T3'),
-    (@M6, 'T4'),
-    (@M9, 'T3');
-
 -- Khai báo Playlist
 DECLARE @P1 UNIQUEIDENTIFIER = NEWID();
 DECLARE @P2 UNIQUEIDENTIFIER = NEWID();
