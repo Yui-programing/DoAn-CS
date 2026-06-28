@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { adminService } from "../../services/adminService";
+import { mediaService } from "../../services";
+import { usePlayer } from "../../contexts/PlayerContext";
 import type { AdminUser } from "../../types";
 import {
   Loader2,
@@ -8,11 +11,17 @@ import {
   ShieldCheck,
   RefreshCcw,
   User,
+  Play,
+  Film,
+  Music,
 } from "lucide-react";
 
 const roleOptions = ["User", "Admin"];
 
 export const AdminDashboard = () => {
+  const { playTrack } = usePlayer();
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [activeTab, setActiveTab] = useState<"users" | "artists" | "medias">(
     "users",
@@ -122,6 +131,29 @@ export const AdminDashboard = () => {
       );
     } finally {
       setSavingUserId(null);
+    }
+  };
+
+  const handlePreview = (m: any) => {
+    const isVideo = m.mediaType === 1;
+    if (isVideo) {
+      navigate(`/video/${m.id}`);
+    } else {
+      playTrack({
+        id: m.id,
+        title: m.title,
+        artist: 'Chờ duyệt',
+        coverUrl: m.coverUrl,
+        duration: '0:00',
+        filePath: mediaService.getStreamUrl(m.id)
+      }, [{
+        id: m.id,
+        title: m.title,
+        artist: 'Chờ duyệt',
+        coverUrl: m.coverUrl,
+        duration: '0:00',
+        filePath: mediaService.getStreamUrl(m.id)
+      }]);
     }
   };
 
@@ -254,21 +286,37 @@ export const AdminDashboard = () => {
                 {pendingMedias.map((m) => (
                   <div
                     key={m.id}
-                    className="p-3 bg-zinc-900 rounded flex items-center justify-between"
+                    className="p-3 bg-zinc-900 rounded-2xl flex items-center justify-between border border-zinc-800/40"
                   >
-                    <div>
-                      <div className="font-bold text-slate-100">{m.title}</div>
-                      <div className="text-xs text-zinc-500">
-                        Owner: {m.ownerId}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-zinc-850 overflow-hidden flex-shrink-0 flex items-center justify-center border border-zinc-850 shadow-inner">
+                        {m.coverUrl ? (
+                          <img src={mediaService.getImageUrl(m.coverUrl)} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Music className="w-5 h-5 text-zinc-500" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-100 text-sm">{m.title}</div>
+                        <div className="text-xs text-zinc-500 mt-0.5">
+                          Thể loại: {m.mediaType === 1 ? "Video" : "Audio"} • ID tác giả: {m.ownerId}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => handlePreview(m)}
+                        className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded hover:bg-zinc-700 transition flex items-center gap-1.5 text-xs font-bold"
+                      >
+                        {m.mediaType === 1 ? <Film className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                        {m.mediaType === 1 ? "Xem thử" : "Nghe thử"}
+                      </button>
                       <button
                         onClick={async () => {
                           await adminService.approveMedia(m.id);
                           void loadPendingMedias();
                         }}
-                        className="px-3 py-2 bg-green-600 rounded"
+                        className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-500 transition text-xs font-bold"
                       >
                         Phê duyệt
                       </button>
@@ -277,7 +325,7 @@ export const AdminDashboard = () => {
                           await adminService.rejectMedia(m.id);
                           void loadPendingMedias();
                         }}
-                        className="px-3 py-2 bg-red-600 rounded"
+                        className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition text-xs font-bold"
                       >
                         Từ chối
                       </button>
