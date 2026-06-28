@@ -31,7 +31,8 @@ export const AdminDashboard = () => {
     try {
       const response = await adminService.getUsers();
       if (response.success) {
-        setUsers(response.data);
+        const nonAdmins = (response.data || []).filter((u: AdminUser) => u.role !== "Admin");
+        setUsers(nonAdmins);
       } else {
         setErrorMessage(
           response.message || "Không tải được danh sách người dùng.",
@@ -323,26 +324,16 @@ export const AdminDashboard = () => {
                   {user.email}
                 </div>
 
-                <div className="space-y-2">
-                  <select
-                    value={user.role}
-                    onChange={(e) =>
-                      void handleRoleChange(user.id, e.target.value)
-                    }
-                    disabled={savingUserId === user.id}
-                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none"
-                  >
-                    {roleOptions.map((roleOption) => (
-                      <option key={roleOption} value={roleOption}>
-                        {roleOption}
-                      </option>
-                    ))}
-                  </select>
-                  {savingUserId === user.id && (
-                    <p className="text-[11px] text-zinc-500">
-                      Đang cập nhật...
-                    </p>
-                  )}
+                <div>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                    user.role === "Admin"
+                      ? "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+                      : user.role === "Artist"
+                      ? "bg-sky-500/10 text-sky-300 border border-sky-500/20"
+                      : "bg-zinc-500/10 text-zinc-300 border border-zinc-800"
+                  }`}>
+                    {user.role}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-3">
