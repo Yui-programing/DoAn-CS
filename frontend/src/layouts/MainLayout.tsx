@@ -677,14 +677,7 @@ export const MainLayout = () => {
               placeholder="Bạn muốn phát nội dung gì?"
               className="w-full bg-transparent py-3 pl-12 pr-14 text-xs placeholder-zinc-500 text-slate-100 outline-none"
             />
-            {/* Vertical separator & browse icon */}
-            <div 
-              className="absolute right-4 flex items-center gap-3 text-zinc-450 border-l border-zinc-800/60 pl-3 py-1 cursor-pointer" 
-              title="Duyệt tìm"
-              onClick={() => navigate('/search')}
-            >
-              <Folder className="w-5 h-5 hover:text-slate-100 transition-colors" />
-            </div>
+
 
             {/* SUGGESTION DROPDOWN */}
             {showDropdown && (keywordSuggestions.length > 0 || songSuggestions.length > 0) && (
