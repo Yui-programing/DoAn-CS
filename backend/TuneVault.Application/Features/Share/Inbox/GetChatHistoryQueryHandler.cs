@@ -46,7 +46,7 @@ namespace TuneVault.Application.Features.Share.Inbox
                     AlbumId = share.AlbumId
                 };
 
-                // Fetch title and cover depending on what is attached
+                
                 if (share.MediaItemId.HasValue)
                 {
                     var media = await _mediaItemRepository.GetByIdAsync(share.MediaItemId.Value);

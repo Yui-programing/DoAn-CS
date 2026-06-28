@@ -25,12 +25,12 @@ namespace TuneVault.Application.Features.Share.Inbox
         {
             var result = new InboxResultDto();
 
-            // 1. Process Main Inbox
+            
             var mainShares = await _sharedRepository.GetInboxAsync(request.UserId);
             var mainContacts = await ProcessSharesToContacts(mainShares, request.UserId);
             result.MainInbox = mainContacts;
 
-            // 2. Process Message Requests
+            
             var requestShares = await _sharedRepository.GetMessageRequestsAsync(request.UserId);
             var requestContacts = await ProcessSharesToContacts(requestShares, request.UserId);
             result.MessageRequests = requestContacts;
@@ -42,7 +42,7 @@ namespace TuneVault.Application.Features.Share.Inbox
         {
             var contacts = new List<InboxContactDto>();
             
-            // Group by the "other" user
+            
             var grouped = shares.GroupBy(s => s.SenderId == currentUserId ? s.ReceiverId : s.SenderId);
 
             foreach (var group in grouped)
@@ -60,7 +60,7 @@ namespace TuneVault.Application.Features.Share.Inbox
                         AvatarUrl = userProfile.AvatarUrl,
                         LastMessage = latestShare.Message,
                         LastMessageAt = latestShare.SharedAt,
-                        IsUnread = false // Can be expanded later
+                        IsUnread = false 
                     });
                 }
             }

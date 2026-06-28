@@ -4,19 +4,6 @@ using System.Text;
 
 namespace TuneVault.Application.Models
 {
-    public class ShareMediaItemRequest
-    {
-        public Guid ReceiverId { get; set; }
-        public Guid MediaItemId { get; set; }
-        
-        public string? Message { get; set; }
-    }
-    public class SharePlaylistRequest
-    {
-        public Guid ReceiverId { get; set; }
-        public Guid PlaylistId { get; set; }
-        public string? Message { get; set; }
-    }
     public class SharedMediaItemDto
     {
         public Guid MediaItemId { get; set; }
