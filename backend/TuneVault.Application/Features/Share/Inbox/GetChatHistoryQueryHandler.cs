@@ -32,6 +32,9 @@ namespace TuneVault.Application.Features.Share.Inbox
             var shares = await _sharedRepository.GetChatHistoryAsync(request.CurrentUserId, request.OtherUserId);
             var result = new List<ChatHistoryItemDto>();
 
+            if (shares == null)
+                return result;
+
             foreach (var share in shares)
             {
                 var dto = new ChatHistoryItemDto
@@ -46,7 +49,6 @@ namespace TuneVault.Application.Features.Share.Inbox
                     AlbumId = share.AlbumId
                 };
 
-                
                 if (share.MediaItemId.HasValue)
                 {
                     var media = await _mediaItemRepository.GetByIdAsync(share.MediaItemId.Value);
@@ -58,9 +60,21 @@ namespace TuneVault.Application.Features.Share.Inbox
                 }
                 else if (share.PlaylistId.HasValue)
                 {
-                    // Playlist might not have a direct cover, just title. Wait, PlaylistDto doesn't have it either, let's just get Title.
-                    // Assuming IPlaylistRepository has GetByIdAsync, wait I can just use a raw Dapper if it doesn't.
-                    // For now I'll just use a try catch or assume it doesn't exist if compilation fails.
+                    var playlist = await _playlistRepository.GetByIdAsync(share.PlaylistId.Value);
+                    if (playlist != null)
+                    {
+                        dto.AttachedMediaTitle = playlist.Title;
+                        
+                    }
+                }
+                else if (share.AlbumId.HasValue)
+                {
+                    var album = await _albumRepository.GetAlbumByIdAsync(share.AlbumId.Value);
+                    if (album != null)
+                    {
+                        dto.AttachedMediaTitle = album.Title;
+                        dto.AttachedMediaCoverUrl = album.CoverImageUrl;
+                    }
                 }
 
                 result.Add(dto);

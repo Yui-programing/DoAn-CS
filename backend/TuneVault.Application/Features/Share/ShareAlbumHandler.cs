@@ -44,14 +44,14 @@ namespace TuneVault.Application.Features.Share
                 throw new KeyNotFoundException("Album không tồn tại.");
             }
 
-            // 1. Sender phải follow Receiver
+            
             var senderFollowsReceiver = await _followRepository.IsFollowingAsync(command.SenderId, command.ReceiverId);
             if (!senderFollowsReceiver)
             {
                 throw new ArgumentException("Bạn phải theo dõi người này trước khi có thể chia sẻ.");
             }
 
-            // 2. Mutual follow -> IsAccepted = true
+            
             var receiverFollowsSender = await _followRepository.IsFollowingAsync(command.ReceiverId, command.SenderId);
             bool isAccepted = receiverFollowsSender;
 
@@ -63,12 +63,12 @@ namespace TuneVault.Application.Features.Share
                 isAccepted
             );
 
-            // 3. Tạo Notification
+            
             var notification = new Notification
             {
                 Id = Guid.NewGuid(),
                 UserId = command.ReceiverId,
-                Type = 0, // Shared
+                Type = 0, 
                 CreatedAt = DateTime.UtcNow,
                 IsRead = false,
                 PayloadJson = JsonSerializer.Serialize(new

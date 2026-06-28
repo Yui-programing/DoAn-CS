@@ -111,14 +111,7 @@ namespace TuneVault.Infrastructure.Repositories
             return shareId;
         }
 
-        public async Task<IEnumerable<SharedMediaItemDto>> GetSharedMediaItemsByReceiverIdAsync(Guid receiverId)
-        {
-            string sql = @"
-                SELECT MediaItemId, SenderId, ReceiverId, SharedAt, Message
-                FROM MediaShare
-                WHERE ReceiverId = @ReceiverId AND MediaItemId IS NOT NULL";
-            return await _dbConnection.QueryAsync<SharedMediaItemDto>(sql, new { ReceiverId = receiverId });
-        }
+        
 
         public async Task<IEnumerable<MediaShare>> GetInboxAsync(Guid receiverId)
         {
