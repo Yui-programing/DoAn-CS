@@ -791,17 +791,13 @@ export const MainLayout = () => {
 
                           {/* Action Button bên phải */}
                           <div>
-                            {item.type === 'Artist' ? (
-                              <button className="px-3 py-1 text-[10px] font-bold border border-zinc-600 group-hover:border-zinc-400 hover:scale-105 active:scale-95 rounded-full transition-all text-zinc-300 hover:text-white cursor-pointer select-none">
-                                Theo dõi
-                              </button>
-                            ) : isThisPlaying ? (
+                            {item.type !== 'Artist' && isThisPlaying ? (
                               <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-black shadow-sm">
                                 <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current">
                                   <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
                                 </svg>
                               </span>
-                            ) : (
+                            ) : item.type !== 'Artist' ? (
                               <button className="text-zinc-450 hover:text-white transition-colors cursor-pointer p-0.5">
                                 <svg viewBox="0 0 24 24" className="w-4 h-4 stroke-current fill-none stroke-[2]">
                                   <circle cx="12" cy="12" r="10" />
@@ -809,7 +805,7 @@ export const MainLayout = () => {
                                   <line x1="8" y1="12" x2="16" y2="12" />
                                 </svg>
                               </button>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       );

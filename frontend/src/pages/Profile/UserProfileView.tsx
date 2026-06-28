@@ -260,7 +260,7 @@ export const UserProfileView = () => {
   const isArtist = profile.role === "Artist";
 
   return (
-    <div className="min-h-screen bg-black text-slate-100 flex flex-col font-sans pb-24 overflow-x-hidden w-full relative h-full">
+    <div className="bg-black text-slate-100 flex flex-col font-sans pb-24 w-full relative">
       {/* Background Banner / Blur (cho User bình thường) */}
       {!isArtist && (
         <div className="absolute top-0 left-0 w-full h-[40vh] bg-gradient-to-b from-zinc-800/40 to-black -z-10"></div>
@@ -366,9 +366,6 @@ export const UserProfileView = () => {
                 {isFollowing ? "Đang theo dõi" : "Theo dõi"}
               </button>
             )}
-            <button className="w-10 h-10 rounded-full border border-zinc-700 flex items-center justify-center text-zinc-300 hover:text-white hover:border-white transition-colors">
-              •••
-            </button>
           </div>
 
           {profile.bio && (
