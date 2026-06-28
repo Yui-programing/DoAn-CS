@@ -7,6 +7,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { mediaService } from '../services';
 import { TrackDropdownMenu } from './TrackDropdownMenu';
 import { ShareModal } from './ShareModal';
+import { AddToPlaylistModal } from './AddToPlaylistModal';
+import { MarqueeText } from './MarqueeText';
+import { ContextMenu } from './ContextMenu';
 
 export interface TrackData {
     id: string;
@@ -31,6 +34,18 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
     const { isFavorite, toggleFavorite } = useFavorite();
     const navigate = useNavigate();
     const [sharingTrack, setSharingTrack] = useState<TrackData | null>(null);
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; track: TrackData } | null>(null);
+    const [selectedAddToPlaylistTrackId, setSelectedAddToPlaylistTrackId] = useState<string | null>(null);
+
+    const handleContextMenu = (e: React.MouseEvent, track: TrackData) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            track
+        });
+    };
 
     const handleTrackClick = (track: TrackData) => {
         const isVideo = track.mediaType === 1;
@@ -64,6 +79,7 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
                             <tr
                                 key={track.id || index}
                                 onClick={() => handleTrackClick(track)}
+                                onContextMenu={(e) => handleContextMenu(e, track)}
                                 className={`hover:bg-zinc-900/40 border-b border-zinc-900/20 last:border-0 group cursor-pointer transition-colors ${isCurrent ? 'bg-zinc-900/20' : ''}`}
                             >
                                 <td className={`py-4 px-4 text-center text-sm font-semibold ${isCurrent ? 'text-green-400' : 'text-zinc-500'}`}>
@@ -77,11 +93,11 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
                                             <Music className="w-5 h-5 text-zinc-550" />
                                         )}
                                     </div>
-                                    <div className="min-w-0">
-                                        <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
-                                            {track.title}
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className={`text-sm font-bold transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
+                                            <MarqueeText text={track.title} />
                                         </h4>
-                                        <p className="text-xs text-zinc-400 truncate">{track.artist || 'Không rõ ca sĩ'}</p>
+                                        <MarqueeText text={track.artist || 'Không rõ ca sĩ'} className="text-xs text-zinc-400 mt-0.5" />
                                     </div>
                                 </td>
                                 <td className="py-4 px-4 text-center align-middle">
@@ -126,6 +142,35 @@ export const TrackListTable: React.FC<TrackListTableProps> = ({ tracks, onRemove
                     onClose={() => setSharingTrack(null)}
                     mediaItemId={sharingTrack.id}
                     title={`Bài hát: ${sharingTrack.title}`}
+                />
+            )}
+
+            {selectedAddToPlaylistTrackId && (
+                <AddToPlaylistModal
+                    isOpen={true}
+                    onClose={() => setSelectedAddToPlaylistTrackId(null)}
+                    mediaItemId={selectedAddToPlaylistTrackId}
+                />
+            )}
+
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    isPlaylist={contextMenu.track.mediaType === undefined ? false : false} // Table chỉ chứa bài hát
+                    onAddToPlaylist={() => {
+                        if (onAddToPlaylist) {
+                            onAddToPlaylist(contextMenu.track.id);
+                        } else {
+                            setSelectedAddToPlaylistTrackId(contextMenu.track.id);
+                        }
+                        setContextMenu(null);
+                    }}
+                    onShare={() => {
+                        setSharingTrack(contextMenu.track);
+                        setContextMenu(null);
+                    }}
                 />
             )}
         </div>

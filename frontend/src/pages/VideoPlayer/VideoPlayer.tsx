@@ -19,13 +19,16 @@ import {
     Shuffle
 } from 'lucide-react';
 // Import dịch vụ API để gọi dữ liệu thật
-import { mediaService } from '../../services';
+import { mediaService, userService } from '../../services';
 import { useFavorite } from '../../contexts/FavoriteContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePlayer } from '../../contexts/PlayerContext';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
-import { formatTime } from '../../utils';
-import './VideoPlayer.css';
+import { ShareModal } from '../../components/ShareModal';
+import { formatTime, parseArtists } from '../../utils';
+import { MarqueeText } from '../../components/MarqueeText';
+import { ContextMenu } from '../../components/ContextMenu';
+
 
 export const VideoPlayer = () => {
     const { id } = useParams<{ id: string }>();
@@ -70,12 +73,28 @@ export const VideoPlayer = () => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isControlsHovered, setIsControlsHovered] = useState(false);
 
+    // Trạng thái cho Context Menu (Chuột phải)
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; track: any } | null>(null);
+    const [selectedAddToPlaylistTrackId, setSelectedAddToPlaylistTrackId] = useState<string | null>(null);
+    const [sharingTrack, setSharingTrack] = useState<any | null>(null);
+
+    const handleContextMenu = (e: React.MouseEvent, track: any) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            track
+        });
+    };
+
     // BƯỚC 1: Khai báo State để lưu thông tin video từ Backend
     const [videoInfo, setVideoInfo] = useState<{
         title: string;
         artist: string;
         coverUrl: string | null;
         filePath: string;
+        artistId?: string;
     } | null>(null);
 
     // BƯỚC 2: Gọi API lấy chi tiết video dựa trên ID ở URL và tải danh sách phát
@@ -87,48 +106,61 @@ export const VideoPlayer = () => {
                 // Gọi API lấy Meta Data của Video
                 const response = await mediaService.getMediaDetails(id);
                 if (response.success && response.data) {
+                    let artistName = 'Nghệ sĩ tự do';
+                    if (response.data.artistId) {
+                        try {
+                            const artistRes = await userService.getUserProfile(response.data.artistId);
+                            if (artistRes.success && artistRes.data) {
+                                artistName = artistRes.data.fullName || 'Nghệ sĩ tự do';
+                            }
+                        } catch (err) {
+                            console.error("Lỗi khi tải thông tin nghệ sĩ:", err);
+                        }
+                    }
+
                     setVideoInfo({
                         title: response.data.title,
-                        artist: response.data.artistName || 'Nghệ sĩ tự do',
+                        artist: artistName,
                         coverUrl: response.data.coverUrl || null,
-                        filePath: mediaService.getStreamUrl(id) // Lấy link stream chuẩn truyền vào src của Video
+                        filePath: mediaService.getStreamUrl(id),
+                        artistId: response.data.artistId
                     });
                     document.title = `TuneVault - Xem Video: ${response.data.title}`;
-                }
 
-                // Gọi API lấy danh sách bài hát/video (tối đa 50 bài) để làm hàng đợi video
-                const searchRes = await mediaService.searchSongs('%', 50);
-                if (searchRes.success && searchRes.data && searchRes.data.items) {
-                    // Lọc ra các video (mediaType === 1 hoặc file path kết thúc bằng .mp4, .mkv)
-                    const videos = searchRes.data.items.filter((item: any) => 
-                        item.mediaType === 1 || 
-                        item.filePath?.toLowerCase().endsWith('.mp4') || 
-                        item.filePath?.toLowerCase().endsWith('.mkv')
-                    ).map((item: any) => ({
-                        id: item.id,
-                        title: item.name,
-                        artist: item.artistName || 'Nghệ sĩ tự do',
-                        coverUrl: item.coverUrl,
-                        filePath: mediaService.getStreamUrl(item.id)
-                    }));
+                    // Gọi API lấy danh sách bài hát/video (tối đa 50 bài) để làm hàng đợi video
+                    const searchRes = await mediaService.searchSongs('%', 50);
+                    if (searchRes.success && searchRes.data && searchRes.data.items) {
+                        // Lọc ra các video
+                        const videos = searchRes.data.items.filter((item: any) => 
+                            item.mediaType === 1 || 
+                            item.filePath?.toLowerCase().endsWith('.mp4') || 
+                            item.filePath?.toLowerCase().endsWith('.mkv')
+                        ).map((item: any) => ({
+                            id: item.id,
+                            title: item.name,
+                            artist: item.artistName || 'Nghệ sĩ tự do',
+                            coverUrl: item.coverUrl,
+                            filePath: mediaService.getStreamUrl(item.id)
+                        }));
 
-                    setVideoQueue(videos);
+                        setVideoQueue(videos);
 
-                    // Tìm vị trí của video hiện tại trong queue
-                    const idx = videos.findIndex((v: any) => v.id === id);
-                    if (idx !== -1) {
-                        setCurrentQueueIndex(idx);
-                    } else if (response.data) {
-                        // Nếu không tìm thấy, chèn video hiện tại vào đầu hàng đợi
-                        const currentVideoItem = {
-                            id: response.data.id,
-                            title: response.data.title,
-                            artist: response.data.artistName || 'Nghệ sĩ tự do',
-                            coverUrl: response.data.coverUrl || null,
-                            filePath: mediaService.getStreamUrl(response.data.id)
-                        };
-                        setVideoQueue([currentVideoItem, ...videos]);
-                        setCurrentQueueIndex(0);
+                        // Tìm vị trí của video hiện tại trong queue
+                        const idx = videos.findIndex((v: any) => v.id === id);
+                        if (idx !== -1) {
+                            setCurrentQueueIndex(idx);
+                        } else {
+                            // Nếu không tìm thấy, chèn video hiện tại vào đầu hàng đợi
+                            const currentVideoItem = {
+                                id: response.data.id,
+                                title: response.data.title,
+                                artist: artistName,
+                                coverUrl: response.data.coverUrl || null,
+                                filePath: mediaService.getStreamUrl(response.data.id)
+                            };
+                            setVideoQueue([currentVideoItem, ...videos]);
+                            setCurrentQueueIndex(0);
+                        }
                     }
                 }
             } catch (error) {
@@ -668,49 +700,77 @@ export const VideoPlayer = () => {
                                 </div>
                             )}
                         </div>
-                        {/* Tên bài hát & Nghệ sĩ */}
-                        <div className="min-w-0">
-                            <h4 className="text-sm font-bold text-slate-100 truncate hover:underline cursor-pointer" title={videoInfo.title}>
-                                {videoInfo.title}
-                            </h4>
-                            <p className="text-xs text-zinc-400 truncate hover:underline cursor-pointer font-medium mt-0.5">
-                                {videoInfo.artist}
-                            </p>
-                        </div>
-                        
-                        {/* Nút Thả tim & Nút thêm playlist - màu giống MainLayout */}
-                        {user && id && (
-                            <div className="flex items-center gap-1 ml-2 shrink-0">
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleFavorite(id);
-                                    }}
-                                    className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
-                                        isFavorite(id) 
-                                            ? "text-green-400" 
-                                            : "text-zinc-400 hover:text-green-400"
-                                    }`}
-                                    title={isFavorite(id) ? "Bỏ thích" : "Thích"}
-                                >
-                                    <Heart className={`w-5 h-5 ${isFavorite(id) ? "fill-current" : ""}`} />
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowPlaylistModal(true);
-                                    }}
-                                    className="text-zinc-400 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
-                                    title="Thêm vào danh sách phát"
-                                >
-                                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <line x1="12" y1="8" x2="12" y2="16" />
-                                        <line x1="8" y1="12" x2="16" y2="12" />
-                                    </svg>
-                                </button>
+                        {/* Tên bài hát, Nghệ sĩ & Các nút tương tác */}
+                        <div className="min-w-0 flex-1 flex items-center justify-start gap-2">
+                            <div className="min-w-0" onContextMenu={(e) => handleContextMenu(e, { id, title: videoInfo.title, artist: videoInfo.artist, coverUrl: videoInfo.coverUrl })}>
+                                <MarqueeText 
+                                    text={videoInfo.title} 
+                                    className="text-sm font-bold text-slate-100 hover:underline cursor-pointer"
+                                />
+                                <MarqueeText text={videoInfo.artist} className="text-xs text-zinc-400 font-medium mt-0.5 w-full">
+                                    {parseArtists(videoInfo.artist, videoInfo.artistId).map((artist, idx, arr) => (
+                                        <span key={idx}>
+                                            {artist.id ? (
+                                                <span 
+                                                    onClick={() => navigate(`/user/${artist.id}`)} 
+                                                    className="hover:underline cursor-pointer"
+                                                >
+                                                    {artist.name}
+                                                </span>
+                                            ) : (
+                                                <span 
+                                                    onClick={async () => {
+                                                        if (id) {
+                                                            const res = await mediaService.getMediaDetails(id);
+                                                            if (res.success && res.data?.artistId) {
+                                                                navigate(`/user/${res.data.artistId}`);
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="hover:underline cursor-pointer"
+                                                >
+                                                    {artist.name}
+                                                </span>
+                                            )}
+                                            {idx < arr.length - 1 ? ", " : ""}
+                                        </span>
+                                    ))}
+                                </MarqueeText>
                             </div>
-                        )}
+                            
+                            {user && id && (
+                                <div className="flex items-center gap-1 ml-2 shrink-0">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleFavorite(id);
+                                        }}
+                                        className={`transition-colors p-1 cursor-pointer hover:scale-110 active:scale-95 ${
+                                            isFavorite(id) 
+                                                ? "text-green-400" 
+                                                : "text-zinc-400 hover:text-green-400"
+                                        }`}
+                                        title={isFavorite(id) ? "Bỏ thích" : "Thích"}
+                                    >
+                                        <Heart className={`w-5 h-5 ${isFavorite(id) ? "fill-current" : ""}`} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowPlaylistModal(true);
+                                        }}
+                                        className="text-zinc-400 hover:text-white transition-all duration-200 p-1 cursor-pointer hover:scale-105 active:scale-90"
+                                        title="Thêm vào danh sách phát"
+                                    >
+                                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current stroke-[2.2]">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <line x1="12" y1="8" x2="12" y2="16" />
+                                            <line x1="8" y1="12" x2="16" y2="12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* 2. Ở giữa: Playback Control & Progress Bar */}
@@ -910,6 +970,45 @@ export const VideoPlayer = () => {
                         placement="center"
                     />
                 </div>
+            )}
+
+            {selectedAddToPlaylistTrackId && (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <AddToPlaylistModal
+                        isOpen={true}
+                        onClose={() => setSelectedAddToPlaylistTrackId(null)}
+                        mediaItemId={selectedAddToPlaylistTrackId}
+                        placement="center"
+                    />
+                </div>
+            )}
+
+            {sharingTrack && (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <ShareModal 
+                        isOpen={!!sharingTrack}
+                        onClose={() => setSharingTrack(null)}
+                        mediaItemId={sharingTrack.id}
+                        title={`Bài hát: ${sharingTrack.title}`}
+                    />
+                </div>
+            )}
+
+            {/* Context Menu chuột phải */}
+            {contextMenu && (
+                <ContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    onAddToPlaylist={() => {
+                        setSelectedAddToPlaylistTrackId(contextMenu.track.id);
+                        setContextMenu(null);
+                    }}
+                    onShare={() => {
+                        setSharingTrack(contextMenu.track);
+                        setContextMenu(null);
+                    }}
+                />
             )}
         </div>
     );

@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle, Loader2, Music, ShieldAlert } from "lucide-react";
+import { CheckCircle, Loader2, Music, ShieldAlert, ListMusic } from "lucide-react";
 import { userService } from "../../services/userService";
 import { mediaService, albumService, followService } from "../../services";
+import { playlistService } from "../../services/playlistService";
 import type { UserProfile, MediaItem } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { usePlayer } from "../../contexts/PlayerContext";
 import { formatDuration } from "../../utils";
+import { MarqueeText } from "../../components/MarqueeText";
+import { ContextMenu } from "../../components/ContextMenu";
+import { AddToPlaylistModal } from "../../components/AddToPlaylistModal";
+import { ShareModal } from "../../components/ShareModal";
 
 export const UserProfileView = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +24,25 @@ export const UserProfileView = () => {
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
   const [isLoadingAlbums, setIsLoadingAlbums] = useState(false);
+  const [mvs, setMvs] = useState<any[]>([]);
+  const [isLoadingMvs, setIsLoadingMvs] = useState(false);
+  const [publicPlaylists, setPublicPlaylists] = useState<any[]>([]);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; track: any } | null>(null);
+  const [selectedAddToPlaylistTrackId, setSelectedAddToPlaylistTrackId] = useState<string | null>(null);
+  const [sharingTrack, setSharingTrack] = useState<any | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, track: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      track
+    });
+  };
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -57,7 +80,8 @@ export const UserProfileView = () => {
       coverUrl: song.coverUrl,
       duration: song.durationInSeconds ? formatDuration(song.durationInSeconds) : '0:00',
       durationInSeconds: song.durationInSeconds,
-      filePath: mediaService.getStreamUrl(song.id)
+      filePath: mediaService.getStreamUrl(song.id),
+      artistId: song.artistId || id
     };
 
     const queueForPlayer = mediaList.map((s: any) => ({
@@ -67,7 +91,8 @@ export const UserProfileView = () => {
       coverUrl: s.coverUrl,
       duration: s.durationInSeconds ? formatDuration(s.durationInSeconds) : '0:00',
       durationInSeconds: s.durationInSeconds,
-      filePath: mediaService.getStreamUrl(s.id)
+      filePath: mediaService.getStreamUrl(s.id),
+      artistId: s.artistId || id
     }));
 
     if (currentTrack?.id === song.id) {
@@ -104,13 +129,72 @@ export const UserProfileView = () => {
               console.error("Lỗi khi kiểm tra trạng thái follow:", err);
             }
           }
-          
+
+          // Lấy playlist công khai của user này
+          try {
+            setIsLoadingPlaylists(true);
+            const playlistRes = await playlistService.getPublicPlaylistsByUser(id);
+            if (playlistRes.success) {
+              setPublicPlaylists(playlistRes.data || []);
+            }
+          } catch (err) {
+            console.error("Lỗi khi tải playlist công khai:", err);
+          } finally {
+            setIsLoadingPlaylists(false);
+          }
+
           if (res.data.role === "Artist") {
             try {
               const songsRes = await mediaService.getArtistMedia(id);
-              if (songsRes.success) {
-                setMediaList(songsRes.data || []);
+              let officialMedia = songsRes.success ? (songsRes.data || []) : [];
+              
+              // Gọi API tìm kiếm theo tên đầy đủ của nghệ sĩ để lấy các tác phẩm song ca / liên quan
+              let searchMedia: any[] = [];
+              try {
+                setIsLoadingMvs(true);
+                const searchRes = await mediaService.searchSongs(res.data.fullName || '', 50);
+                if (searchRes.success && searchRes.data?.items) {
+                  searchMedia = searchRes.data.items;
+                }
+              } catch (searchErr) {
+                console.error("Lỗi khi tìm kiếm tác phẩm liên quan:", searchErr);
+              } finally {
+                setIsLoadingMvs(false);
               }
+
+              // Gộp và loại trùng lặp theo ID
+              const uniqueMediaMap = new Map<string, any>();
+              
+              // Đưa các tác phẩm chính thức vào map trước
+              officialMedia.forEach((item: any) => {
+                uniqueMediaMap.set(item.id, item);
+              });
+
+              // Đưa các tác phẩm tìm kiếm được vào map (map cấu trúc SearchItemDto về MediaItem)
+              searchMedia.forEach((item: any) => {
+                if (!uniqueMediaMap.has(item.id)) {
+                  uniqueMediaMap.set(item.id, {
+                    id: item.id,
+                    title: item.title || item.name || '',
+                    coverUrl: item.coverUrl,
+                    durationInSeconds: item.durationInSeconds || 0,
+                    mediaType: item.mediaType, // 0: Audio, 1: Video
+                    artistName: item.artistName || res.data.fullName,
+                    viewCount: item.viewCount || 0
+                  });
+                }
+              });
+
+              const allMediaList = Array.from(uniqueMediaMap.values());
+
+              // Phân loại:
+              // - Bài hát (Audio: mediaType === 0)
+              // - MV ca nhạc (Video: mediaType === 1)
+              const audioList = allMediaList.filter(item => item.mediaType === 0);
+              const videoList = allMediaList.filter(item => item.mediaType === 1);
+
+              setMediaList(audioList);
+              setMvs(videoList);
             } catch (err) {
               console.error("Lỗi khi tải danh sách tác phẩm nghệ sĩ:", err);
             }
@@ -296,6 +380,54 @@ export const UserProfileView = () => {
             </div>
           )}
 
+          {/* === SECTION PLAYLIST CÔNG KHAI === */}
+          {(isLoadingPlaylists || publicPlaylists.length > 0) && (
+            <div className="mt-4">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                <ListMusic className="w-6 h-6 text-green-400" />
+                Playlist công khai
+              </h2>
+              {isLoadingPlaylists ? (
+                <div className="flex items-center gap-2 py-8 text-zinc-500">
+                  <Loader2 className="w-5 h-5 animate-spin text-green-500" />
+                  <span className="text-sm">Đang tải playlist...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {publicPlaylists.map((playlist) => (
+                    <div
+                      key={playlist.id}
+                      onClick={() => navigate(`/playlist/${playlist.id}`)}
+                      className="group relative bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800/30 hover:border-zinc-700/60 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col gap-3"
+                    >
+                      {/* Ảnh đại diện playlist */}
+                      <div className="aspect-square w-full rounded-lg overflow-hidden bg-zinc-800 relative shadow-inner flex items-center justify-center">
+                        <ListMusic className="w-10 h-10 text-zinc-600 group-hover:text-green-500 transition-colors" />
+                        {/* Nút play khi hover */}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg">
+                            <svg className="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" fill="currentColor" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Thông tin playlist */}
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-sm text-slate-200 truncate group-hover:text-green-400 transition-colors" title={playlist.title}>
+                          {playlist.title}
+                        </h4>
+                        <p className="text-[11px] text-zinc-500 mt-0.5 font-medium">
+                          {playlist.tracksCount ?? 0} bài hát
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Nghệ sĩ Playlist (Phổ biến) */}
           {isArtist && mediaList.length > 0 && (
             <div className="mt-12">
@@ -305,6 +437,7 @@ export const UserProfileView = () => {
                   <div 
                     key={song.id} 
                     onClick={() => playSong(song)}
+                    onContextMenu={(e) => handleContextMenu(e, { ...song, artist: song.artistName || profile?.fullName })}
                     className="group flex items-center justify-between p-3 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
@@ -320,14 +453,71 @@ export const UserProfileView = () => {
                         alt="Cover" 
                         className="w-12 h-12 rounded object-cover shadow-md" 
                       />
-                      <div>
-                        <h4 className={`text-sm font-semibold transition-colors ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`}>{song.title}</h4>
+                      <div className="min-w-0 flex-1">
+                        <h4 className={`text-sm font-semibold transition-colors ${currentTrack?.id === song.id ? 'text-green-500' : 'text-white'}`} title={song.title}>
+                          <MarqueeText text={song.title} />
+                        </h4>
                       </div>
                     </div>
                     <span className="text-zinc-400 text-xs font-medium">{song.viewCount?.toLocaleString() || '0'} lượt nghe</span>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* MV của Nghệ sĩ */}
+          {isArtist && (mvs.length > 0 || isLoadingMvs) && (
+            <div className="mt-12">
+              <h2 className="text-2xl font-bold text-white mb-6">MV ca nhạc</h2>
+              {isLoadingMvs ? (
+                <div className="flex items-center justify-center py-12 text-zinc-500 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+                  <p className="text-xs font-medium">Đang tải danh sách MV...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {mvs.map((mv) => (
+                    <div
+                      key={mv.id}
+                      onClick={() => navigate(`/video/${mv.id}`)}
+                      onContextMenu={(e) => handleContextMenu(e, { ...mv, artist: mv.artistName || profile?.fullName })}
+                      className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-2xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
+                    >
+                      {/* Bìa MV */}
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors shadow-inner">
+                        {mv.coverUrl ? (
+                          <img
+                            src={mediaService.getImageUrl(mv.coverUrl)}
+                            alt={mv.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                            <Music className="w-8 h-8 text-zinc-650" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-black transform scale-90 group-hover:scale-100 transition-transform duration-300 hover:scale-110 shadow-lg">
+                            <svg className="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" fill="currentColor" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Thông tin MV */}
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-sm text-slate-200 group-hover:text-green-400 transition-colors" title={mv.title}>
+                          <MarqueeText text={mv.title} />
+                        </h4>
+                        <p className="text-[10px] text-zinc-500 mt-1 font-medium">
+                          {mv.viewCount?.toLocaleString() || '0'} lượt nghe
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -383,6 +573,43 @@ export const UserProfileView = () => {
           )}
         </div>
       </div>
+
+      {/* Modal Add to Playlist */}
+      {selectedAddToPlaylistTrackId && (
+        <AddToPlaylistModal
+          isOpen={true}
+          onClose={() => setSelectedAddToPlaylistTrackId(null)}
+          mediaItemId={selectedAddToPlaylistTrackId}
+        />
+      )}
+
+      {/* Modal Share */}
+      {sharingTrack && (
+        <ShareModal 
+          isOpen={!!sharingTrack}
+          onClose={() => setSharingTrack(null)}
+          mediaItemId={sharingTrack.id}
+          title={`Bài hát: ${sharingTrack.title}`}
+        />
+      )}
+
+      {/* Context Menu chuột phải */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          isPlaylist={contextMenu.track.isPlaylist}
+          onAddToPlaylist={() => {
+            setSelectedAddToPlaylistTrackId(contextMenu.track.id);
+            setContextMenu(null);
+          }}
+          onShare={() => {
+            setSharingTrack(contextMenu.track);
+            setContextMenu(null);
+          }}
+        />
+      )}
     </div>
   );
 };

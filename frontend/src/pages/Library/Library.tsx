@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { Playlist } from '../../types';
 import { NavLink } from 'react-router-dom';
 import { ListMusic, Plus, Loader2 } from 'lucide-react';
 import { CreatePlaylistModal } from '../../components/CreatePlaylistModal';
@@ -7,7 +8,7 @@ import { playlistService, mediaService } from '../../services';
 
 export const Library = () => {
   // BƯỚC 1: Khai báo State
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -55,7 +56,7 @@ export const Library = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ListMusic className="w-6 h-6 text-green-400" />
-          <h2 className="text-2xl font-bold tracking-tight">Thư viện của bạn (Từ API)</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Thư viện của bạn</h2>
         </div>
 
         {/* Nút thêm Playlist */}

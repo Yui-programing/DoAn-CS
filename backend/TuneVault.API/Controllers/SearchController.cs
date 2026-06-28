@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.API.Common;
 using TuneVault.Application.Features.Query;
@@ -22,11 +22,9 @@ namespace TuneVault.API.Controllers
         {
             var query = new SuggestionQuery { Keyword = keyword };
 
-            // Nh?n DTO t? Application
             var data = await _mediator.Send(query);
 
-            // B?c v�o ApiResponse t?i t?ng API
-            var response = ApiResponse<IEnumerable<SuggestionResultDto>>.SetSuccess(data, "L?y d? li?u t�m ki?m nhanh th�nh c�ng.");
+            var response = ApiResponse<IEnumerable<SuggestionResultDto>>.SetSuccess(data, "Lấy dữ liệu tìm kiếm nhanh thành công.");
             return Ok(response);
         }
 
@@ -35,16 +33,13 @@ namespace TuneVault.API.Controllers
         {
             if (string.IsNullOrWhiteSpace(query.Keyword))
             {
-                return Ok(ApiResponse<ResultPage<SearchItemDto>>.SetSuccess(new ResultPage<SearchItemDto>(), "Keyword kh�ng du?c d? tr?ng."));
+                return Ok(ApiResponse<ResultPage<SearchItemDto>>.SetSuccess(new ResultPage<SearchItemDto>(), "Keyword không được để trống."));
             }
 
-            
-            // MediatR t? d?ng map c�c query params (Keyword, PageNumber, PageSize) v�o FullSearchQuery
             var data = await _mediator.Send(query);
 
-            var response = ApiResponse<ResultPage<SearchItemDto>>.SetSuccess(data, "L?y d? li?u t�m ki?m chi ti?t th�nh c�ng.");
+            var response = ApiResponse<ResultPage<SearchItemDto>>.SetSuccess(data, "Lấy dữ liệu tìm kiếm chi tiết thành công.");
             return Ok(response);
         }
     }
 }
-

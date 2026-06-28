@@ -11,27 +11,7 @@ using TuneVault.Application.Models;
 
 namespace TuneVault.API.Controllers
 {
-    public class ShareMediaItemRequest
-    {
-        public Guid ReceiverId { get; set; }
-        public Guid MediaItemId { get; set; }
-        public string? Message { get; set; }
-    }
-
-    public class SharePlaylistRequest
-    {
-        public Guid ReceiverId { get; set; }
-        public Guid PlaylistId { get; set; }
-        public string? Message { get; set; }
-    }
-
-    public class ShareAlbumRequest
-    {
-        public Guid ReceiverId { get; set; }
-        public Guid AlbumId { get; set; }
-        public string? Message { get; set; }
-    }
-
+    
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]

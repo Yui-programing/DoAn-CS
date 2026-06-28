@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { Playlist } from '../../types';
 import { useParams, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Thêm icon Loader2
@@ -23,7 +24,7 @@ export const PlaylistDetail = () => {
   const isAlbumPage = location.pathname.startsWith('/album');
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
-  const [playlistInfo, setPlaylistInfo] = useState<any>(null); // Chứa Tên, Mô tả
+  const [playlistInfo, setPlaylistInfo] = useState<Playlist | null>(null); // Chứa Tên, Mô tả
   const [tracks, setTracks] = useState<any[]>([]);             // Chứa danh sách bài hát
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -185,7 +186,6 @@ export const PlaylistDetail = () => {
         <span>Quay lại</span>
       </button>
 
-      {/* Header Playlist (Dữ liệu thật) */}
       <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900">
         <div className="w-48 h-48 bg-gradient-to-br from-green-500/20 to-zinc-900 rounded-2xl overflow-hidden flex items-center justify-center border border-zinc-800 shadow-2xl shrink-0">
           {playlistInfo?.coverUrl ? (

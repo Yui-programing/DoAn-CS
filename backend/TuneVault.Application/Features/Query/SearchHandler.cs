@@ -7,7 +7,7 @@ using TuneVault.Application.Repositories;
 
 namespace TuneVault.Application.Features.Query
 {
-    // Handler cho Quick Search
+    
     public class QuickSearchQueryHandler : IRequestHandler<SuggestionQuery, IEnumerable<SuggestionResultDto>>
     {
         private readonly ISearchRepository _searchRepository;
@@ -19,12 +19,12 @@ namespace TuneVault.Application.Features.Query
 
         public async Task<IEnumerable<SuggestionResultDto>> Handle(SuggestionQuery request, CancellationToken cancellationToken)
         {
-            // Có thể thêm logic kiểm tra/validation nghiệp vụ ở đây trước khi gọi DB
+            
             return await _searchRepository.GetQuickSearchResultsAsync(request.Keyword, request.Limit);
         }
     }
 
-    // Handler cho Full Search
+    
     public class FullSearchQueryHandler : IRequestHandler<FullSearchQuery, ResultPage<SearchItemDto>>
     {
         private readonly ISearchRepository _searchRepository;

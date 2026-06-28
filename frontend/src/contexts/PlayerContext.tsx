@@ -9,6 +9,7 @@ export interface Track {
   duration: string; // ví dụ: "3:30" hoặc "3:00"
   album?: string;
   coverUrl?: string;
+  artistId?: string;
 }
 
 // Thuật toán xáo trộn Fisher-Yates

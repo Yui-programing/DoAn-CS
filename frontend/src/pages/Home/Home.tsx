@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { Playlist } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { usePlayer } from '../../contexts/PlayerContext';
 // Import thêm Loader2 để làm icon xoay vòng lúc chờ mạng
@@ -10,7 +11,9 @@ import { TrackDropdownMenu } from '../../components/TrackDropdownMenu';
 import { AddToPlaylistModal } from '../../components/AddToPlaylistModal';
 import { ShareModal } from '../../components/ShareModal';
 import { useFavorite } from '../../contexts/FavoriteContext';
-import { formatDuration, formatViewCount } from '../../utils';
+import { formatDuration, formatViewCount, parseArtists } from '../../utils';
+import { MarqueeText } from '../../components/MarqueeText';
+import { ContextMenu } from '../../components/ContextMenu';
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -19,7 +22,7 @@ export const Home = () => {
   const { isFavorite, toggleFavorite } = useFavorite();
 
   // BƯỚC 1: Khai báo State chứa dữ liệu thật
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [recentTracks, setRecentTracks] = useState<any[]>([]);
   const [suggestedTracks, setSuggestedTracks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +35,44 @@ export const Home = () => {
   // Trạng thái cho Add to Playlist Modal và Share Modal
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [sharingTrack, setSharingTrack] = useState<any | null>(null);
+  
+  // Trạng thái cho Context Menu (Chuột phải)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; track: any } | null>(null);
+
+  const handlePlayPlaylist = async (e: React.MouseEvent, playlistId: string) => {
+    e.stopPropagation();
+    try {
+      const res = await playlistService.getTracks(playlistId);
+      if (res.success && res.data && res.data.length > 0) {
+        const playerTracks = res.data.map((pt: any) => ({
+          id: pt.mediaItemId,
+          title: pt.title,
+          artist: pt.artistName || 'Không rõ ca sĩ',
+          coverUrl: pt.coverUrl,
+          duration: formatDuration(pt.durationInSeconds),
+          durationInSeconds: pt.durationInSeconds,
+          mediaType: pt.mediaType,
+          filePath: mediaService.getStreamUrl(pt.mediaItemId),
+          artistId: pt.artistId
+        }));
+        playTrack(playerTracks[0], playerTracks);
+      } else {
+        alert("Danh sách phát này chưa có bài hát nào!");
+      }
+    } catch (err) {
+      console.error("Lỗi khi phát danh sách phát:", err);
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, track: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      track
+    });
+  };
 
   // BƯỚC 2: Tự động gọi API khi vừa mở trang Home
   useEffect(() => {
@@ -214,31 +255,47 @@ export const Home = () => {
             {playlists.map((playlist) => (
               <div
                 key={playlist.id}
-                onClick={() => navigate(`/playlist/${playlist.id}`)}
-                className="flex items-center gap-3 rounded-lg bg-[#2b2b2b]/40 hover:bg-[#2b2b2b]/95 border border-zinc-800/20 transition-all duration-300 cursor-pointer group relative overflow-hidden h-14 shadow-sm"
+                onContextMenu={(e) => handleContextMenu(e, { id: playlist.id, title: playlist.title, isPlaylist: true })}
+                className="flex items-center gap-3 rounded-lg bg-[#2b2b2b]/40 hover:bg-[#2b2b2b]/95 border border-zinc-800/20 transition-all duration-300 group relative overflow-hidden h-14 shadow-sm"
               >
-                {/* Thumbnail bên trái */}
-                <div className="h-full aspect-square bg-gradient-to-br from-green-500/10 to-zinc-950 flex items-center justify-center shrink-0 overflow-hidden">
-                  {playlist.coverUrl ? (
-                    <img 
-                      src={mediaService.getImageUrl(playlist.coverUrl)} 
-                      alt={playlist.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                {/* Vùng click chuyển hướng chỉ bọc Thumbnail và Tên playlist */}
+                <div
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                  className="flex items-center gap-3 flex-1 min-w-0 h-full cursor-pointer pr-12"
+                >
+                  {/* Thumbnail bên trái */}
+                  <div className="h-full aspect-square bg-gradient-to-br from-green-500/10 to-zinc-950 flex items-center justify-center shrink-0 overflow-hidden">
+                    {playlist.coverUrl ? (
+                      <img 
+                        src={mediaService.getImageUrl(playlist.coverUrl)} 
+                        alt={playlist.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                    ) : (
+                      <ListMusic className="w-5 h-5 text-zinc-500 group-hover:text-green-400 transition-colors" />
+                    )}
+                  </div>
+                  {/* Thông tin ở giữa */}
+                  <div className="min-w-0 flex-grow">
+                    <MarqueeText 
+                      text={playlist.title} 
+                      className="font-bold text-xs text-slate-200 group-hover:text-white transition-colors"
                     />
-                  ) : (
-                    <ListMusic className="w-5 h-5 text-zinc-500 group-hover:text-green-400 transition-colors" />
-                  )}
+                  </div>
                 </div>
-                {/* Thông tin ở giữa */}
-                <div className="flex-1 min-w-0 pr-12">
-                  <h4 className="font-bold text-xs text-slate-200 truncate group-hover:text-white transition-colors">
-                    {playlist.title}
-                  </h4>
-                </div>
-                {/* Nút Play tròn màu xanh nổi lên khi hover */}
-                <div className="absolute right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-black opacity-0 group-hover:opacity-100 transition-all duration-200 shadow hover:scale-105 shrink-0">
+
+                {/* Nút Play tròn màu xanh nổi lên khi hover (nằm ngoài vùng click chuyển trang để tránh bị nổi bọt) */}
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handlePlayPlaylist(e, playlist.id);
+                  }}
+                  className="absolute right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-black opacity-0 group-hover:opacity-100 transition-all duration-200 shadow hover:scale-105 shrink-0 z-30 cursor-pointer pointer-events-auto"
+                >
                   <Play className="w-4 h-4 fill-current ml-0.5" />
-                </div>
+                </button>
               </div>
             ))}
           </div>
@@ -249,7 +306,7 @@ export const Home = () => {
       {(activeFilter === 'all' || activeFilter === 'music') && (
         <section className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay (Dữ liệu thật)</h3>
+            <h3 className="text-xl font-bold tracking-tight">Gợi ý bài hát hôm nay</h3>
           </div>
 
           {audioTracks.length === 0 ? (
@@ -262,6 +319,7 @@ export const Home = () => {
                   <div
                     key={track.id || index}
                     onClick={() => handleTrackClick(track, audioTracks)}
+                    onContextMenu={(e) => handleContextMenu(e, track)}
                     className={`group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3 ${
                       isCurrent ? 'bg-zinc-850/50 border-green-500/20 shadow-md' : ''
                     }`}
@@ -310,12 +368,44 @@ export const Home = () => {
                     </div>
                     {/* Thông tin bài hát */}
                     <div className="min-w-0">
-                      <h4 className={`font-bold text-sm truncate transition-colors ${
+                      <h4 className={`font-bold text-sm transition-colors ${
                         isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'
                       }`} title={track.title}>
-                        {track.title}
+                        <MarqueeText text={track.title} />
                       </h4>
-                      <p className="text-xs text-zinc-400 truncate mt-1">{track.artist}</p>
+                      <MarqueeText text={track.artist} className="text-xs text-zinc-400 mt-1">
+                        {parseArtists(track.artist, track.artistId).map((artist, idx, arr) => (
+                          <span key={idx}>
+                            {artist.id ? (
+                              <span 
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  navigate(`/user/${artist.id}`);
+                                }} 
+                                className="hover:underline cursor-pointer"
+                              >
+                                {artist.name}
+                              </span>
+                            ) : (
+                              <span 
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (track.id) {
+                                    const res = await mediaService.getMediaDetails(track.id);
+                                    if (res.success && res.data?.artistId) {
+                                      navigate(`/user/${res.data.artistId}`);
+                                    }
+                                  }
+                                }}
+                                className="hover:underline cursor-pointer"
+                              >
+                                {artist.name}
+                              </span>
+                            )}
+                            {idx < arr.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </MarqueeText>
                       <span className="text-[10px] text-zinc-500 font-semibold block mt-1.5">{formatViewCount(track.viewCount)}</span>
                     </div>
                   </div>
@@ -332,7 +422,7 @@ export const Home = () => {
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-green-400" />
-              MV ca nhạc gợi ý (Dữ liệu thật)
+              MV ca nhạc gợi ý
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -341,6 +431,7 @@ export const Home = () => {
                 <div
                   key={track.id}
                   onClick={() => navigate(`/video/${track.id}`)}
+                  onContextMenu={(e) => handleContextMenu(e, track)}
                   className="group relative bg-zinc-900/40 hover:bg-zinc-800/40 border border-zinc-800/30 hover:border-zinc-700/50 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col space-y-3"
                 >
                   <div className="aspect-video w-full rounded-lg overflow-hidden bg-zinc-950 relative border border-zinc-800/50 group-hover:border-zinc-700/80 transition-colors">
@@ -358,10 +449,45 @@ export const Home = () => {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-slate-200 line-clamp-1 group-hover:text-green-400 transition-colors">
-                      {track.title}
+                    <h4 className="font-bold text-sm text-slate-200 group-hover:text-green-400 transition-colors" title={track.title}>
+                      <MarqueeText text={track.title} />
                     </h4>
-                    <p className="text-xs text-zinc-400 mt-1">{track.artist} • {formatViewCount(track.viewCount)}</p>
+                    <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1 w-full min-w-0">
+                      <MarqueeText text={track.artist} className="max-w-[65%] inline-block">
+                        {parseArtists(track.artist, track.artistId).map((artist, idx, arr) => (
+                          <span key={idx}>
+                            {artist.id ? (
+                              <span 
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  navigate(`/user/${artist.id}`);
+                                }} 
+                                className="hover:underline cursor-pointer"
+                              >
+                                {artist.name}
+                              </span>
+                            ) : (
+                              <span 
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (track.id) {
+                                    const res = await mediaService.getMediaDetails(track.id);
+                                    if (res.success && res.data?.artistId) {
+                                      navigate(`/user/${res.data.artistId}`);
+                                    }
+                                  }
+                                }}
+                                className="hover:underline cursor-pointer"
+                              >
+                                {artist.name}
+                              </span>
+                            )}
+                            {idx < arr.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </MarqueeText>
+                      <span className="shrink-0">• {formatViewCount(track.viewCount)}</span>
+                    </p>
                   </div>
                 </div>
               );
@@ -374,7 +500,7 @@ export const Home = () => {
       {isAuthenticated && (activeFilter === 'all' || activeFilter === 'music') && (
         <section className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây (Dữ liệu thật)</h3>
+            <h3 className="text-xl font-bold tracking-tight">Nghe nhiều gần đây</h3>
             <button className="text-xs text-green-400 hover:underline font-bold">Xem tất cả</button>
           </div>
 
@@ -388,6 +514,7 @@ export const Home = () => {
                   <div
                     key={track.id || index}
                     onClick={() => handleTrackClick(track, recentTracks)}
+                    onContextMenu={(e) => handleContextMenu(e, track)}
                     className={`flex items-center justify-between px-6 py-4 hover:bg-zinc-900/50 transition-colors group cursor-pointer ${isCurrent ? 'bg-zinc-900/30' : ''}`}
                   >
                     {/* CỘT 1 */}
@@ -409,11 +536,11 @@ export const Home = () => {
                           )}
                         </div>
                       </div>
-                      <div className="min-w-0">
-                        <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`}>
-                          {track.title}
+                      <div className="min-w-0 flex-1">
+                        <h4 className={`text-sm font-bold transition-colors ${isCurrent ? 'text-green-400' : 'text-slate-200 group-hover:text-green-400'}`} title={track.title}>
+                          <MarqueeText text={track.title} />
                         </h4>
-                        <p className="text-xs text-zinc-400 truncate mt-0.5">{track.artist || 'Không có tên ca sĩ'}</p>
+                        <MarqueeText text={track.artist || 'Không có tên ca sĩ'} className="text-xs text-zinc-400 mt-0.5" />
                       </div>
                     </div>
 
@@ -463,8 +590,27 @@ export const Home = () => {
         <ShareModal 
           isOpen={!!sharingTrack}
           onClose={() => setSharingTrack(null)}
-          mediaItemId={sharingTrack.id}
-          title={`Bài hát: ${sharingTrack.title}`}
+          mediaItemId={sharingTrack.isPlaylist ? undefined : sharingTrack.id}
+          playlistId={sharingTrack.isPlaylist ? sharingTrack.id : undefined}
+          title={sharingTrack.isPlaylist ? `Danh sách phát: ${sharingTrack.title}` : `Bài hát: ${sharingTrack.title}`}
+        />
+      )}
+
+      {/* Context Menu chuột phải */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          isPlaylist={contextMenu.track.isPlaylist}
+          onAddToPlaylist={() => {
+            setSelectedMediaId(contextMenu.track.id);
+            setContextMenu(null);
+          }}
+          onShare={() => {
+            setSharingTrack(contextMenu.track);
+            setContextMenu(null);
+          }}
         />
       )}
     </div>

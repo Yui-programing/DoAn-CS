@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Music, Eye, Clock, Check } from 'lucide-react';
 import { mediaService, userService } from '../services';
-import { formatDuration, formatViewCount } from '../utils';
+import { formatDuration, formatViewCount, parseArtists } from '../utils';
+import { MarqueeText } from './MarqueeText';
 
 interface RightPanelProps {
   track: any;
@@ -14,6 +16,7 @@ export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist 
   const [details, setDetails] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [artistProfile, setArtistProfile] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!track?.id) {
@@ -113,14 +116,33 @@ export const RightPanel = ({ track, onClose, isTrackInPlaylist, onAddToPlaylist 
         </div>
 
         {/* Title, Artist & Save button */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="text-xl font-bold text-slate-100 hover:text-green-400 cursor-pointer transition-colors line-clamp-2" title={track.title}>
-              {track.title}
+        <div className="flex items-start justify-between gap-3 w-full">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xl font-bold text-slate-100 hover:text-green-400 cursor-pointer transition-colors" title={track.title}>
+              <MarqueeText text={track.title} />
             </h3>
-            <p className="text-sm text-zinc-400 mt-1 hover:underline cursor-pointer font-medium inline-block">
-              {track.artist}
-            </p>
+            <MarqueeText text={track.artist} className="text-sm text-zinc-400 mt-1 font-medium w-full">
+              {parseArtists(track.artist, track.artistId || details?.artistId).map((artist, idx, arr) => (
+                <span key={idx}>
+                  {artist.id ? (
+                    <span 
+                      onClick={() => navigate(`/user/${artist.id}`)} 
+                      className="hover:underline cursor-pointer"
+                    >
+                      {artist.name}
+                    </span>
+                  ) : (
+                    <span 
+                      onClick={() => details?.artistId && navigate(`/user/${details.artistId}`)} 
+                      className="hover:underline cursor-pointer"
+                    >
+                      {artist.name}
+                    </span>
+                  )}
+                  {idx < arr.length - 1 ? ", " : ""}
+                </span>
+              ))}
+            </MarqueeText>
           </div>
           
           {onAddToPlaylist && (

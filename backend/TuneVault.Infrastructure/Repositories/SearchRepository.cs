@@ -38,7 +38,7 @@ namespace TuneVault.Infrastructure.Repositories
             FROM Album 
             WHERE Title LIKE @Keyword
         
-            ORDER BY Text ASC;"; // Có thể sắp xếp theo bảng chữ cái
+            ORDER BY Text ASC;";
 
             return await _dbConnection.QueryAsync<SuggestionResultDto>(sql, new { Keyword = safeKeyword, Limit = limit });
         }

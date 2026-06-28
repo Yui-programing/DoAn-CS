@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using TuneVault.API.Common;
+using TuneVault.API.Requests;
 using TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack;
 using TuneVault.Application.Features.Playlists.Commands.CreatePlaylist;
 using TuneVault.Application.Features.Playlists.Commands.DeletePlaylist;
@@ -14,6 +15,7 @@ using TuneVault.Application.Features.Playlists.Commands.RemovePlaylistTrack;
 using TuneVault.Application.Features.Playlists.Commands.UpdatePlaylist;
 using TuneVault.Application.Features.Playlists.Commands.ViewPlaylist;
 using TuneVault.Application.Features.Playlists.Commands.ViewPlaylistTrack;
+using TuneVault.Application.Features.Playlists.Queries.GetPublicPlaylistsByUser;
 using TuneVault.Application.Models;
 
 
@@ -31,20 +33,19 @@ public class PlaylistsController : ControllerBase
         _mediator = mediator;
     }
 
-    // H�m helper r�t nhanh UserId t? JWT Token
-            private Guid GetUserIdFromJwt()
-        {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userIdStr, out var userId)) return userId;
-            return Guid.Empty;
-        }
+    private Guid GetUserIdFromJwt()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdStr, out var userId)) return userId;
+        return Guid.Empty;
+    }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePlaylistRequest request)
     {
         var userId = GetUserIdFromJwt();
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh�ng h?p l?."));
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         var command = new CreatePlaylistCommand
         {
@@ -56,8 +57,7 @@ public class PlaylistsController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        // S? d?ng SetSuccess theo file ApiResponse c?a b?n
-        return Ok(ApiResponse<Guid>.SetSuccess(result, "T?o playlist th�nh c�ng!"));
+        return Ok(ApiResponse<Guid>.SetSuccess(result, "Tạo playlist thành công!"));
     }
 
     [HttpPut("{id:guid}")]
@@ -65,9 +65,8 @@ public class PlaylistsController : ControllerBase
     {
         var userId = GetUserIdFromJwt();
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh�ng h?p l?."));
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
-        // �?m b?o ID du?c l?y t? URL v� g�n v�o request
         var command = new UpdatePlaylistCommand
         {
             Id = id,
@@ -79,7 +78,7 @@ public class PlaylistsController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return Ok(ApiResponse<Guid>.SetSuccess(result, "C?p nh?t playlist th�nh c�ng!"));
+        return Ok(ApiResponse<Guid>.SetSuccess(result, "Cập nhật playlist thành công!"));
     }
 
     [HttpDelete("{id:guid}")]
@@ -87,23 +86,21 @@ public class PlaylistsController : ControllerBase
     {
         var userId = GetUserIdFromJwt();
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh�ng h?p l?."));
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         var command = new DeletePlaylistCommand { Id = id, OwnerId = userId };
 
         var result = await _mediator.Send(command);
 
-        return Ok(ApiResponse<Guid>.SetSuccess(result, "X�a playlist th�nh c�ng!"));
+        return Ok(ApiResponse<Guid>.SetSuccess(result, "Xóa playlist thành công!"));
     }
-
-    
 
     [HttpPost("{id:guid}/tracks")]
     public async Task<IActionResult> AddTrackToPlaylist(Guid id, [FromBody] AddPlaylistTrackRequest request)
     {
         var userId = GetUserIdFromJwt();
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh�ng h?p l?."));
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         var command = new AddPlaylistTrackCommand
         {
@@ -115,7 +112,7 @@ public class PlaylistsController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return Ok(ApiResponse<Guid>.SetSuccess(result, "Th�m b�i h�t v�o playlist th�nh c�ng!"));
+        return Ok(ApiResponse<Guid>.SetSuccess(result, "Thêm bài hát vào playlist thành công!"));
     }
 
     [HttpDelete("{id:guid}/tracks/{trackId:guid}")]
@@ -123,7 +120,7 @@ public class PlaylistsController : ControllerBase
     {
         var userId = GetUserIdFromJwt();
         if (userId == Guid.Empty)
-            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh�ng h?p l?."));
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
         var command = new RemovePlaylistTrackCommand
         {
@@ -134,44 +131,61 @@ public class PlaylistsController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return Ok(ApiResponse<Guid>.SetSuccess(result, "X�a b�i h�t kh?i playlist th�nh c�ng!"));
+        return Ok(ApiResponse<Guid>.SetSuccess(result, "Xóa bài hát khỏi playlist thành công!"));
     }
 
     [HttpGet]
-        public async Task<IActionResult> GetMyPlaylists()
-        {
-            var userId = GetUserIdFromJwt();
-            if (userId == Guid.Empty)
-                return Unauthorized(ApiResponse<object>.SetFailure(message: "Token kh�ng h?p l?."));
+    public async Task<IActionResult> GetMyPlaylists()
+    {
+        var userId = GetUserIdFromJwt();
+        if (userId == Guid.Empty)
+            return Unauthorized(ApiResponse<object>.SetFailure(message: "Token không hợp lệ."));
 
-            var query = new ViewPlaylistQuery { OwnerId = userId };
+        var query = new ViewPlaylistQuery { OwnerId = userId };
 
-            // 1. L?y th?ng danh s�ch DTO t? Mediator
-            var MyPlaylistDto = await _mediator.Send(query);
+        var myPlaylists = await _mediator.Send(query);
 
-            // 2. Tr? th?ng v? cho Frontend (N?u tr?ng, JSON s? t? ra data: [])
-            return Ok(ApiResponse<IEnumerable<MyPlaylistDto>>.SetSuccess(MyPlaylistDto, "L?y danh s�ch playlist th�nh c�ng!"));
+        return Ok(ApiResponse<IEnumerable<MyPlaylistDto>>.SetSuccess(myPlaylists, "Lấy danh sách playlist thành công!"));
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetPlaylistById(Guid id)
     {
-        var query = new TuneVault.Application.Features.Playlists.Queries.GetPlaylistById.GetPlaylistByIdQuery { PlaylistId = id, UserId = GetUserIdFromJwt() };
+        var query = new TuneVault.Application.Features.Playlists.Queries.GetPlaylistById.GetPlaylistByIdQuery
+        {
+            PlaylistId = id,
+            UserId = GetUserIdFromJwt()
+        };
+
         var playlist = await _mediator.Send(query);
-        if (playlist == null) return NotFound(ApiResponse<object>.SetFailure(message: "Khong tim thay playlist"));
-        return Ok(ApiResponse<MyPlaylistDto>.SetSuccess(playlist, "Lay playlist thanh cong!"));
+
+        if (playlist == null)
+            return NotFound(ApiResponse<object>.SetFailure(message: "Không tìm thấy playlist."));
+
+        return Ok(ApiResponse<MyPlaylistDto>.SetSuccess(playlist, "Lấy playlist thành công!"));
     }
+
+    [AllowAnonymous]
+    [HttpGet("user/{userId:guid}")]
+    public async Task<IActionResult> GetPublicPlaylistsByUser(Guid userId)
+    {
+        var query = new GetPublicPlaylistsByUserQuery
+        {
+            UserId = userId
+        };
+
+        var playlists = await _mediator.Send(query);
+
+        return Ok(ApiResponse<IEnumerable<MyPlaylistDto>>.SetSuccess(playlists, "Lấy danh sách playlist công khai thành công!"));
+    }
+
     [HttpGet("{id:guid}/tracks")]
     public async Task<IActionResult> GetPlaylistTracks(Guid id)
     {
         var query = new GetPlaylistTracksQuery { PlaylistId = id, UserId = GetUserIdFromJwt() };
 
-        var PlaylistTracks = await _mediator.Send(query);
+        var playlistTracks = await _mediator.Send(query);
 
-        // Tr? v? danh s�ch b�i h�t
-        return Ok(ApiResponse<IEnumerable<PlaylistTrackDto>>.SetSuccess(PlaylistTracks, "L?y danh s�ch b�i h�t th�nh c�ng!"));
+        return Ok(ApiResponse<IEnumerable<PlaylistTrackDto>>.SetSuccess(playlistTracks, "Lấy danh sách bài hát thành công!"));
     }
 }
-
-
-

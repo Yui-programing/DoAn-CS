@@ -4,25 +4,6 @@ using System.Text;
 
 namespace TuneVault.Application.Models
 {
-    public class CreatePlaylistRequest
-    {
-        public string Title { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsPublic { get; set; }
-    }   
-    public class AddPlaylistTrackRequest
-    {
-        public Guid MediaItemId { get; set; }
-    }
-
-
-    public class UpdatePlaylistRequest
-    {
-        public string Title { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsPublic { get; set; }
-    }
-
     public class MyPlaylistDto
     {
         public Guid Id { get; set; }

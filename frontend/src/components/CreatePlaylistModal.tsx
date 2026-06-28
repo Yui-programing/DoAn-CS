@@ -26,8 +26,8 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({ isOpen
       if (playlistToEdit) {
         setTitle(playlistToEdit.title);
         setDescription(playlistToEdit.description || '');
-        setIsPublic(playlistToEdit.isPublic);
-        setType(playlistToEdit.type);
+        setIsPublic(playlistToEdit.isPublic ?? true);
+        setType(playlistToEdit.type ?? 0);
       } else {
         // Reset form cho tạo mới
         setTitle('');

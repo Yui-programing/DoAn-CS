@@ -111,19 +111,11 @@ namespace TuneVault.Infrastructure.Repositories
             return shareId;
         }
 
-        public async Task<IEnumerable<SharedMediaItemDto>> GetSharedMediaItemsByReceiverIdAsync(Guid receiverId)
-        {
-            string sql = @"
-                SELECT MediaItemId, SenderId, ReceiverId, SharedAt, Message
-                FROM MediaShare
-                WHERE ReceiverId = @ReceiverId AND MediaItemId IS NOT NULL";
-            return await _dbConnection.QueryAsync<SharedMediaItemDto>(sql, new { ReceiverId = receiverId });
-        }
+        
 
         public async Task<IEnumerable<MediaShare>> GetInboxAsync(Guid receiverId)
         {
-            // Lấy tất cả chia sẻ mà user này là người nhận và IsAccepted = 1
-            // HOẶC user này là người gửi (họ đã chủ động gửi thì tất nhiên là Inbox chính).
+            
             string sql = @"
                 SELECT *
                 FROM MediaShare
@@ -135,7 +127,7 @@ namespace TuneVault.Infrastructure.Repositories
 
         public async Task<IEnumerable<MediaShare>> GetMessageRequestsAsync(Guid receiverId)
         {
-            // Lấy tất cả chia sẻ mà user này là người nhận và IsAccepted = 0
+            
             string sql = @"
                 SELECT *
                 FROM MediaShare

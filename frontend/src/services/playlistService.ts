@@ -40,5 +40,11 @@ export const playlistService = {
     removeTrack: async (id: string, trackId: string): Promise<ApiResponse<string>> => {
         const response = await api.delete<ApiResponse<string>>(`/playlists/${id}/tracks/${trackId}`);
         return response.data;
+    },
+
+    // Lấy danh sách playlist công khai của một user bất kỳ (dùng cho trang hồ sơ)
+    getPublicPlaylistsByUser: async (userId: string): Promise<ApiResponse<Playlist[]>> => {
+        const response = await api.get<ApiResponse<Playlist[]>>(`/playlists/user/${userId}`);
+        return response.data;
     }
 };

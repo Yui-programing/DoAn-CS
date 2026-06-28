@@ -53,11 +53,14 @@ export interface Playlist {
   id: string;
   title: string;
   description?: string;
-  isPublic: boolean;
-  tracksCount: number;
-  createdAt: string;
-  type: number;
+  isPublic?: boolean;
+  tracksCount?: number;
+  createdAt?: string;
+  type?: number;
   ownerId?: string;
+  coverUrl?: string;
+  isAlbum?: boolean;
+  artistName?: string;
 }
 
 export interface PlaylistTrack {

@@ -17,7 +17,7 @@ namespace TuneVault.Application.Repositories
         Task<Guid> SharePlaylistAsync(Guid senderId, Guid receiverId, Guid playlistId, string? message, bool isAccepted);
         Task<Guid> ShareAlbumAsync(Guid senderId, Guid receiverId, Guid albumId, string? message, bool isAccepted);
         
-        Task<IEnumerable<SharedMediaItemDto>> GetSharedMediaItemsByReceiverIdAsync(Guid receiverId);
+        
         
         Task<IEnumerable<MediaShare>> GetInboxAsync(Guid receiverId);
         Task<IEnumerable<MediaShare>> GetMessageRequestsAsync(Guid receiverId);

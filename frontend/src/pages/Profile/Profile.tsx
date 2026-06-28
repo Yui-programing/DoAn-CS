@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Camera, Check, Loader2, UploadCloud, Music, Film, Eye, CheckCircle } from "lucide-react";
+import { Edit2, Camera, Check, Loader2, UploadCloud, Music, Film, Eye, CheckCircle, ListMusic } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { userService } from "../../services/userService";
 import { mediaService, albumService } from "../../services";
+import { playlistService } from "../../services/playlistService";
 import RegisterArtistModal from "../../components/RegisterArtistModal";
 import { UploadMediaModal } from "../../components/UploadMediaModal";
 import type { MediaItem } from "../../types";
@@ -66,6 +67,8 @@ export const Profile = () => {
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [myPlaylists, setMyPlaylists] = useState<any[]>([]);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,6 +164,18 @@ export const Profile = () => {
         loadMyMedia();
         loadMyAlbums();
       }
+      // Load playlist cá nhân
+      (async () => {
+        try {
+          setIsLoadingPlaylists(true);
+          const res = await playlistService.getMyPlaylists();
+          if (res.success) setMyPlaylists(res.data || []);
+        } catch (err) {
+          console.error("Lỗi khi tải playlist:", err);
+        } finally {
+          setIsLoadingPlaylists(false);
+        }
+      })();
     }
   }, [user]);
 
@@ -246,7 +261,7 @@ export const Profile = () => {
     <div className="space-y-8 animate-fadeIn">
       {/* Register as Artist button */}
       {user?.role !== "Artist" && (
-        <div className="flex justify-end">
+        <div className="flex justify-end -mb-4">
           <button
             onClick={() => setShowRegisterModal(true)}
             className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-green-400 text-xs font-bold rounded-full border border-zinc-800"
@@ -367,7 +382,7 @@ export const Profile = () => {
         /* --- LAYOUT DÀNH CHO USER BÌNH THƯỜNG --- */
         <>
           {/* Thông tin hồ sơ Header */}
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900 relative z-10 pt-4">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pb-6 border-b border-zinc-900 relative z-10 pt-0">
             {/* Avatar */}
             <div className="relative group shrink-0">
               <div className="w-36 h-36 rounded-full bg-zinc-800 border-2 border-green-500/50 flex items-center justify-center font-black text-4xl text-green-400 shadow-2xl relative overflow-hidden">
@@ -452,6 +467,65 @@ export const Profile = () => {
             )}
           </div>
         </>
+      )}
+
+      {/* === SECTION PLAYLIST CỦA TÔI (Chỉ public mới hiển thị với người khác) === */}
+      {!isEditing && (isLoadingPlaylists || myPlaylists.length > 0) && (
+        <section className="bg-zinc-900/10 border border-zinc-900 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+              <ListMusic className="w-5 h-5 text-green-400" />
+              Playlist của tôi
+              <span className="text-xs text-zinc-500 font-normal ml-1">
+                ({myPlaylists.filter(p => p.isPublic).length} công khai)
+              </span>
+            </h3>
+            <button
+              onClick={() => navigate('/library')}
+              className="text-xs text-zinc-500 hover:text-green-400 font-bold transition-colors"
+            >
+              Xem thư viện →
+            </button>
+          </div>
+          {isLoadingPlaylists ? (
+            <div className="flex items-center gap-2 py-4 text-zinc-500">
+              <Loader2 className="w-4 h-4 animate-spin text-green-500" />
+              <span className="text-xs">Đang tải playlist...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {myPlaylists.map((playlist) => (
+                <div
+                  key={playlist.id}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                  className="group relative bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800/30 hover:border-zinc-700/60 rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col gap-3"
+                >
+                  <div className="aspect-square w-full rounded-lg overflow-hidden bg-zinc-800 relative shadow-inner flex items-center justify-center">
+                    <ListMusic className="w-8 h-8 text-zinc-600 group-hover:text-green-500 transition-colors" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg">
+                        <svg className="w-4 h-4 fill-current ml-0.5" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" fill="currentColor" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm text-slate-200 truncate group-hover:text-green-400 transition-colors" title={playlist.title}>
+                      {playlist.title}
+                    </h4>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-[11px] text-zinc-500 font-medium">{playlist.tracksCount ?? 0} bài hát</p>
+                      {!playlist.isPublic && (
+                        <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded font-bold">Riêng tư</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Form chỉnh sửa nếu ở chế độ Edit */}

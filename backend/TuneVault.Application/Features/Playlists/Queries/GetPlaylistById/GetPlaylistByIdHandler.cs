@@ -19,7 +19,7 @@ namespace TuneVault.Application.Features.Playlists.Queries.GetPlaylistById
         {
             var hasAccess = await _playlistRepository.HasAccessAsync(request.PlaylistId, request.UserId);
             if (!hasAccess)
-                return null; // Return null if not authorized
+                return null; 
 
             return await _playlistRepository.GetByIdAsync(request.PlaylistId);
         }

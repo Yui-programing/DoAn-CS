@@ -25,7 +25,7 @@ namespace TuneVault.API.Controllers
             _mediator = mediator;
         }
 
-                private Guid GetUserIdFromJwt()
+            private Guid GetUserIdFromJwt()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(userIdStr, out var userId)) return userId;

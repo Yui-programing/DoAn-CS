@@ -1,0 +1,40 @@
+name: Build and deploy ASP.Net Core app to Azure Web App - TuneVault
+
+on:
+  push:
+    branches:
+      - main
+      - TruongHiep
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Build with dotnet
+        run: dotnet build backend/TuneVault.API/TuneVault.API.csproj --configuration Release
+
+ 
+      - name: Run Automated Tests
+        run: dotnet test backend/ --configuration Release --no-build --verbosity normal
+      # ==========================================
+
+      # Publish ra thư mục cục bộ tên là 'publish'
+      - name: dotnet publish
+        run: dotnet publish backend/TuneVault.API/TuneVault.API.csproj -c Release -o ./publish
+
+      # Deploy lên Azure Web App bằng Publish Profile
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'TuneVault'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./publish

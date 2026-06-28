@@ -1,163 +1,218 @@
 # Cấu Trúc Dự Án TuneVault Backend
 
-## 📁 Tổng Quan Cấu Trúc Thư Mục
+## 📁 Tổng Quan
 
-Dự án sử dụng kiến trúc **Clean Architecture** với 4 layer chính:
-
----
-
-## 🎯 Các Folder Chính
-
-### 1. **TuneVault.API** 🔌
-**Mục đích**: Tầng Presentation (Giao diện API)
-
-Chứa các endpoint HTTP và cấu hình ứng dụng:
-- **Controllers/**: Định nghĩa các API endpoints
-  - `UsersController.cs` - Quản lý các request liên quan đến users
-- **appsettings.json**: Cấu hình ứng dụng (database, logging, v.v.)
-- **appsettings.Development.json**: Cấu hình riêng cho môi trường Development
-- **Program.cs**: Entry point của ứng dụng, khởi tạo dependency injection và middleware
-- **Dockerfile**: Tệp dùng để build container Docker cho API
-- **TuneVault.API.http**: File định nghĩa các HTTP request test
-- **bin/**, **obj/**: Thư mục build output (tự động sinh ra)
-
-**Trách nhiệm**: Tiếp nhận request từ client, gọi đúng service logic, và trả về response
+Dự án sử dụng kiến trúc **Clean Architecture** với 4 layer rõ ràng, mỗi layer chỉ phụ thuộc vào layer bên dưới nó.
 
 ---
 
-### 2. **TuneVault.Application** 🛠️
-**Mục đích**: Tầng Application (Logic ứng dụng)
+## 🎯 Các Layer Chính
 
-Chứa business logic và use cases:
-- **Features/**: Nhóm các tính năng theo nghiệp vụ
-  - `Users/`: Features liên quan đến quản lý users
-    - `Queries/`: Xử lý các truy vấn (SELECT)
-      - `GetAllUsersQuery.cs` - Định nghĩa query lấy tất cả users
-      - `GetAllUsersQueryHandler.cs` - Xử lý logic lấy dữ liệu users
-- **Repositories/**: Định nghĩa các interface repository
-  - `IUserRepository.cs` - Giao diện cho các operation liên quan đến User
-- **bin/**, **obj/**: Thư mục build output
+### 1. **TuneVault.API** 🔌 — Presentation Layer
 
-**Trách nhiệm**: Chứa use cases, business rules, validation logic
+Tiếp nhận và xử lý HTTP requests, trả về responses:
 
----
-
-### 3. **TuneVault.Domain** 📊
-**Mục đích**: Tầng Domain (Model dữ liệu cốt lõi)
-
-Định nghĩa các entity và business rules cơ bản:
-- **Entities/**: Các model đại diện cho dữ liệu trong hệ thống
-  - `Album.cs` - Entity cho Album nhạc
-  - `Artist.cs` - Entity cho Nghệ sĩ
-  - `Favorite.cs` - Entity cho Bài hát yêu thích
-  - `Follow.cs` - Entity cho quan hệ theo dõi
-  - `MediaItem.cs` - Entity cho mục media (bài hát, podcast, v.v.)
-  - `MediaShare.cs` - Entity chia sẻ media
-  - `MediaTag.cs` - Entity gắn tag vào media
-  - `Notification.cs` - Entity thông báo
-  - `PlayHistory.cs` - Entity lịch sử phát nhạc
-  - `Playlist.cs` - Entity playlist
-  - `PlaylistTrack.cs` - Entity track trong playlist
-  - `Tag.cs` - Entity thẻ/tag
-  - `UserProfile.cs` - Entity hồ sơ người dùng
-- **Enums/**: Các enum (kiểu dữ liệu hạn chế)
-  - `MediaType.cs` - Enum loại media (Song, Podcast, v.v.)
-  - `NotificationType.cs` - Enum loại thông báo
-- **bin/**, **obj/**: Thư mục build output
-
-**Trách nhiệm**: Định nghĩa cấu trúc dữ liệu, không chứa logic ứng dụng
+```
+TuneVault.API/
+├── Program.cs                          # Entry point, cấu hình DI và middleware pipeline
+├── Dockerfile                          # Docker build image cho API
+├── appsettings.json                    # Cấu hình production (JWT, Cloudinary, DB...)
+├── appsettings.Development.json        # Cấu hình môi trường dev
+├── Common/
+│   └── ApiResponse.cs                  # Wrapper chuẩn hóa mọi response JSON
+├── Controllers/
+│   ├── AdminController.cs              # Quản lý users (role, active state)
+│   ├── AlbumsController.cs             # CRUD album
+│   ├── ArtistsController.cs            # Thông tin nghệ sĩ
+│   ├── AuthController.cs               # Đăng ký, đăng nhập, OTP, reset mật khẩu
+│   ├── FavoritesController.cs          # Thả tim / bỏ tim bài hát
+│   ├── FollowsController.cs            # Follow / Unfollow nghệ sĩ
+│   ├── HistoryController.cs            # Lịch sử nghe nhạc
+│   ├── InboxController.cs              # Hộp thư chia sẻ nhạc
+│   ├── MediaController.cs              # Upload, stream, xem chi tiết media
+│   ├── NotificationsController.cs      # Thông báo real-time
+│   ├── PlaylistsController.cs          # CRUD playlist và tracks trong playlist
+│   ├── SearchController.cs             # Tìm kiếm toàn hệ thống
+│   ├── ShareController.cs              # Chia sẻ nhạc/playlist/album cho người khác
+│   └── UsersController.cs              # Hồ sơ người dùng, đăng ký Artist
+└── Middlewares/
+    └── ExceptionHandlingMiddleware.cs  # Bắt lỗi toàn cục, trả về lỗi chuẩn JSON
+```
 
 ---
 
-### 4. **TuneVault.Infrastructure** 🔧
-**Mục đích**: Tầng Infrastructure (Truy cập dữ liệu và external services)
+### 2. **TuneVault.Application** 🛠️ — Business Logic Layer
 
-Chứa việc triển khai (implementation) cụ thể:
-- **Repositories/**: Triển khai các interface repository
-  - `UserRepository.cs` - Thực hiện các database operation cho User (CRUD)
-- **bin/**, **obj/**: Thư mục build output
+Chứa toàn bộ business logic theo pattern **CQRS (MediatR)**:
 
-**Trách nhiệm**: Kết nối database, gọi external APIs, xử lý I/O
+```
+TuneVault.Application/
+├── Features/
+│   ├── Admin/                          # Quản lý users (GetAll, SetRole, SetActive)
+│   ├── Artists/                        # Xem thông tin nghệ sĩ
+│   ├── Auth/
+│   │   └── Commands/
+│   │       ├── Login/                  # LoginCommand + Handler + Validator
+│   │       ├── Register/               # RegisterCommand + Handler + Validator
+│   │       ├── SendRegistrationOtp/    # Gửi OTP đăng ký
+│   │       ├── SendForgotPasswordOtp/  # Gửi OTP quên mật khẩu
+│   │       └── ResetPassword/          # Đặt lại mật khẩu
+│   ├── Favorites/                      # Thả tim, bỏ tim, lấy danh sách yêu thích
+│   ├── Follows/                        # Follow, Unfollow, kiểm tra trạng thái
+│   ├── History/                        # Ghi nhận & lấy lịch sử nghe
+│   ├── Medias/                         # Upload media, stream, lấy chi tiết
+│   ├── Notifications/                  # Lấy thông báo, đánh dấu đã đọc
+│   ├── Playlists/                      # CRUD playlist, thêm/xóa tracks
+│   ├── Query/                          # Shared queries dùng chung
+│   ├── Share/                          # Chia sẻ nhạc/playlist/album, Inbox
+│   └── Users/                          # Hồ sơ người dùng, đăng ký Artist
+├── Models/                             # DTOs dùng để trả dữ liệu về Frontend
+│   ├── MediaItemDto.cs
+│   ├── MyPlaylistDto.cs
+│   ├── PlaylistTrackDto.cs
+│   ├── ShareDto.cs
+│   └── ...
+├── Repositories/                       # Interfaces cho tầng Infrastructure
+│   ├── IUserRepository.cs
+│   ├── IMediaRepository.cs
+│   ├── IPlaylistRepository.cs
+│   ├── ISharedRepository.cs
+│   └── ...
+└── DependencyInjection.cs              # Đăng ký MediatR, FluentValidation
+```
+
+---
+
+### 3. **TuneVault.Domain** 📊 — Domain Layer
+
+Định nghĩa các entity cốt lõi, **không phụ thuộc bất kỳ layer nào**:
+
+```
+TuneVault.Domain/
+├── Entities/
+│   ├── Album.cs                # Entity album nhạc
+│   ├── Artist.cs               # Entity nghệ sĩ
+│   ├── Favorite.cs             # Entity bài hát yêu thích
+│   ├── Follow.cs               # Entity quan hệ follow
+│   ├── MediaItem.cs            # Entity media (bài hát, video)
+│   ├── MediaShare.cs           # Entity chia sẻ media
+│   ├── MediaTag.cs             # Entity gắn tag cho media
+│   ├── Notification.cs         # Entity thông báo
+│   ├── PlayHistory.cs          # Entity lịch sử phát nhạc
+│   ├── Playlist.cs             # Entity playlist
+│   ├── PlaylistTrack.cs        # Entity bài hát trong playlist
+│   ├── Tag.cs                  # Entity tag/thẻ
+│   ├── User.cs                 # Entity người dùng
+│   └── UserProfile.cs          # Entity hồ sơ người dùng (quan hệ 1-1 với User)
+└── Enums/
+    ├── MediaType.cs            # Enum: Song, Video, Podcast...
+    └── NotificationType.cs     # Enum: NewFollow, NewShare...
+```
+
+---
+
+### 4. **TuneVault.Infrastructure** 🔧 — Infrastructure Layer
+
+Triển khai cụ thể việc kết nối DB, cloud storage, real-time:
+
+```
+TuneVault.Infrastructure/
+├── DependencyInjection.cs          # Đăng ký tất cả services vào DI container
+├── Configurations/
+│   └── CloudinarySettings.cs       # Config Cloudinary (CloudName, ApiKey, ApiSecret)
+├── Hubs/
+│   └── NotificationHub.cs          # SignalR Hub — gửi thông báo real-time
+├── Repositories/                   # Triển khai các IRepository dùng Dapper + SQL Server
+│   ├── UserRepository.cs
+│   ├── MediaRepository.cs
+│   ├── PlaylistRepository.cs
+│   ├── FavoriteRepository.cs
+│   ├── FollowRepository.cs
+│   ├── HistoryRepository.cs
+│   ├── NotificationRepository.cs
+│   └── SharedRepository.cs
+└── Services/
+    └── CloudinaryService.cs        # Upload ảnh/audio/video lên Cloudinary
+```
 
 ---
 
 ## 🏗️ Sơ Đồ Kiến Trúc
 
 ```
-                    ┌──────────────────┐
-                    │   Frontend       │ (React/TypeScript)
-                    └────────┬─────────┘
-                             │ HTTP Requests
-                    ┌────────▼─────────┐
-                    │  TuneVault.API   │ (Controllers, Input/Output)
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │TuneVault.         │ (Queries, Handlers,
-                    │Application       │  Business Logic)
-                    └────────┬─────────┘
-                             │
-        ┌────────────────────┼────────────────────┐
-        │                    │                    │
-┌───────▼──────┐   ┌─────────▼──────┐  ┌────────▼──────┐
-│TuneVault.    │   │TuneVault.      │  │TuneVault.     │
-│Infrastructure│   │Domain          │  │...            │
-│(DB Access)   │   │(Models)        │  └───────────────┘
-└──────────────┘   └────────────────┘
+┌─────────────────────────────────────────────┐
+│           Frontend (React + TypeScript)      │
+│              http://localhost:3000            │
+└────────────────────┬────────────────────────┘
+                     │ HTTP Requests (Axios)
+                     │ WebSocket (SignalR)
+┌────────────────────▼────────────────────────┐
+│         TuneVault.API (Controllers)          │
+│           http://localhost:5000              │
+│     Middleware: JWT Auth, Exception Handler  │
+└────────────────────┬────────────────────────┘
+                     │ MediatR (Commands/Queries)
+┌────────────────────▼────────────────────────┐
+│       TuneVault.Application (Handlers)       │
+│   FluentValidation → Business Logic → DTO   │
+└────────┬───────────────────────┬────────────┘
+         │                       │
+┌────────▼──────────┐   ┌────────▼──────────┐
+│ TuneVault.Domain  │   │TuneVault.          │
+│ (Entities, Enums) │   │Infrastructure      │
+│  Pure C# Classes  │   │(Dapper, Cloudinary,│
+└───────────────────┘   │ SignalR)           │
+                        └───────────────────┘
 ```
 
 ---
 
-## 📝 Luồng Dữ Liệu
+## 📝 Luồng Xử Lý Request
 
-1. **Client** gửi request HTTP tới API
-2. **Controller** (TuneVault.API) nhận request
-3. **Handler** (TuneVault.Application) xử lý business logic
-4. **Repository** (TuneVault.Infrastructure) truy cập database
-5. **Entity** (TuneVault.Domain) đại diện dữ liệu
-6. Response trả về client
+```
+Client → Controller → MediatR.Send(Command/Query)
+       → ValidationBehavior (FluentValidation)
+       → Handler (Business Logic)
+       → Repository (Dapper SQL)
+       → SQL Server
+       → DTO mapping
+       → ApiResponse<T>.SetSuccess(data, message)
+       → JSON response
+```
 
 ---
 
 ## 🔑 Quy Ước Đặt Tên
 
-| Thư mục | Chức năng | Ví dụ |
-|---------|----------|-------|
-| **Controllers** | HTTP endpoints | `UsersController.cs` |
-| **Features** | Organize use cases bằng domain | `Users/Queries/` |
-| **Queries** | Chỉ đọc dữ liệu | `GetAllUsersQuery.cs` |
-| **Handlers** | Xử lý logic | `GetAllUsersQueryHandler.cs` |
-| **Entities** | Database models | `User.cs`, `Album.cs` |
-| **Enums** | Kiểu enumeration | `MediaType.cs` |
-| **Repositories** | Data access abstraction | `IUserRepository.cs` |
+| Loại file | Pattern | Ví dụ |
+|---|---|---|
+| Command | `{Action}{Entity}Command.cs` | `CreatePlaylistCommand.cs` |
+| Query | `{Action}{Entity}Query.cs` | `GetPlaylistByIdQuery.cs` |
+| Handler | `{...}Handler.cs` | `CreatePlaylistHandler.cs` |
+| Validator | `{...}Validator.cs` | `CreatePlaylistValidator.cs` |
+| Repository (interface) | `I{Entity}Repository.cs` | `IPlaylistRepository.cs` |
+| Repository (impl) | `{Entity}Repository.cs` | `PlaylistRepository.cs` |
+| Controller | `{Entity}Controller.cs` | `PlaylistsController.cs` |
+| DTO | `{Entity}Dto.cs` | `MyPlaylistDto.cs` |
 
 ---
 
 ## 📦 Sự Phụ Thuộc Giữa Các Layer
 
 ```
-TuneVault.API 
+TuneVault.API
     ↓ depends on
-TuneVault.Application 
+TuneVault.Application
     ↓ depends on
-TuneVault.Domain + TuneVault.Infrastructure
+TuneVault.Domain
+    ↑ also used by
+TuneVault.Infrastructure
 ```
 
-- **API** import từ **Application**
-- **Application** import từ **Domain** và **Infrastructure**
-- **Domain** không import từ layer nào
-- **Infrastructure** import từ **Domain**
-
----
-
-## 🚀 Cách Thêm Feature Mới
-
-1. Tạo folder trong `Features/FeatureName/`
-2. Tạo `Queries/` hoặc `Commands/` folder
-3. Tạo `Handler` để xử lý logic
-4. Tạo endpoint trong `Controllers/`
-5. Tạo `Entity` trong `Domain/Entities/`
-6. Tạo `Repository` implementation trong `Infrastructure/`
+- **API** phụ thuộc **Application**
+- **Application** phụ thuộc **Domain**
+- **Infrastructure** phụ thuộc **Domain** (implement interfaces của Application)
+- **Domain** không phụ thuộc bất kỳ layer nào
 
 ---
 

@@ -28,7 +28,11 @@ public class HistoryController : ControllerBase
     {
         // 1. Lấy UserId từ JWT Token đang đăng nhập (Nếu có)
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userId = Guid.Parse(userIdStr!);
+        Guid? userId = null;
+        if (!string.IsNullOrEmpty(userIdStr) && Guid.TryParse(userIdStr, out var parsedGuid))
+        {
+            userId = parsedGuid;
+        }
 
         // 2. Map sang MediatR Command
         var command = new RecordPlayHistoryCommand
