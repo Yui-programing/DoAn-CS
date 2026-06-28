@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using TuneVault.API.Common;
+using TuneVault.API.Requests;
 using TuneVault.Application.Features.Playlists.Commands.AddPlaylistTrack;
 using TuneVault.Application.Features.Playlists.Commands.CreatePlaylist;
 using TuneVault.Application.Features.Playlists.Commands.DeletePlaylist;
@@ -16,6 +17,7 @@ using TuneVault.Application.Features.Playlists.Commands.ViewPlaylist;
 using TuneVault.Application.Features.Playlists.Commands.ViewPlaylistTrack;
 using TuneVault.Application.Features.Playlists.Queries.GetPublicPlaylistsByUser;
 using TuneVault.Application.Models;
+
 
 namespace TuneVault.API.Controllers;
 
